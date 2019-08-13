@@ -5,7 +5,7 @@ import test_cluster_tools as tct
 g_cluster_counter = 0
 
 
-'''
+"""
 Additional testing and other notes:
 
 1. Make sure that it handles single clusters in the cid list; fails if this
@@ -22,9 +22,10 @@ internal consistency.
 
 clustering is a mapping from a cluster id to a set of node ids.
 
-'''
-class LCA(object):
+"""
 
+
+class LCA(object):
     def __init__(self, subG, clustering, cids, score):
         self.subgraph = subG   # Restricted to the clustering
         self.from_clusters = {c: clustering[c] for c in cids}
@@ -86,7 +87,7 @@ class LCA(object):
 
         nodes = sorted(self.nodes())
         for i, m in enumerate(nodes):
-            for j in range(i+1, len(nodes)):
+            for j in range(i + 1, len(nodes)):
                 n = nodes[j]
                 if self.node_pair_inconsistent(m, n):
                     if n in self.subgraph[m]:   # edge exists
@@ -131,13 +132,13 @@ class LCA(object):
         return v
 
     def add_edge(self, e):
-        '''
+        """
         Do not change weight here because the graph aliases the overall
         graph.  Assume the calling function makes this change.
-        '''
+        """
         n0, n1, wgt = e
         delta_wgt = wgt
-        '''  The following is removed because weights are now additive '''
+        """  The following is removed because weights are now additive """
         # if n1 in self.subgraph[n0]:
         #    delta_wgt -= self.subgraph[n0][n1]['weight']
 
@@ -155,7 +156,7 @@ class LCA(object):
         """
         if self.to_n2c is None:
             return (from_score_change, 0)
-        
+
         n0_cid = self.to_n2c[n0]
         n1_cid = self.to_n2c[n1]
         same_in_to = n0_cid == n1_cid
@@ -187,7 +188,7 @@ class LCA(object):
         return (from_score_change, to_score_change)
 
     def pprint_short(self, stop_after_from=False):
-        print("from:", end='')
+        print("from:", end='')  # NOQA
         for cid in sorted(self.from_clusters.keys()):
             print(" %d: %a" % (cid, sorted(self.from_clusters[cid])), end='')
         check_score = ct.clustering_score(self.subgraph, self.from_n2c)

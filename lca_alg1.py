@@ -20,16 +20,16 @@ def best_shift(n0, n1, G, clustering, node2cid, trace_on=False):
     for m in H[n0]:
         w = H[n0][m]['weight']
         if node2cid_H[m] == c0_id:
-            delta_s -= 2*w
+            delta_s -= 2 * w
             frontier.add(m)
         else:
-            delta_s += 2*w
+            delta_s += 2 * w
     shift_set = {n0}
 
     if trace_on:
         print("Initial values:")
 
-    while len(frontier) > 0 and len(shift_set) < len(c0)-1:
+    while len(frontier) > 0 and len(shift_set) < len(c0) - 1:
         if trace_on:
             print("delta_s:", delta_s)
             print("shift_set:", shift_set)
@@ -40,9 +40,9 @@ def best_shift(n0, n1, G, clustering, node2cid, trace_on=False):
             new_delta = delta_s
             for m1 in H[m]:
                 if m1 in c1 or m1 in shift_set:
-                    new_delta += 2*H[m][m1]['weight']  # 2* since neg -> pos
+                    new_delta += 2 * H[m][m1]['weight']  # 2* since neg -> pos
                 else:
-                    new_delta -= 2*H[m][m1]['weight']  # 2* since pos -> neg
+                    new_delta -= 2 * H[m][m1]['weight']  # 2* since pos -> neg
             if trace_on:
                 print('m %s, new_delta %a' % (m, new_delta))
             if new_delta > best_delta:

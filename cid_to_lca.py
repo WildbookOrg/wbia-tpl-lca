@@ -9,13 +9,13 @@ class CID2LCA(object):
         self.cid2lcas = dict()
 
     def add(self, a):
-        ''' Add an LCA to the dictionary, making sure that each CID is there
-            and includes the LCA
-        '''
+        """
+        Add an LCA to the dictionary, making sure that each CID is there
+        and includes the LCA
 
-        ''' Super inefficent and needs to change; involves at least double,
-            and sometimes triple hashing.
-        '''
+        Super inefficent and needs to change; involves at least double,
+        and sometimes triple hashing.
+        """
         for c in a.from_cids():
             if c not in self.cid2lcas:
                 self.cid2lcas[c] = set()
@@ -25,7 +25,7 @@ class CID2LCA(object):
         self.cid2lcas.clear()
 
     def containing_all_cids(self, cids):
-        '''Find all LCAs containing all the cids in the list.  If there is
+        """Find all LCAs containing all the cids in the list.  If there is
         only one cid, there will be multiple LCAs, but if there are
         multiple cids there will be at most one LCA.
 
@@ -33,7 +33,7 @@ class CID2LCA(object):
         LCAs, which can only happen if the cid is an isolated
         singleton. When this is discovered we can immediately return
         the empty set.
-        '''
+        """
         lca_sets = list()
         for c in cids:
             if c in self.cid2lcas:
@@ -46,13 +46,13 @@ class CID2LCA(object):
             return set.intersection(*lca_sets)
 
     def remove_with_cids(self, cids):
-        '''Find and remove any LCA containing at least one of the cids.
+        """Find and remove any LCA containing at least one of the cids.
         Return the set of all removed cids.
 
         Note that if the "from" cid set of an LCA (call it "a")
         contains two CIDs then a will need to be removed from the LCA
         set of the other cid.
-        '''
+        """
         all_lcas = set()
         for c in cids:
             if c in self.cid2lcas:
@@ -90,9 +90,9 @@ class CID2LCA(object):
                 print("    ", str(a))
 
 
-#############  Testing code  ######################
+# #############  Testing code  ######################
 
-class lca_lite(object):
+class lca_lite(object):  # NOQA
     def __init__(self, hv, cids):
         self.__hash_value = hv
         self.m_cids = cids
@@ -142,9 +142,9 @@ def test_all():
 
     lca_set = c2a.containing_all_cids([1, 99])
     print("containg_all_cids [1, 99] (should be len(0)):", len(lca_set))
-    
+
     print("========\nDictionary structure")
-    c2a.is_consistent()    
+    c2a.is_consistent()
     c2a.print_structure()
     lca_set = c2a.remove_with_cids([2, 5])
     print("after removing [2, 5] returned LCAs should be 124, 692, 710, 826")
@@ -160,14 +160,14 @@ def test_all():
         print("    ", str(a))
 
     print("========\nDictionary structure")
-    c2a.is_consistent()    
+    c2a.is_consistent()
     c2a.print_structure()
     lca_set = c2a.remove_with_cids([4])
     print("after removing [4]; should have returned the empty set, did it? ",
           len(lca_set) == 0)
 
     print("========\nDictionary structure (final)")
-    c2a.is_consistent()    
+    c2a.is_consistent()
     c2a.print_structure()
 
 

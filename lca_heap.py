@@ -1,16 +1,14 @@
-'''
+"""
 Although this depends on the LCA having a hash value, it can be tested on any
 object that has the following:
 
 1. hash value
 2. delta_score method
 
-'''
+"""
 
 
-
-
-class lca_heap(object):
+class lca_heap(object):  # NOQA
 
     def __init__(self):
         self.heap = []
@@ -34,25 +32,25 @@ class lca_heap(object):
             self.percolate_down(0)
 
     def remove(self, a):
-        '''
+        """
         a.pprint()
         print("len of index", len(self.lca2index))
         print("len of heap", len(self.heap))
-        '''
+        """
         assert(a in self.lca2index)
 
         # Special case of removing the end of list.
         # This also works for removing the last item.
         loc = self.lca2index[a]
         del self.lca2index[a]
-        if loc == len(self.heap)-1:
+        if loc == len(self.heap) - 1:
             self.heap.pop()
             return
 
         a_last_leaf = self.heap.pop()
         self.heap[loc] = a_last_leaf
         self.lca2index[a_last_leaf] = loc
-        p_loc = (loc-1)//2
+        p_loc = (loc - 1) // 2
         if p_loc >= 0 and \
            self.heap[p_loc].delta_score() < self.heap[loc].delta_score():
             self.percolate_up(loc)
@@ -61,7 +59,7 @@ class lca_heap(object):
 
     def insert(self, a):
         self.heap.append(a)
-        last_index = len(self.heap)-1
+        last_index = len(self.heap) - 1
         self.lca2index[a] = last_index
         self.percolate_up(last_index)
 
@@ -75,13 +73,13 @@ class lca_heap(object):
     def percolate_down(self, i):
         i_lca = self.heap[i]
         i_delta = i_lca.delta_score()
-        last_interior = len(self.heap)//2 - 1
+        last_interior = len(self.heap) // 2 - 1
 
         while i <= last_interior:
-            c = 2*i + 1
+            c = 2 * i + 1
             c_lca = self.heap[c]
             c_delta = c_lca.delta_score()
-            rc = c+1
+            rc = c + 1
             if rc < len(self.heap) and self.heap[rc].delta_score() > c_delta:
                 c = rc
                 c_lca = self.heap[c]
@@ -101,7 +99,7 @@ class lca_heap(object):
         i_lca = self.heap[i]
         i_delta = i_lca.delta_score()
         while i > 0:
-            p = (i-1) // 2
+            p = (i - 1) // 2
             p_lca = self.heap[p]
             p_delta = p_lca.delta_score()
             if p_delta >= i_delta:
@@ -130,9 +128,9 @@ class lca_heap(object):
 
         # Make sure each index is in the heap
         for i, lca in enumerate(self.heap):
-            if not lca in self.lca2index:
-                print('lca at location %d with heap value %d not in lca2index'\
-                      %(i, lca.__heap))
+            if lca not in self.lca2index:
+                print('lca at location %d with heap value %d not in lca2index'
+                      % (i, lca.__heap))
                 is_ok = False
 
         # Make sure each lca2index entry is unique
@@ -141,24 +139,24 @@ class lca_heap(object):
             is_ok = False
 
         # Make sure all indices are in range
-        if not all([0<=i<len(self.heap) for i in self.lca2index.values()]):
+        if not all([0 <= i < len(self.heap) for i in self.lca2index.values()]):
             print('At least one index out of range in self.lca2index.values')
             is_ok = False
 
         # finally test to see if the ordering property is maintained
         last_internal = len(self.heap) // 2 - 1
-        for i in range(last_internal+1):
-            lchild = 2*i+1
+        for i in range(last_internal + 1):
+            lchild = 2 * i + 1
             rchild = lchild + 1
             if self.heap[i].delta_score() < self.heap[lchild].delta_score():
-                print("Heap index %d has score %1.1f less than left child %d with score %1.1f"\
-                      %(i, self.heap[i].delta_score(), lchild, self.heap[lchild].delta_score()))
+                print("Heap index %d has score %1.1f less than left child %d with score %1.1f"
+                      % (i, self.heap[i].delta_score(), lchild, self.heap[lchild].delta_score()))
                 is_ok = False
 
             if rchild < len(self.heap) and \
                self.heap[i].delta_score() < self.heap[lchild].delta_score():
-                print("Heap index %d has score %1.1f, less than right child %d with score %1.1f"\
-                      %(i, self.heap[i].delta_score(), rchild, self.heap[rchild].delta_score()))
+                print("Heap index %d has score %1.1f, less than right child %d with score %1.1f"
+                      % (i, self.heap[i].delta_score(), rchild, self.heap[rchild].delta_score()))
                 is_ok = False
 
         if not is_ok:
@@ -168,7 +166,7 @@ class lca_heap(object):
         return is_ok
 
 
-class lca_lite(object):
+class lca_lite(object):  # NOQA
     def __init__(self, hash_value, delta_s):
         self.__hash = hash_value
         self.m_delta_score = delta_s

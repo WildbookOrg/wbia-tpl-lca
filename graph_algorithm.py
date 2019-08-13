@@ -10,7 +10,7 @@ import lca_alg2 as alg2
 from lca_queues import *
 
 
-'''
+"""
 Data structures:
 
 1. clustering:  cid -> set of nodes; each node is in exactly one set
@@ -23,9 +23,9 @@ Data structures:
 cids and the LCAs that might include them.  This is much more
 than a mapping from a pair of cids to the LCA that combines them.
 
-'''
+"""
 
-class graph_algorithm(object):
+class graph_algorithm(object):  # NOQA
 
     def __init__(self, G, params, clustering=None):
         self.G = G
@@ -44,10 +44,10 @@ class graph_algorithm(object):
 
         self.phase = None
 
-        '''  Need to set these callbacks to request and receive
+        """  Need to set these callbacks to request and receive
         information from the verfication algorithm and to do the same
         from human reviewers.
-        '''
+        """
         # self.node_generator = None
         # self.ranker_request = None
         # self.ranker_result = None
@@ -56,7 +56,6 @@ class graph_algorithm(object):
         self.human_request = None
         self.human_result_cb = None
 
-        
         self.start_splitting_cb = None
         self.next_splitting_itr_cb = None
         self.start_stability_cb = None
@@ -298,18 +297,18 @@ class graph_algorithm(object):
         #       old_cids, " added_clusters", added_clusters)
 
         ct.replace_clusters(old_cids, added_clusters, self.clustering, self.node2cid)
-        '''
+        """
         print("BEFORE replace:")
         print("old_cids", old_cids)
         print("added_clusters", added_clusters)
         print("clustering", self.clustering)
         print("node2cid", self.node2cid)
-        '''
-        '''
+        """
+        """
         print("AFTER replace:")
         print("clustering", self.clustering)
         print("node2cid", self.node2cid)
-        '''
+        """
 
         #  Step 3: Form a list of CID singleton and/or pairs involving at
         #  least one of the new clusters.  Whether singletons or pairs or both
@@ -319,7 +318,7 @@ class graph_algorithm(object):
                                                            self.node2cid, new_cids)
         elif self.phase == "splitting":
             new_cid_sets = [(cid,) for cid in new_cids]
-        else: # self.phase == "stability"
+        else:  # self.phase == "stability"
             new_cid_sets = ct.form_connected_cluster_pairs(self.G, self.clustering,
                                                            self.node2cid, new_cids)
             new_cid_sets.extend([(cid,) for cid in new_cids])
@@ -443,14 +442,14 @@ class graph_algorithm(object):
             print("empty")
         else:
             for i, a in enumerate(self.queues.Q.heap):
-                print("heap entry:", i, end=' ')
+                print("heap entry:", i, end=' ')  # NOQA
                 a.pprint_short(stop_after_from=False)
         print("-----------------------")
 
     def show_brief_state(self):
         print("Queue lengths: main Q %d, scoring %d, waiting %d"
               % (len(self.queues.Q), len(self.queues.S), self.queues.num_on_W()))
-              
+
         print("Top LCA: ", end='')
         # print("Top delta score:", self.queues.top_Q().delta_score(), end='')
         self.queues.top_Q().pprint_short(stop_after_from=False)
@@ -460,15 +459,15 @@ class graph_algorithm(object):
         print("Human results:", self.num_human_results)
 
     def is_consistent(self):
-        ''' Each edge between two different clusters should be 
-        '''
+        """ Each edge between two different clusters should be
+        """
         all_ok = self.lca_queues.is_consistent()
-        return all_ok # Need to add a lot more here.....
+        return all_ok  # Need to add a lot more here.....
 
 """
 Testing code starts here
 """
-class test_generator1(object):
+class test_generator1(object):  # NOQA
 
     def __init__(self, which_graph=1):
         self.no_calls_yet = True
@@ -571,7 +570,7 @@ class test_generator1(object):
                 e = (pr[0], pr[1], self.human_available[pr])
                 # print("human available e=", e)
             elif pr[1] in self.G[pr[0]]:
-                e = (pr[0], pr[1], 2*self.G[pr[0]][pr[1]]['weight'])
+                e = (pr[0], pr[1], 2 * self.G[pr[0]][pr[1]]['weight'])
                 # print("taking from graph, e=", e)
             else:
                 e = (pr[0], pr[1], 0)

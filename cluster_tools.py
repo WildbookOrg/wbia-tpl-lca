@@ -1,9 +1,9 @@
 
 def build_clustering(node2cluster):
-    '''
+    """
     node2cluster: mapping from node id to cluster id
     clustering: mapping from cluster id to set of node ids
-    '''
+    """
     clustering = {}
     for n, c in node2cluster.items():
         if c not in clustering:
@@ -14,18 +14,18 @@ def build_clustering(node2cluster):
 
 
 def build_node_to_cluster_mapping(clustering):
-    '''
+    """
     clustering: mapping from cluster id to set of node ids
     node2cluster: mapping from node id to cluster id
-    '''
+    """
     node2cluster = {n: c for c in clustering for n in clustering[c]}
     return node2cluster
 
 
 def sign_from_clusters(n1, n2, node2cid):
-    '''
+    """
     Returns 1 if the two nodes are in the same cluster and -1 otherwise.
-    '''
+    """
     if node2cid[n1] == node2cid[n2]:
         return 1
     else:
@@ -33,15 +33,15 @@ def sign_from_clusters(n1, n2, node2cid):
 
 
 def cid_list_score(G, clustering, node2cid, cid_list):
-    '''
+    """
     Return the objective function score of the clusters indicated in
     the cid_list
-    '''
+    """
     score = 0
     for cid0 in cid_list:
         for n0 in clustering[cid0]:
             for n1 in G[n0]:
-                if n0 >= n1: # only count when n0 < n1
+                if n0 >= n1:  # only count when n0 < n1
                     continue
                 cid_n1 = node2cid[n1]
                 if cid0 == cid_n1:
@@ -52,10 +52,10 @@ def cid_list_score(G, clustering, node2cid, cid_list):
 
 
 def get_cluster_id(n, clusters):
-    '''
+    """
     Find the id of the cluster whose node set contains
     node n.  Return None if n is not in any cluster.
-    '''
+    """
     for cid, c in clusters.items():
         if n in c:
             return cid
@@ -63,19 +63,19 @@ def get_cluster_id(n, clusters):
 
 
 def clustering_score(G, node2cid):
-    '''
+    """
     Return the objective function score for the entire graph.
-    '''
+    """
     score = sum([sign_from_clusters(n1, n2, node2cid) * G[n1][n2]['weight']
                  for n1 in G for n2 in G[n1] if n1 < n2])
     return score
 
 
 def get_weight_lists(G, sort_positive=True):
-    '''
+    """
     Return a pair of lists of the negative and positive edges
     in graph G.  Each list contains triples of (ni, nj, wgt).
-    '''
+    """
     weight_list = [(n1, n2, G[n1][n2]['weight'])
                    for n1 in G for n2 in G[n1] if n1 < n2]
     negatives = [t for t in weight_list if t[2] < 0]
@@ -86,16 +86,16 @@ def get_weight_lists(G, sort_positive=True):
 
 
 def weights_between(c0, c1, G):
-    '''
+    """
     Return a list of the weights between two clusters
-    '''
+    """
     return [G[n0][n1]['weight'] for n0 in c0 for n1 in G[n0] if n1 in c1]
 
 
 def has_edges_between_them(G, c0, c1):
-    '''
+    """
     Return true iff there is an edge joining two clusters
-    '''
+    """
     if len(c0) > len(c1):
         c0, c1 = c1, c0
     for n in c0:
@@ -106,13 +106,13 @@ def has_edges_between_them(G, c0, c1):
 
 
 def replace_clusters(old_cids, add_clustering, clustering, node2cid):
-    '''
+    """
     Remove the old_cids clusters from the clustering dictionary,
     add the new ones, and change the mapping of the nodes in the
     new clusters. It is assumed without checking that the nodes
     in the old clusters and the nodes in the new clusters are
     the same.
-    '''
+    """
     for cid in old_cids:
         del clustering[cid]
     clustering.update(add_clustering)
@@ -122,11 +122,11 @@ def replace_clusters(old_cids, add_clustering, clustering, node2cid):
 
 
 def merge_clusters(cid0, cid1, G, clustering, node2cid):
-    '''
+    """
     Merge the smaller cluster into the larger.  This includes
     removing the cluster, reassigning the node-to-cluster-id
     mapping, and returning the change in score.
-    '''
+    """
     cluster0 = clustering[cid0]
     cluster1 = clustering[cid1]
     if len(cluster0) < len(cluster1):
@@ -137,7 +137,7 @@ def merge_clusters(cid0, cid1, G, clustering, node2cid):
         cid_small, cid_large = cid1, cid0
 
     adjoining_wgts = weights_between(c_small, c_large, G)
-    delta_score = 2*sum(adjoining_wgts)
+    delta_score = 2 * sum(adjoining_wgts)
     c_large |= c_small
     for n in c_small:
         node2cid[n] = cid_large
@@ -146,10 +146,10 @@ def merge_clusters(cid0, cid1, G, clustering, node2cid):
 
 
 def score_delta_after_merge(cid0, cid1, G, clustering):
-    '''
+    """
     Return the change in score that would occur IF the two clusters
     were merge.  This is done without performing the actual merge.
-    '''
+    """
     cluster0 = clustering[cid0]
     cluster1 = clustering[cid1]
     if len(cluster0) < len(cluster1):
@@ -158,17 +158,17 @@ def score_delta_after_merge(cid0, cid1, G, clustering):
         c_small, c_large = cluster1, cluster0
 
     adjoining_wgts = weights_between(c_small, c_large, G)
-    delta_score = 2*sum(adjoining_wgts)
+    delta_score = 2 * sum(adjoining_wgts)
     return delta_score
 
 
 def shift_between_clusters(cid0, nodes_to_move, cid1,
                            clustering, node2cid):
-    '''
+    """
     Move nodes from cluster 0 to cluster 1, changing the clustering
     and the node-to-cluster mapping.  This move must be such that at
     least one node is left in cluster 0.
-    '''
+    """
     cluster0, cluster1 = clustering[cid0], clustering[cid1]
     assert(len(nodes_to_move) < len(cluster0))
 
@@ -179,12 +179,12 @@ def shift_between_clusters(cid0, nodes_to_move, cid1,
 
 
 def form_connected_cluster_pairs(G, clustering, node2cid, new_cids=None):
-    '''
+    """
     Return a sorted list of all pairs of cluster ids such that at least one
     cluster is in the new_cids list (defaults to the entire list of
     clusters) and there is an edge connecting the clusters. Each pair
     is ordered smaller to larger, and the entire list is ordered.
-    '''
+    """
     if new_cids is None:
         cids = sorted(list(clustering.keys()))
     else:
@@ -206,12 +206,12 @@ def form_connected_cluster_pairs(G, clustering, node2cid, new_cids=None):
 
 
 def print_structures(G, clustering, node2cid, score):
-    '''
+    """
     Output the graph, the clusters, and the node-to-cluster mapping.
-    '''
+    """
     print("Graph:")
     for n in sorted(G.nodes()):
-        print("    %a: " % n, end="")
+        print("    %a: " % n, end='')  # NOQA
         for m in sorted(G[n]):
             print(" %a/%a" % (m, G[n][m]['weight']), end="")
         print()
@@ -259,14 +259,13 @@ def intersection_over_union(setA, setB):
 
 
 def compare_by_lengths(est, est_n2c, gt):
-    '''
+    """
     Examine each ground truth cluster to see how it is represented
     in the estimated clustering.  To do this, find all estimated
     clustering containing the ground truth cluster nodes, and then
     find which of these has the max overlap (in terms of IOU) with the
     set of ground truth nodes.
-    '''
-
+    """
     if est_n2c is None:
         est_n2c = build_node_to_cluster_mapping(est)
 
@@ -295,9 +294,9 @@ def compare_by_lengths(est, est_n2c, gt):
 
 
 def count_equal_clustering(from_clustering, to_clustering, to_n2c):
-    '''
+    """
     Return the number of clusters that appear exactly in both clusterings.
-    '''
+    """
     n = 0
     for from_c in from_clustering.values():
         node = from_c.pop()   # ugly, but need to get a node from the
@@ -311,30 +310,30 @@ def count_equal_clustering(from_clustering, to_clustering, to_n2c):
 
 
 def precision_recall(est, est_n2c, gt, gt_n2c):
-    '''
+    """
     Each pair of nodes in an estimated cluster is a either a TP (in the
     same GT cluster, or a FP (in a different GT cluster)
-    '''
+    """
     tp = fp = 0
     for est_c in est.values():
         est_c_list = list(est_c)
         for i, ni in enumerate(est_c_list):
-            for j in range(i+1, len(est_c_list)):
+            for j in range(i + 1, len(est_c_list)):
                 nj = est_c_list[j]
                 if gt_n2c[ni] == gt_n2c[nj]:
                     tp += 1
                 else:
                     fp += 1
 
-    '''
+    """
     Each pair of nodes in a GT cluster that is in a different estimated
     cluster is a FN
-    '''
+    """
     fn = 0
     for gt_c in gt.values():   # check: is this a list?  a set?
         gt_c_list = list(gt_c)
         for i, ni in enumerate(gt_c_list):
-            for j in range(i+1, len(gt_c_list)):
+            for j in range(i + 1, len(gt_c_list)):
                 nj = gt_c_list[j]
                 if est_n2c[ni] != est_n2c[nj]:
                     fn += 1
@@ -348,4 +347,4 @@ def percent_and_PR(est, est_n2c, gt, gt_n2c):
     num_eq = count_equal_clustering(est, gt, gt_n2c)
     pr, rec = precision_recall(est, est_n2c, gt, gt_n2c)
     lng = len(est)
-    return (num_eq/lng, pr, rec)
+    return (num_eq / lng, pr, rec)

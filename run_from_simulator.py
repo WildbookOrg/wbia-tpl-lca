@@ -15,13 +15,13 @@ if __name__ == "__main__":
         sys.exit()
     gen_prefix = sys.argv[1]
 
-    '''
+    """
     Specify the parameters for the simulator
-    '''
+    """
     sim_params = dict()
     sim_params['pos_error_frac'] = 0.15
-    sim_params['num_clusters'] = 16 # 256
-    sim_params['num_from_ranker'] = 4 # 10
+    sim_params['num_clusters'] = 16  # 256
+    sim_params['num_from_ranker'] = 4  # 10
     sim_params['p_ranker_correct'] = 0.85
     sim_params['p_human_correct'] = 0.98
 
@@ -38,13 +38,13 @@ if __name__ == "__main__":
     # The mean and the mode must be offset by 1 because every cluster
     # has at least one node.
     #
-    sim_params['gamma_shape'] = 1 # 2   # 1
-    sim_params['gamma_scale'] = 2 # 1.5 # 2
+    sim_params['gamma_shape'] = 1  # 2   # 1
+    sim_params['gamma_scale'] = 2  # 1.5 # 2
     num_per_cluster = sim_params['gamma_scale'] * sim_params['gamma_shape'] + 1
 
-    '''
+    """
     Build the exponential weight generator
-    '''
+    """
     np_ratio = sim.find_np_ratio(sim_params['gamma_shape'],
                                  sim_params['gamma_scale'],
                                  sim_params['num_from_ranker'],
@@ -60,20 +60,19 @@ if __name__ == "__main__":
                                                       np_ratio)
         wgtr_i = wgtr.weighter(scorer, human_prob=sim_params['p_human_correct'])
 
-        '''
+        """
         Build the simulator
-        '''
+        """
         # seed = 9314
         sim_i = sim.simulator(sim_params, wgtr_i)  # , seed=seed)
         sim_i.generate()
 
-        '''
+        """
         Specify parameters for the graph algorithm
-        '''
+        """
         gr_params = dict()
         print(wgtr_i.human_wgt(True), wgtr_i.human_wgt(False))
-        gr_params['min_delta_score'] = -0.9 * (wgtr_i.human_wgt(True)
-                                               - wgtr_i.human_wgt(False))
+        gr_params['min_delta_score'] = -0.9 * (wgtr_i.human_wgt(True) - wgtr_i.human_wgt(False))  # NOQA
 
         gai = ga.graph_algorithm(sim_i.G.copy(), gr_params)
         gai.set_algorithmic_verifiers(sim_i.verify_request, sim_i.verify_result)
@@ -106,7 +105,7 @@ if __name__ == "__main__":
         sim_i.generate_plots(file_prefix)
 
         b = baseline.baseline(sim_i)
-        max_human_baseline = 10 * sim_params['num_clusters'] 
-        
+        max_human_baseline = 10 * sim_params['num_clusters']
+
         b.all_iterations(0, max_human_baseline, 5)
         b.generate_plots(file_prefix + "_base")

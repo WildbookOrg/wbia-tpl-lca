@@ -31,16 +31,14 @@ def ex_graph_fig4():
     return G
 
 
-'''
-def ex_graph_fig5():
-    G = nx.Graph()
-    G.add_weighted_edges_from([('a', 'b', 9), ('a', 'e', -2),
-                               ('b', 'c', -6), ('b', 'e', 5), ('b', 'f', -2),
-                               ('c', 'd', 8), ('c', 'e', 4),
-                               ('d', 'e', 2), ('d', 'f', -1),
-                               ('e', 'f', 6)])
-    return G
-'''
+# def ex_graph_fig5():
+#     G = nx.Graph()
+#     G.add_weighted_edges_from([('a', 'b', 9), ('a', 'e', -2),
+#                                ('b', 'c', -6), ('b', 'e', 5), ('b', 'f', -2),
+#                                ('c', 'd', 8), ('c', 'e', 4),
+#                                ('d', 'e', 2), ('d', 'f', -1),
+#                                ('e', 'f', 6)])
+#     return G
 
 
 def test_build_clustering_and_mapping():
@@ -94,17 +92,17 @@ def test_cluster_scoring_and_weights():
 
     print("=====================")
     print("Testing clustering_score")
-    ''' First clustering:  all together '''
+    """ First clustering:  all together """
     n2c_single_cluster = {n: 0 for n in G.nodes}
     print('Score with all together should be 21.  Score =',
           ct.clustering_score(G, n2c_single_cluster))
 
-    ''' Second clustering:  all separate '''
+    """ Second clustering:  all separate """
     n2c_all_separate = {n: i for i, n in enumerate(G.nodes)}
     print('Score with all together should be -21.  Score =',
           ct.clustering_score(G, n2c_all_separate))
 
-    ''' Third clustering: optimal, by hand '''
+    """ Third clustering: optimal, by hand """
     n2c_optimal = {'a': 0, 'b': 0, 'd': 0, 'e': 0,
                    'c': 1,
                    'h': 2, 'i': 2,
@@ -268,8 +266,8 @@ def test_form_connected_cluster_pairs():
 
 
 def test_comparisons():
-    '''
-    '''
+    """
+    """
     gt = {0: {'a', 'b'},
           3: {'c'},
           4: {'d', 'e'},
@@ -321,8 +319,8 @@ def test_comparisons():
 
 
 def test_count_equal():
-    '''
-    '''
+    """
+    """
     gt = {0: {'a', 'b'},
           3: {'c'},
           4: {'d', 'e'},

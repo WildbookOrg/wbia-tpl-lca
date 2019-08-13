@@ -6,10 +6,11 @@ import test_cluster_tools as tct
 
 
 def build_initial_from_constraints(G, in_same):
-    """ Form an initial clustering from the nodes in G such that any pair
-        of nodes in the in_same list is in the same cluster and any
-        node not in one of these pairs is in its own cluster.  """
-
+    """
+    Form an initial clustering from the nodes in G such that any pair
+    of nodes in the in_same list is in the same cluster and any
+    node not in one of these pairs is in its own cluster.
+    """
     # Use connected components to gather the in_same pairs
     tempG = nx.Graph()
     tempG.add_nodes_from(G.nodes())
@@ -24,9 +25,9 @@ def build_initial_from_constraints(G, in_same):
 
 
 def keep_separate(c0, c1, must_be_in_different):
-    '''  Return true if the any pair of nodes in must_be_in_different
+    """  Return true if the any pair of nodes in must_be_in_different
     are split across clusters c0 and c1.
-    '''
+    """
     for m, n in must_be_in_different:
         if (m in c0 and n in c1) or (m in c1 and n in c0):
             return True
@@ -127,8 +128,10 @@ def lca_alg1_constrained(curr_G, in_same=[], in_different=[],
 
 
 def inconsistent_edges(G, clustering, node2cid):
-    ''' Return each negatively-weighted edge that is inside a cluster, or
-        positively-weighted edge that is between clusters. '''
+    """
+    Return each negatively-weighted edge that is inside a cluster, or
+    positively-weighted edge that is between clusters.
+    """
     inconsistent = []
     for m, n in G.edges():
         if m > n:
@@ -143,9 +146,10 @@ def inconsistent_edges(G, clustering, node2cid):
 
 
 def best_alternative_len2(G, clustering, node2cid):
-    ''' Return the best alternative to the current clustering when G has
-        exactly two nodes.
-    '''
+    """
+    Return the best alternative to the current clustering when G has
+    exactly two nodes.
+    """
     if len(clustering) == 2:
         alt_clustering = {0: set(G.nodes())}
         alt_node2cid = ct.build_node_to_cluster_mapping(alt_clustering)
@@ -157,17 +161,16 @@ def best_alternative_len2(G, clustering, node2cid):
 
 
 def lca_alg2(G, clustering, node2cid, trace_on=False):
-    """  If it is a single cluster, then stop the original algorithm when
+    """ If it is a single cluster, then stop the original algorithm when
     there are two clusters.  Perhaps can run alternative multiple times
 
     If there are multiple clusterings, then one option is a merge, but
     add others based on inconsistency
-    """
 
-    """  Don't allow len(G) <= 1it is two, and the
+    Don't allow len(G) <= 1it is two, and the
     nodes are disconnected, there is also no alternative.  If it is two,
-    then split/merging vs. merging/splitting is the alternative."""
-
+    then split/merging vs. merging/splitting is the alternative.
+    """
     assert(len(G) >= 2)
 
     if len(G) == 2:
@@ -286,7 +289,7 @@ def test_lca_alg1_constrained():
     clustering, score = lca_alg1_constrained(G, in_same, in_different)
     node2cid = ct.build_node_to_cluster_mapping(clustering)
     correct_score = ct.clustering_score(G, node2cid)
-    
+
     exp_clustering = {0: {'a', 'b', 'd'}, 1: {'f', 'g', 'h', 'i', 'k'},
                       2: {'c'}, 3: {'e'}, 4: {'j'}}
     is_same = ct.same_clustering(clustering, exp_clustering,
@@ -297,9 +300,9 @@ def test_lca_alg1_constrained():
         print("constrained (d,e) different and (f,i) same: FAIL")
 
     if score != correct_score:
-        print("scoring error:  actual %a, correct %a" %(score, correct_score))
+        print("scoring error:  actual %a, correct %a" % (score, correct_score))
     else:
-        print("scoring correct:  actual %a, correct %a" %(score, correct_score))
+        print("scoring correct:  actual %a, correct %a" % (score, correct_score))
 
 
 def test_inconsistent_edges():

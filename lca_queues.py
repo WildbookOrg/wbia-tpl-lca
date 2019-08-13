@@ -1,7 +1,7 @@
 import lca_heap as lh
 
 
-class lca_queues(object):
+class lca_queues(object):  # NOQA
 
     def __init__(self, lcas=None):
         self.Q = lh.lca_heap()
@@ -116,8 +116,6 @@ class lca_queues(object):
 
         return all_ok
 
-            
-
 
 def test_all():
     v = [lh.lca_lite(123, 1.0),
@@ -146,7 +144,7 @@ def test_all():
     lcas_on_W = v[-2:]
     print("After moving around: lengths should be (%d, 2, 2)"
           " and are (%d, %d, %d)"
-          % (len(v)-4, len(queues.Q), len(queues.S), len(queues.W)))
+          % (len(v) - 4, len(queues.Q), len(queues.S), len(queues.W)))
     print("num_on_W should be %d, and is %d" % (len(queues.W), queues.num_on_W()))
     print("Which queue: should be S and is", queues.which_queue(lcas_on_S[0]))
     print("Which queue: should be Q and is", queues.which_queue(lcas_on_Q[0]))
