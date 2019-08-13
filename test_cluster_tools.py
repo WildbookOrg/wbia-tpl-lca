@@ -305,17 +305,16 @@ def test_comparisons():
           "5, 1, 0, 0.00, 0.800")
 
     print("------")
-    print("ct.pairwise_eval")
-    result = ct.compare_to_ground_truth(est, est_n2c, gt, gt_n2c)
-    print("Result is [%d, %d, %1.3f, %1.3f]"
-          % tuple(result))
+    print("ct.percent_and_PR")
+    result = ct.percent_and_PR(est, est_n2c, gt, gt_n2c)
+    print("Result is [%1.3f, %1.3f, %1.3f]" % tuple(result))
     num_clusters = len(est)
     num_correct = 5
     tp, fp, fn = 18, 6, 7
     precision = tp / (tp + fp)
     recall = tp / (tp + fn)
-    print("Should be [%d, %d, %1.3f, %1.3f]"
-          % (num_clusters, num_correct, precision, recall))
+    print("Should be [%1.3f, %1.3f, %1.3f]"
+          % (num_correct / num_clusters, precision, recall))
 
 
 def test_count_equal():
