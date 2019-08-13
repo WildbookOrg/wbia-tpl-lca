@@ -56,15 +56,15 @@ if __name__ == "__main__":
         print("===================================")
         print("Starting simulation", i)
         file_prefix = gen_prefix + ("_%02d" % i)
-        scorer = es.exp_scores.create_from_error_frac(sim_params['pos_error_frac'],
+        scorer = es.ExpScores.create_from_error_frac(sim_params['pos_error_frac'],
                                                       np_ratio)
-        wgtr_i = wgtr.weighter(scorer, human_prob=sim_params['p_human_correct'])
+        wgtr_i = wgtr.Weighter(scorer, human_prob=sim_params['p_human_correct'])
 
         """
         Build the simulator
         """
         # seed = 9314
-        sim_i = sim.simulator(sim_params, wgtr_i)  # , seed=seed)
+        sim_i = sim.Simulator(sim_params, wgtr_i)  # , seed=seed)
         sim_i.generate()
 
         """
@@ -74,7 +74,7 @@ if __name__ == "__main__":
         print(wgtr_i.human_wgt(True), wgtr_i.human_wgt(False))
         gr_params['min_delta_score'] = -0.9 * (wgtr_i.human_wgt(True) - wgtr_i.human_wgt(False))  # NOQA
 
-        gai = ga.graph_algorithm(sim_i.G.copy(), gr_params)
+        gai = ga.GraphAlgorithm(sim_i.G.copy(), gr_params)
         gai.set_algorithmic_verifiers(sim_i.verify_request, sim_i.verify_result)
         gai.set_human_reviewers(sim_i.human_request, sim_i.human_result)
         gai.set_trace_callbacks(sim_i.trace_start_splitting, sim_i.trace_compare_to_gt,
@@ -104,7 +104,7 @@ if __name__ == "__main__":
         sim_i.csv_output(file_prefix + "_r.csv", sim_i.r_results)
         sim_i.generate_plots(file_prefix)
 
-        b = baseline.baseline(sim_i)
+        b = baseline.Baseline(sim_i)
         max_human_baseline = 10 * sim_params['num_clusters']
 
         b.all_iterations(0, max_human_baseline, 5)

@@ -14,7 +14,7 @@ import exp_scores as es
 import weighter as wgtr
 
 
-class simulator(object):  # NOQA
+class Simulator(object):
     """
     Important note (2019-08-01): when human-weighted edges are added, only the
     latest edge is currently "remembered" in this graph.  This could
@@ -756,11 +756,11 @@ if __name__ == "__main__":
                              params['p_ranker_correct'])
     print('np_ratio = %1.3f' % np_ratio)
 
-    scorer = es.exp_scores.create_from_error_frac(params['pos_error_frac'],
+    scorer = es.ExpScores.create_from_error_frac(params['pos_error_frac'],
                                                   np_ratio)
-    wgtr = wgtr.weighter(scorer, human_prob=params['p_human_correct'])
+    wgtr = wgtr.Weighter(scorer, human_prob=params['p_human_correct'])
 
-    sim = simulator(params, wgtr)
+    sim = Simulator(params, wgtr)
     sim.generate()
 
     r_leng = len(sim.r_clustering)

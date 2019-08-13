@@ -1,10 +1,10 @@
 import lca_heap as lh
 
 
-class lca_queues(object):  # NOQA
+class LCAQueues(object):
 
     def __init__(self, lcas=None):
-        self.Q = lh.lca_heap()
+        self.Q = lh.LCAHeap()
         if lcas is None:
             self.S = set()
         else:
@@ -71,7 +71,7 @@ class lca_queues(object):  # NOQA
         self.done.add(a)
 
     def score_change(self, a, from_delta, to_delta):
-        # print("lca_queues::score_change from_delta %a to_delta %a."
+        # print("LCAQueues::score_change from_delta %a to_delta %a."
         #       % (from_delta, to_delta), "Current queue is", self.which_queue(a))
         if a in self.S:
             # print("leaving lca in scoring")
@@ -118,15 +118,15 @@ class lca_queues(object):  # NOQA
 
 
 def test_all():
-    v = [lh.lca_lite(123, 1.0),
-         lh.lca_lite(456, 5.3),
-         lh.lca_lite(827, 7.8),
-         lh.lca_lite(389, 8.9),
-         lh.lca_lite(648, 8.6),
-         lh.lca_lite(459, 9.4),
-         lh.lca_lite(628, 8.2),
-         lh.lca_lite(747, 4.7)]
-    queues = lca_queues(v)
+    v = [lh.LCALite(123, 1.0),
+         lh.LCALite(456, 5.3),
+         lh.LCALite(827, 7.8),
+         lh.LCALite(389, 8.9),
+         lh.LCALite(648, 8.6),
+         lh.LCALite(459, 9.4),
+         lh.LCALite(628, 8.2),
+         lh.LCALite(747, 4.7)]
+    queues = LCAQueues(v)
 
     print()
     print("After initialization: lengths should be (0, %d, 0)"

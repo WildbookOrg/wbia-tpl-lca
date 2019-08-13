@@ -4,7 +4,7 @@ import random
 import exp_scores as es
 
 
-class weighter(object):  # NOQA
+class Weighter(object):
     """  Object whose primary function is to generate a signed edge
     weight from a verification score. This verification score is
     converted to a value from histograms of positive and negative
@@ -77,11 +77,11 @@ class weighter(object):  # NOQA
 if __name__ == "__main__":
     error_frac = 0.15
     neg_pos_ratio = 5.0
-    scorer = es.exp_scores.create_from_error_frac(error_frac, neg_pos_ratio)
+    scorer = es.ExpScores.create_from_error_frac(error_frac, neg_pos_ratio)
 
     human_prob = 0.98
     max_weight = 999
-    s2w = weighter(scorer, human_prob, max_weight)
+    s2w = Weighter(scorer, human_prob, max_weight)
 
     print("\nSampling of weights:")
     n = 100

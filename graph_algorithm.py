@@ -25,7 +25,8 @@ than a mapping from a pair of cids to the LCA that combines them.
 
 """
 
-class graph_algorithm(object):  # NOQA
+
+class GraphAlgorithm(object):
 
     def __init__(self, G, params, clustering=None):
         self.G = G
@@ -116,7 +117,7 @@ class graph_algorithm(object):  # NOQA
         cid_pairs = ct.form_connected_cluster_pairs(self.G, self.clustering,
                                                     self.node2cid)
         self.cid2lca = CID2LCA()
-        self.queues = lca_queues()
+        self.queues = LCAQueues()
         self.create_lcas(cid_pairs)
 
     def run_main_loop(self):
@@ -461,13 +462,16 @@ class graph_algorithm(object):  # NOQA
     def is_consistent(self):
         """ Each edge between two different clusters should be
         """
-        all_ok = self.lca_queues.is_consistent()
+        all_ok = self.LCAQueues.is_consistent()
         return all_ok  # Need to add a lot more here.....
+
 
 """
 Testing code starts here
 """
-class test_generator1(object):  # NOQA
+
+
+class TestGenerator1(object):
 
     def __init__(self, which_graph=1):
         self.no_calls_yet = True
@@ -584,10 +588,10 @@ class test_generator1(object):  # NOQA
         return edges
 
 if __name__ == "__main__":
-    tg = test_generator1(which_graph=4)
+    tg = TestGenerator1(which_graph=4)
     params = {'min_delta_score': -10}
 
-    ga_instance = graph_algorithm(tg.G, params)
+    ga_instance = GraphAlgorithm(tg.G, params)
     ga_instance.set_algorithmic_verifiers(tg.verify_request, tg.verify_result)
     ga_instance.set_human_reviewers(tg.human_request, tg.human_result)
     ga_instance.run_main_loop()

@@ -2,7 +2,8 @@
 import networkx as nx
 import cluster_tools as ct
 
-'''Given a simulator, a lower threshold and an upper threshold.
+"""
+Given a simulator, a lower threshold and an upper threshold.
 
 0. Copy the nodes of the graph from the simulator into the new graph.
 
@@ -14,10 +15,10 @@ b. if its weight is above the upper threshold, keep it
 
 c. otherwise, ask the human verifier to make a decision about it, and
    insert into the new graph if it is positive
-'''
+"""
 
 
-class baseline(object):  # NOQA
+class Baseline(object):
 
     def __init__(self, G, human_request, human_result):
         self.G = G
@@ -86,7 +87,7 @@ structure.  Add to the accumulated results.
 """
 
 
-class baseline(object):  # NOQA
+class Baseline(object):
 
     def __init__(self, sim):
         self.sim = sim

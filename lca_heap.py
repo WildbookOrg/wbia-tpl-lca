@@ -8,7 +8,7 @@ object that has the following:
 """
 
 
-class lca_heap(object):  # NOQA
+class LCAHeap(object):
 
     def __init__(self):
         self.heap = []
@@ -166,7 +166,7 @@ class lca_heap(object):  # NOQA
         return is_ok
 
 
-class lca_lite(object):  # NOQA
+class LCALite(object):
     def __init__(self, hash_value, delta_s):
         self.__hash = hash_value
         self.m_delta_score = delta_s
@@ -186,21 +186,21 @@ class lca_lite(object):  # NOQA
 
 def test_lca_lite():
     s = set()
-    s.add(lca_lite(123, 0.78))
+    s.add(LCALite(123, 0.78))
     print(len(s))
 
 
 def test_all():
-    h = lca_heap()
+    h = LCAHeap()
 
-    v = [lca_lite(123, 1.0),
-         lca_lite(456, 5.3),
-         lca_lite(827, 7.8),
-         lca_lite(389, 8.9),
-         lca_lite(648, 8.6),
-         lca_lite(459, 9.4),
-         lca_lite(628, 8.2),
-         lca_lite(747, 4.7)]
+    v = [LCALite(123, 1.0),
+         LCALite(456, 5.3),
+         LCALite(827, 7.8),
+         LCALite(389, 8.9),
+         LCALite(648, 8.6),
+         LCALite(459, 9.4),
+         LCALite(628, 8.2),
+         LCALite(747, 4.7)]
     remove0 = v[1]
 
     found_error = False
@@ -216,7 +216,7 @@ def test_all():
         h.print_structure()
 
     print("Top of queue should be (459, 9.4) and is %s" % str(h.top_Q()))
-    remove1 = lca_lite(585, 8.5)
+    remove1 = LCALite(585, 8.5)
     h.insert(remove1)
 
     h.pop_Q()
@@ -228,7 +228,7 @@ def test_all():
         h.print_structure()
         print("top value should have delta_score 8.9.  It has %s" % str(h.get_all()[0]))
 
-    h.insert(lca_lite(183, 8.3))
+    h.insert(LCALite(183, 8.3))
     print("Trying two remove operations; one should trigger percolate up and the other percolate down")
     h.remove(remove0)
     h.remove(remove1)
@@ -247,15 +247,15 @@ def test_all():
     print("Emptied the queue")
 
     print("Running special inserts to trigger more percolate up calls in remove.")
-    v = [lca_lite(123, 19),
-         lca_lite(459, 16),
-         lca_lite(628, 6),
-         lca_lite(747, 13),
-         lca_lite(827, 11),
-         lca_lite(389, 4),
-         lca_lite(456, 2),
-         lca_lite(277, 12),
-         lca_lite(648, 8)]
+    v = [LCALite(123, 19),
+         LCALite(459, 16),
+         LCALite(628, 6),
+         LCALite(747, 13),
+         LCALite(827, 11),
+         LCALite(389, 4),
+         LCALite(456, 2),
+         LCALite(277, 12),
+         LCALite(648, 8)]
     remove0 = v[5]
     remove1 = v[6]
     for a in v:
@@ -270,18 +270,18 @@ def test_all():
 
     h.clear()
     print("Running a bunch more inserts and removes.")
-    v = [lca_lite(123, 1.0),
-         lca_lite(459, 9.4),
-         lca_lite(628, 8.2),
-         lca_lite(747, 8.7),
-         lca_lite(827, 7.8),
-         lca_lite(389, 8.9),
-         lca_lite(456, 5.3),
-         lca_lite(277, 6.7),
-         lca_lite(648, 8.6),
-         lca_lite(723, 9.9),
-         lca_lite(823, 2.3),
-         lca_lite(234, 6.5)]
+    v = [LCALite(123, 1.0),
+         LCALite(459, 9.4),
+         LCALite(628, 8.2),
+         LCALite(747, 8.7),
+         LCALite(827, 7.8),
+         LCALite(389, 8.9),
+         LCALite(456, 5.3),
+         LCALite(277, 6.7),
+         LCALite(648, 8.6),
+         LCALite(723, 9.9),
+         LCALite(823, 2.3),
+         LCALite(234, 6.5)]
 
     error_found = False
     for a in v:

@@ -92,7 +92,7 @@ class CID2LCA(object):
 
 # #############  Testing code  ######################
 
-class lca_lite(object):  # NOQA
+class LCALite(object):
     def __init__(self, hv, cids):
         self.__hash_value = hv
         self.m_cids = cids
@@ -111,14 +111,14 @@ class lca_lite(object):  # NOQA
 
 
 def test_all():
-    lcas = [lca_lite(747, [0, 1]),
-            lca_lite(692, [1, 2]),
-            lca_lite(381, [1]),
-            lca_lite(826, [2, 5]),
-            lca_lite(124, [7, 5]),
-            lca_lite(243, [7, 8]),
-            lca_lite(710, [2, 4]),
-            lca_lite(459, [9, 7])]
+    lcas = [LCALite(747, [0, 1]),
+            LCALite(692, [1, 2]),
+            LCALite(381, [1]),
+            LCALite(826, [2, 5]),
+            LCALite(124, [7, 5]),
+            LCALite(243, [7, 8]),
+            LCALite(710, [2, 4]),
+            LCALite(459, [9, 7])]
 
     c2a = CID2LCA()
     for a in lcas:

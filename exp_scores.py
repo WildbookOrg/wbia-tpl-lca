@@ -2,7 +2,7 @@ import math as m
 import random
 
 
-class exp_scores(object):  # NOQA
+class ExpScores(object):
     """ Model the verification scores as exponential distribution
     representations of two histograms, truncated to the domain [0,1].
     For any given score, two histogram values are produced, one for the
@@ -18,13 +18,13 @@ class exp_scores(object):  # NOQA
     def __init__(self, np_ratio, pos_lambda, neg_lambda):
         """  Construct the object from the three main parameters """
         self.np_ratio = np_ratio
-        self.trunc_exp_pos = truncated_exponential(pos_lambda)
-        self.trunc_exp_neg = truncated_exponential(neg_lambda)
+        self.trunc_exp_pos = TruncatedExponential(pos_lambda)
+        self.trunc_exp_neg = TruncatedExponential(neg_lambda)
 
     @classmethod
     def create_from_error_frac(cls, error_frac, np_ratio,
                                create_from_pdf=True):
-        """Create an exp_scores object from a model of the expected fraction
+        """Create an ExpScores object from a model of the expected fraction
         of scores that are in error (negative when they should be
         positive), along with the np_ratio, as above.
         """
@@ -38,17 +38,17 @@ class exp_scores(object):  # NOQA
             neg_lambda = find_lambda_cdf(np_ratio, error_frac)
 
         # Debugging output
-        trunc_exp_pos = truncated_exponential(pos_lambda)
+        trunc_exp_pos = TruncatedExponential(pos_lambda)
         print("ERROR FRAC %1.3f" % error_frac)
         print('POS ERROR RATE %1.3f' % (1 - trunc_exp_pos.cdf(0.5)))
-        trunc_exp_neg = truncated_exponential(neg_lambda)
+        trunc_exp_neg = TruncatedExponential(neg_lambda)
         print('NEG ERROR RATE %1.3f' % (np_ratio * (1 - trunc_exp_neg.cdf(0.5))))
 
         return cls(np_ratio, pos_lambda, neg_lambda)
 
     @classmethod
     def create_from_samples(cls, pos_samples, neg_samples):
-        """  Create an exp_scores object from histogram of scores
+        """  Create an ExpScores object from histogram of scores
         samples from the verification algorithm on positive and
         negative samples.  It is VERY important that the relative
         number of positive and negative samples reasonably represents
@@ -87,7 +87,7 @@ class exp_scores(object):  # NOQA
         return s
 
 
-class truncated_exponential(object):  # NOQA
+class TruncatedExponential(object):
 
     def __init__(self, lmbda):
         self.lmbda = lmbda
@@ -126,7 +126,7 @@ def find_lambda_cdf(np_ratio, error_frac):
     delta_cutoff = 0.0001
     while max_beta - min_beta >= delta_cutoff:
         beta = 0.5 * (min_beta + max_beta)
-        te0 = truncated_exponential(1 / beta)
+        te0 = TruncatedExponential(1 / beta)
         tmp_error = 1 - te0.cdf(0.5)
         if tmp_error < allowed_error:
             min_beta = beta
@@ -145,14 +145,14 @@ def find_lambda_pdf(np_ratio, lambda_p):
 
     where the pdfs are from the truncated exponential.
     """
-    te0 = truncated_exponential(lambda_p)
+    te0 = TruncatedExponential(lambda_p)
     target_pdf = te0.pdf(0.5)
     min_beta = 0.001
     max_beta = 0.999
     delta_cutoff = 0.000001
     while max_beta - min_beta >= delta_cutoff:
         beta = 0.5 * (min_beta + max_beta)
-        te1 = truncated_exponential(1 / beta)
+        te1 = TruncatedExponential(1 / beta)
         scaled_pdf = np_ratio * te1.pdf(0.5)
         if scaled_pdf < target_pdf:
             min_beta = beta
@@ -173,7 +173,7 @@ def find_lambda_from_samples(samples, is_positive=True):
     delta_cutoff = 0.000001
     while max_beta - min_beta >= delta_cutoff:
         beta = 0.5 * (min_beta + max_beta)
-        te = truncated_exponential(1 / beta)
+        te = TruncatedExponential(1 / beta)
         mean = te.mean()
         if mean < pop_mean:
             min_beta = beta
@@ -190,7 +190,7 @@ def find_lambda_from_samples(samples, is_positive=True):
 
 def test_truncated_exponential():
     lmbda = 1 / 0.3
-    te = truncated_exponential(lmbda)
+    te = TruncatedExponential(lmbda)
     n = 20
     for i in range(n + 1):
         x = i / n
@@ -228,8 +228,8 @@ def test_find_lambda():
         lmbda_pos = find_lambda_cdf(1, err)   # find the positive match lambda
         lmbda_neg = find_lambda_cdf(r, err)   # find the negative match lambda
         print("lmbda_pos =", lmbda_pos)
-        te_pos = truncated_exponential(lmbda_pos)
-        te_neg = truncated_exponential(lmbda_neg)
+        te_pos = TruncatedExponential(lmbda_pos)
+        te_neg = TruncatedExponential(lmbda_neg)
         print("goal: positive frac below 0.5 prob =", err)
         print("estimated: negative frac above 0.5 =", r * (1 - te_neg.cdf(0.5)))
 
@@ -238,7 +238,7 @@ def test_find_lambda():
         print('test find_lambda_pdf ')
         print("r =", r, "lmbda_pos =", lmbda_pos)
         print("lmbda_neg =", lmbda_neg)
-        te_neg = truncated_exponential(lmbda_neg)
+        te_neg = TruncatedExponential(lmbda_neg)
         print("goal: pdf of positive at 0.5 = %.4f" % te_pos.pdf(0.5))
         print("est: scaled pdf of negative at 0.5 = %.4f"
               % (r * te_neg.pdf(0.5)))
@@ -248,7 +248,7 @@ def test_find_lambda():
 def test_find_lambda_from_samples():
     beta = 0.225
     lmbda = 1 / beta
-    te = truncated_exponential(lmbda)
+    te = TruncatedExponential(lmbda)
 
     print("-----------\n"
           "test_find_lambda_from_samples")
@@ -268,7 +268,7 @@ def test_create_from_error_frac():
     corr_lambda_neg = 8.1818
     print("------------\n"
           "test_create_from_error_frac\n")
-    score_obj = exp_scores.create_from_error_frac(error_frac, np_ratio,
+    score_obj = ExpScores.create_from_error_frac(error_frac, np_ratio,
                                                   create_from_pdf=True)
     print("corr_lambda_pos %.4f, object's lambda %.4f"
           % (corr_lambda_pos, score_obj.trunc_exp_pos.lmbda))
@@ -315,15 +315,15 @@ def test_create_from_samples():
 
     pos_beta = 0.24
     pos_lambda = 1 / pos_beta
-    te_pos = truncated_exponential(pos_lambda)
+    te_pos = TruncatedExponential(pos_lambda)
     pos_samples = [1 - te_pos.sample() for _ in range(n_pos)]
 
     neg_beta = 0.15
     neg_lambda = 1 / neg_beta
-    te_neg = truncated_exponential(neg_lambda)
+    te_neg = TruncatedExponential(neg_lambda)
     neg_samples = [te_neg.sample() for _ in range(n_neg)]
 
-    score_obj = exp_scores.create_from_samples(pos_samples, neg_samples)
+    score_obj = ExpScores.create_from_samples(pos_samples, neg_samples)
     print("pos_lambda %.4f, object's pos_lambda %.4f"
           % (pos_lambda, score_obj.trunc_exp_pos.lmbda))
     print("neg_lambda %.4f, object's neg_lambda %.4f"
