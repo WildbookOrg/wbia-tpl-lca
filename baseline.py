@@ -18,7 +18,7 @@ c. otherwise, ask the human verifier to make a decision about it, and
 """
 
 
-class Baseline(object):
+class BaselineGraph(object):
 
     def __init__(self, G, human_request, human_result):
         self.G = G
@@ -87,7 +87,7 @@ structure.  Add to the accumulated results.
 """
 
 
-class Baseline(object):
+class BaselineSimulator(object):
 
     def __init__(self, sim):
         self.sim = sim

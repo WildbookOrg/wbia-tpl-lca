@@ -104,7 +104,7 @@ if __name__ == "__main__":
         sim_i.csv_output(file_prefix + "_r.csv", sim_i.r_results)
         sim_i.generate_plots(file_prefix)
 
-        b = baseline.Baseline(sim_i)
+        b = baseline.BaselineSimulator(sim_i)
         max_human_baseline = 10 * sim_params['num_clusters']
 
         b.all_iterations(0, max_human_baseline, 5)
