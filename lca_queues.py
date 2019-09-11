@@ -73,7 +73,7 @@ class LCAQueues(object):
     def score_change(self, a, from_delta, to_delta):
         # print("LCAQueues::score_change from_delta %a to_delta %a."
         #       % (from_delta, to_delta), "Current queue is", self.which_queue(a))
-        if a in self.S:
+        if a in self.S or a in self.done:
             # print("leaving lca in scoring")
             pass   # leave it for an update
         elif to_delta < 0:
@@ -101,17 +101,17 @@ class LCAQueues(object):
 
         qs = q_set & self.S
         if len(qs) > 0:
-            print("LCA queues, Q and S intersect")
+            print("ERROR: LCA queues Q and S intersect")
             all_ok = False
 
         qw = q_set & self.W
         if len(qw) > 0:
-            print("LCA queues, Q and W intersect")
+            print("ERROR: LCA queues Q and W intersect")
             all_ok = False
 
         sw = self.S & self.W
         if len(sw) > 0:
-            print("LCA queues, S and W intersect")
+            print("ERROR: LCA queues S and W intersect")
             all_ok = False
 
         return all_ok

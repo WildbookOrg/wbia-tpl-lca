@@ -1,5 +1,6 @@
 import networkx as nx
-import timeit
+import sys
+import time
 
 from cid_to_lca import *
 import cluster_tools as ct
@@ -28,9 +29,12 @@ than a mapping from a pair of cids to the LCA that combines them.
 
 class GraphAlgorithm(object):
 
-    def __init__(self, G, params, clustering=None):
-        self.G = G
+    def __init__(self, edges, params, clustering=None):
+        self.graph_from_edges(edges)
+
         self.params = params
+        assert('min_delta_score' in self.params)
+        self.assign_parameter_defaults()
 
         if clustering is None:
             self.form_singletons_clustering()
@@ -42,6 +46,15 @@ class GraphAlgorithm(object):
         self.node2cid = ct.build_node_to_cluster_mapping(self.clustering)
         self.score = ct.clustering_score(self.G, self.node2cid)
         self.form_initial_lcas()
+
+        #  Use these to keep track of what's out for review.
+        #  All waiting LCAs must have a node pair in one of
+        #  these sets.
+        self.pairs_waiting_verify = set()
+        self.pairs_waiting_human = set()
+        self.num_verifier_results = 0
+        self.num_human_results = 0
+        self.wait_since_edge = 0
 
         self.phase = None
 
@@ -61,8 +74,6 @@ class GraphAlgorithm(object):
         self.next_splitting_itr_cb = None
         self.start_stability_cb = None
         self.next_stability_itr_cb = None
-        self.num_verifier_results = 0
-        self.num_human_results = 0
 
         self.is_interactive = False
 
@@ -91,6 +102,42 @@ class GraphAlgorithm(object):
         self.start_stability_cb = start_stability
         self.next_stability_itr_cb = next_stability_itr
 
+    def assign_parameter_defaults(self):
+        if 'seconds_to_sleep' not in self.params:
+            self.params['seconds_to_sleep'] = 1.0
+        if 'max_before_sleep' not in self.params:
+            self.params['max_before_sleep'] = 50
+        if 'seconds_before_restart_queues' not in self.params:
+            self.params['seconds_before_restart_queues'] = 1200
+
+    def graph_from_edges(self, edges):
+        # Form an edge dict mapping prs to weights
+        # Also form a dict mapping prs to the number of 0 wgts
+        d = dict()   
+        zc = dict()
+        for e in edges:
+            if e[0] < e[1]:
+                pr = (e[0], e[1])
+            else:
+                pr = (e[1], e[0])
+            if pr in d:
+                d[pr] += e[2]
+            else:
+                d[pr] = e[2]
+
+            if e[2] == 0:
+                if pr in zc:
+                    zc[pr] += 1
+                else:
+                    zc[pr] = 1
+
+        combined = [e + (d[e],) for e in d]
+        self.G = nx.Graph()
+        self.G.add_weighted_edges_from(combined)
+        
+        for pr in zc:
+            self.G[pr[0]][pr[1]]['incomparable'] = zc[pr]
+
     def form_singletons_clustering(self):
         self.clustering = {cid: {n} for cid, n in enumerate(self.G.nodes())}
 
@@ -102,7 +149,8 @@ class GraphAlgorithm(object):
         #  Check number of cluster nodes = number of nodes in clusters
         num_in_graph = len(self.G.nodes())
         num_in_clusters = sum(cluster_lengths)
-        assert(num_in_graph == num_in_clusters)
+        if num_in_graph != num_in_clusters:
+            raise GraphFormationError
 
         #  Check that the sets of nodes are the same.  Since we know
         #  there are no duplicates in the graph's nodes and since we
@@ -111,7 +159,8 @@ class GraphAlgorithm(object):
         #  disjoint.
         cluster_nodes = set.union(*self.clustering.values())
         graph_nodes = set(self.G.nodes())
-        assert(cluster_nodes == graph_nodes)
+        if cluster_nodes != graph_nodes:
+            raise GraphFormationError
 
     def form_initial_lcas(self):
         cid_pairs = ct.form_connected_cluster_pairs(self.G, self.clustering,
@@ -125,11 +174,14 @@ class GraphAlgorithm(object):
         done = False
 
         num_run = 0
-        max_to_run = 99999
+        max_to_run = 200
         print("==================")
         print("Starting main loop")
         print("Min delta score", self.params['min_delta_score'])
         print("==================")
+
+        self.pairs_waiting_verify.clear()
+        self.pairs_waiting_human.clear()
 
         while not done:
             if self.is_interactive:
@@ -156,13 +208,13 @@ class GraphAlgorithm(object):
                                            self.num_human_results)
 
             if num_run > max_to_run:
-                return
+                return num_run
 
             # Step 4b: get the LCA with the top delta_score
             a = self.queues.top_Q()
 
             # Step 4c:
-            if a.delta_score() > 0:
+            if a is not None and a.delta_score() > 0:
                 print("ga::run_main_loop Decision: apply LCA")
                 # Note: no need to explicitly remove a from the top of
                 # the heap because this is done during the replacement
@@ -184,7 +236,8 @@ class GraphAlgorithm(object):
                 self.show_queues()
 
             elif self.phase == "splitting" and \
-                 a.delta_score() < self.params["min_delta_score"] / 8:  # was 2
+                 (a is None or
+                  a.delta_score() < self.params["min_delta_score"] / 8):  # was 2
                 print("ga::run_main_loop Decision: switch phases from splitting to stability")
                 if self.start_stability_cb is not None:
                     self.start_stability_cb(self.clustering, self.node2cid)
@@ -196,7 +249,7 @@ class GraphAlgorithm(object):
                 print("ga::run_main_loop after switch to stability, queues are")
                 self.show_queues()
 
-            elif self.params["min_delta_score"] < a.delta_score():
+            elif a is not None and self.params["min_delta_score"] < a.delta_score():
                 print("ga::run_main_loop Decision: trying augmentation")
                 self.queues.pop_Q()
                 if self.augmentation(a):
@@ -206,61 +259,42 @@ class GraphAlgorithm(object):
                     print("ga::run_main_loop adding top of Q to done list")
                     self.queues.add_to_done(a)
 
+            # At this point, we are in the stability phase and nothing on the
+            # main queue is productive.
             elif self.queues.num_on_W() == 0:
                 print("ga::run_main_loop decision: all deltas too low and empty waiting queue W, so done")
                 done = True
                 continue
 
             else:
-                print("ga::run_main_loop decision: all deltas too low,"
-                      "but non-empty waiting queue; should wait")
-                pass  # should be suspended here until new edges arrive
+                print("ga::run_main_loop decision: all deltas too low but waiting for edges")
 
-            edges = self.get_new_edges_and_weights()  # no new nodes allowed here...
-            new_cid_pairs = set()
-            temp_e = None
-            for e in edges:
-                cids = self.cids_for_edge(e)
-                lcas_to_change = self.cid2lca.containing_all_cids(cids)
+            wait_since_edge_or_resend = 0
+            while True:
+                verify_edges, human_edges = self.get_new_edges_and_weights()
+                num_new_edges = len(verify_edges) + len(human_edges)
+                self.incorporate_new_edges(verify_edges, is_human_result=False)
+                self.incorporate_new_edges(human_edges, is_human_result=True)
 
-                if len(lcas_to_change) == 0:   # previously disconnected
-                    print("ga::run_main_loop adding edge: e =", e, "between disconnected clusters")
-                    cid_pair = (min(cids[0], cids[1]), max(cids[0], cids[1]))
-                    new_cid_pairs.add(cid_pair)
-                    self.G.add_weighted_edges_from([e])
+                if not self.should_wait_for_edges(num_new_edges):
+                    break
 
-                else:
-                    print("ga::run_main_loop adding edge: e =", e,
-                          "between connected clusters")
-                    for a in lcas_to_change:
-                        print("queue =", self.queues.which_queue(a))
-                        (from_delta, to_delta) = a.add_edge(e)
-                        self.queues.score_change(a, from_delta, to_delta)
-                    if e[1] in self.G[e[0]]:
-                        old_w = self.G[e[0]][e[1]]['weight']
-                        self.G[e[0]][e[1]]['weight'] += e[2]
-                        # print("ga::run_main_loop Old edge, added weight: old", old_w, "new",
-                        #       self.G[e[0]][e[1]]['weight'])
-                    else:
-                        self.G.add_weighted_edges_from([e])
-                        # print("ga::run_main_loop New edge with weight:",
-                        #       self.G[e[0]][e[1]]['weight'])
+                seconds_to_sleep = self.params['seconds_to_sleep']
+                print("ga::run_main_loop: sleeping "
+                      "for %0.2f seconds" % seconds_to_sleep)
+                time.sleep(seconds_to_sleep)
+                wait_since_edge_or_resend += seconds_to_sleep
 
-                if len(cids) == 1:
-                    self.score += e[2]
-                    # print("ga::run_main_loop changed score (1) to", self.score)
-                else:
-                    self.score -= e[2]
-                    # print("ga::run_main_loop changed score (2) to", self.score)
+                print("ga::run_main_loop: wait since edge or resend is now %0.2f seconds"
+                      % wait_since_edge_or_resend)
+                if wait_since_edge_or_resend > self.params['seconds_before_restart_queues']:
+                    self.resend_waiting()
+                    wait_since_edge_or_resend = 0
 
-            if len(new_cid_pairs) > 0:
-                self.create_lcas(new_cid_pairs)
-
-            if temp_e is not None:
-                n0, n1, _ = temp_e
-                if n1 not in self.G[n0]:
-                    print("Missing", temp_e)
-                    assert(False)
+            if not self.is_consistent():
+                assert(False)
+    
+        return num_run
 
     def compute_lca_scores(self):
         lcas_for_scoring = self.queues.get_S()
@@ -294,22 +328,10 @@ class GraphAlgorithm(object):
         new_cids = range(self._next_cid, new_next_cid)
         self._next_cid = new_next_cid
         added_clusters = {id: nodes for id, nodes in zip(new_cids, new_clusters)}
-        # print("ga::apply_lca: old_cids to remove",
-        #       old_cids, " added_clusters", added_clusters)
+        print("ga::apply_lca: old_cids to remove",
+              old_cids, " added_clusters", added_clusters)
 
         ct.replace_clusters(old_cids, added_clusters, self.clustering, self.node2cid)
-        """
-        print("BEFORE replace:")
-        print("old_cids", old_cids)
-        print("added_clusters", added_clusters)
-        print("clustering", self.clustering)
-        print("node2cid", self.node2cid)
-        """
-        """
-        print("AFTER replace:")
-        print("clustering", self.clustering)
-        print("node2cid", self.node2cid)
-        """
 
         #  Step 3: Form a list of CID singleton and/or pairs involving at
         #  least one of the new clusters.  Whether singletons or pairs or both
@@ -324,7 +346,7 @@ class GraphAlgorithm(object):
                                                            self.node2cid, new_cids)
             new_cid_sets.extend([(cid,) for cid in new_cids])
 
-        # print("ga::new_cid_sets (2):", new_cid_sets)
+        print("ga::new_cid_sets (2):", new_cid_sets)
         new_cid_sets = set(new_cid_sets)
 
         # Step 4: Create a new LCA from each set in new_cid_sets.
@@ -349,6 +371,13 @@ class GraphAlgorithm(object):
             self.queues.add_to_S(a)
 
     def augmentation(self, a):
+        """
+        Ask the LCA for some of the node pairs it needs for
+        verification and send them via the verifier callback.  If
+        there are no pairs, do the same for human review. If no pairs
+        are available, the LCA will be considered done.
+        """
+
         if self.verifier_request_cb is None and self.human_result_cb is not None:
             print("ga::augmentation: both None")
             return False
@@ -356,48 +385,125 @@ class GraphAlgorithm(object):
         if self.verifier_request_cb is not None:
             node_pairs = a.get_node_pairs_for_verification()
             if len(node_pairs) > 0:
+                # Only send pairs that aren't already out for verification
+                node_pairs -= self.pairs_waiting_verify
                 print("ga::augmentation: verify node pairs", list(node_pairs))
                 self.verifier_request_cb(node_pairs)
+                self.pairs_waiting_verify |= node_pairs
                 return True
 
         if self.human_request_cb is not None:
-            edges = a.get_edges_for_manual()
-            if len(edges) > 0:
-                print("ga::augmentation: manual review edges", edges)
-                self.human_request_cb(edges)
+            node_pairs = a.get_edges_for_manual()
+            if len(node_pairs) > 0:
+                node_pairs -= self.pairs_waiting_human
+                print("ga::augmentation: manual review edges", node_pairs)
+                self.human_request_cb(node_pairs)
+                self.pairs_waiting_human |= node_pairs
                 return True
 
-        print("ga::augmentation: no pairs or edges")
+        print("ga::augmentation: no pairs or edges, so this LCA will be considered 'done'")
         return False
 
     def get_new_edges_and_weights(self):
-        edges = []
+        verifier_edges = []
         if self.verifier_result_cb is not None:
             new_edges = self.verifier_result_cb()
             self.num_verifier_results += len(new_edges)
-            edges += new_edges
+            verifier_edges = [(min(e[0], e[1]), max(e[0], e[1]), e[2])
+                              for e in new_edges]  # ensure ordering
+            self.pairs_waiting_verify -= {(e[0], e[1]) for e in verifier_edges}
 
+        human_edges = []
         if self.human_result_cb is not None:
             new_edges = self.human_result_cb()
             self.num_human_results += len(new_edges)
-            edges += new_edges
-            if len(new_edges) > 0:
-                for n0, n1, w in new_edges:
-                    cid0, cid1 = self.node2cid[n0], self.node2cid[n1]
-                    if cid0 != cid1:
-                        leng0, leng1 = len(self.clustering[cid0]), len(self.clustering[cid1])
-                        if leng0 > leng1:
-                            leng0, leng1 = leng1, leng0
-                        # print("g1:augmentation manual review pair with cluster sizes", leng0, leng1,
-                        #       "weight", w)
-                    else:
-                        leng0 = len(self.clustering[cid0])
-                        # print("g1:augmentation manual review singleton with cluster size", leng0,
-                        #       "weight", w)
+            human_edges = [(min(e[0], e[1]), max(e[0], e[1]), e[2])
+                           for e in new_edges]  # ensure ordering
+            self.pairs_waiting_human -= {(e[0], e[1]) for e in human_edges}
 
-        edges = [(min(e[0], e[1]), max(e[0], e[1]), e[2]) for e in edges]  # ensure ordering
-        print("ga::get_new_edges_and_weights returning edges =", edges)
-        return edges
+        print("ga::get_new_edges_and_weights returning verifier_edges",
+              verifier_edges, "and human edges", human_edges)
+        return verifier_edges, human_edges
+
+    def incorporate_new_edges(self, edges, is_human_result=False):
+        """
+        Incorporate each new edge, doing something different
+        depending on the state of the LCAs involved, whether or not
+        the edge already exists, if it is a verification or human
+        manual weight, and if it is an incomparable edge.  Phew!
+        Maybe I need to simplify here...
+        """
+        new_cid_pairs = set()
+
+        for e in edges:
+            cids = self.cids_for_edge(e)
+            lcas_to_change = self.cid2lca.containing_all_cids(cids)
+            edge_added = False
+
+            # Handle previously disconnected LCAs
+            if len(lcas_to_change) == 0:   # previously disconnected
+                print("ga::incorporate_new_edges: adding edge: e =",
+                      e, "between disconnected clusters")
+                cid_pair = (min(cids[0], cids[1]), max(cids[0], cids[1]))
+                new_cid_pairs.add(cid_pair)
+                self.G.add_weighted_edges_from([e])
+                edge_added = True
+
+            # Handle verification result that is a repeated edge
+            elif not is_human_result and e[1] in self.G[e[0]]:
+                print("ga::incorporate_new_edges: verify edge: e =",
+                      e, "is already in the graph")
+                edge_added = False
+
+            # Handline verification result that is not already in the
+            # graph
+            elif not is_human_result:
+                print("ga::incorporate_new_edges: verify edge: e =",
+                      e, "being added to the graph")
+                edge_added = True
+                self.G.add_weighted_edges_from([e])
+
+            # Handle human result that is an 'incomparable'
+            elif is_human_result and e[2] == 0:
+                print("ga::incorporate_new_edges manual incomparable edge: e =", e,
+                      "between connected clusters")
+                edge_added = False
+                if 'incomparable' not in self.G[e[0]][e[1]]:
+                    self.G[e[0]][e[1]]['incomparable'] = 1
+                else:
+                    self.G[e[0]][e[1]]['incomparable'] += 1
+                print('incomparable value:', self.G[e[0]][e[1]]['incomparable'])
+
+            # Handle normal result: a new edge for verification or a
+            # non-zero weight for human results.
+            else:
+                print("ga::incorporate_new_edges adding edge: e =", e,
+                      "between connected clusters")
+                edge_added = True
+                self.G[e[0]][e[1]]['weight'] += e[2]
+
+            # If the edge was added, change the score and decide how
+            # to handle the affected LCAs
+            if edge_added:
+                for a in lcas_to_change:
+                    (from_delta, to_delta) = a.add_edge(e)
+                    self.queues.score_change(a, from_delta, to_delta)
+
+                if len(cids) == 1: # edge is within cluster, so add weight
+                    self.score += e[2]
+                else: # edge is between clusters, so subtract weight
+                    self.score -= e[2]
+
+            # Since the edge was not added, the scores don't change
+            # but the LCA must be moved to because an edge was
+            # returned.  What's below will put all affected LCAs on
+            # the main Q.
+            else:
+                for a in lcas_to_change:
+                    self.queues.score_change(a, 0, 0)
+
+        if len(new_cid_pairs) > 0:
+            self.create_lcas(new_cid_pairs)
 
     def new_lca_for_edge(self, e, cids):
         assert(len(cids) == 2)  # linking two clusters
@@ -417,6 +523,48 @@ class GraphAlgorithm(object):
             return [cid0]
         else:
             return [cid0, cid1]
+
+    def should_wait_for_edges(self, num_new_edges):
+        '''
+        Decide whether or not to sleep based on whether or not new
+        results have come back and on the size of the waiting queue.
+        '''
+        print("ga::should_wait: num_new_edges", num_new_edges,
+              "num_on_W", self.queues.num_on_W(),
+              "len(Q)", len(self.queues.Q),
+              "max_before_sleep", self.params['max_before_sleep'])
+        """
+        print('Current W:')
+        if self.queues.num_on_W() == 0:
+            print('- none -')
+        else:
+            for a in self.queues.W:
+                a.pprint_short()
+        """
+
+        if num_new_edges > 0 or self.queues.num_on_W() == 0:
+            # print("ga::should_wait: no sleep because new edges or W empty")
+            return False
+        elif self.queues.num_on_W() > len(self.queues.Q): # could add percentage
+            print("ga::should_wait: sleep because W is bigger than Q")
+            return True
+        elif self.queues.num_on_W() >= self.params['max_before_sleep']:
+            print("ga::should_wait: sleep because W is too large")
+            return True
+        else:
+            # print("ga::should_wait: no sleep because W is too small")
+            return False
+
+    def resend_waiting(self):
+        if self.verifier_request_cb is not None:
+            print("ga::resend_waiting: %d pairs to verifier"
+                  % len(self.pairs_waiting_verify))
+            self.verifier_request_cb(list(self.pairs_waiting_verify))
+
+        if self.human_request_cb is not None:
+            print("ga::resend_waiting: %d pairs for human review"
+                  % len(self.pairs_waiting_human))
+            self.human_request_cb(list(self.pairs_waiting_human))
 
     def show_clustering(self):
         # print("-----------------------")
@@ -450,92 +598,234 @@ class GraphAlgorithm(object):
     def show_brief_state(self):
         print("Queue lengths: main Q %d, scoring %d, waiting %d"
               % (len(self.queues.Q), len(self.queues.S), self.queues.num_on_W()))
-
-        print("Top LCA: ", end='')
-        # print("Top delta score:", self.queues.top_Q().delta_score(), end='')
-        self.queues.top_Q().pprint_short(stop_after_from=False)
-        # print("Clustering score:", self.score)
+        if len(self.queues.Q) > 0:
+            print("Top LCA: ", end='')
+            # print("Top delta score:", self.queues.top_Q().delta_score(), end='')
+            self.queues.top_Q().pprint_short(stop_after_from=False)
         print("Clusters:", len(self.clustering))
         print("Verify results:", self.num_verifier_results)
         print("Human results:", self.num_human_results)
 
     def is_consistent(self):
-        """ Each edge between two different clusters should be
-        """
-        all_ok = self.LCAQueues.is_consistent()
-        return all_ok  # Need to add a lot more here.....
+        #  make sure the queues are non-intersecting
+        all_ok = self.queues.is_consistent()
+
+        #  For each LCA on W, make sure there is at least one node pr
+        #  waiting for a verification or manual review result.  Note
+        #  that the reverse is not true: there could be a pr waiting a
+        #  result with no corresponding LCA on W because the LCA could
+        #  have been pulling off due to another result.
+        waiting_prs = self.pairs_waiting_verify | self.pairs_waiting_human
+        for a in self.queues.W:
+            nodes = a.nodes()
+            found = False
+            for pr in waiting_prs:
+                if pr[0] in nodes and pr[1] in nodes:
+                    found = True
+                    break
+            if not found:
+                print("ga::is_consistent: no waiting node pair for waiting LCA", end=' ')
+                a.pprint_short(stop_after_from=True)
+                all_ok = False
+
+        return all_ok
 
 
 """
 Testing code starts here
 """
 
+def test_initial_graph():
+    w_e = [('a', 'b', 3),
+           ('c', 'b', 1),
+           ('a', 'c', 5),
+           ('b', 'd', 0),
+           ('a', 'd', -4),
+           ('c', 'a', -6),
+           ('b', 'd', 0),
+           ('b', 'a', 4),
+           ('d', 'b', 0),
+           ('a', 'b', 0)]
+    c_e = [('a', 'b', w_e[0][2] + w_e[7][2]),
+           ('a', 'c', w_e[2][2] + w_e[5][2]),
+           w_e[4],
+           w_e[1],
+           ('b', 'd', 0)]
+    params = {'min_delta_score': -10}
+    gai = GraphAlgorithm(w_e, params)
+    print('test_initial_graph: length of edges should be:', len(c_e),
+          'and is', gai.G.number_of_edges())
+    mistakes = 0
+    if len(c_e) != gai.G.number_of_edges():
+        mistakes += 1
+    for (n0, n1, wgt) in c_e:
+        if n1 not in gai.G[n0]:
+            print('Error:', n1, 'not in the edges of', n0)
+            mistakes += 1
+        elif wgt != gai.G[n0][n1]['weight']:
+            print('Error: edge (%a, %a) should have weight %a but has %a'
+                  % (n0, n1, wgt, gai.G[n0][n1]['weight']))
+            mistakes += 1
+    if mistakes > 0:
+        print('test initial_graph found', mistakes, 'edge mistakes')
+    else:
+        print('test_initial_graph found no mistakes')
+
+    pairs = [('a', 'b'), ('b', 'd'), ('b', 'c')]
+    counts = [1, 3, 0]
+    for pr, cc in zip(pairs, counts):
+        cnt = 0
+        if 'incomparable' in gai.G[pr[0]][pr[1]]:
+            cnt = gai.G[pr[0]][pr[1]]['incomparable']
+        print("test_initial_graph: pair", pr, "should have",
+              cc, "incomparable. It has", cnt)
+
 
 class TestGenerator1(object):
 
-    def __init__(self, which_graph=1):
+    def __init__(self, which_graph=0):
         self.no_calls_yet = True
         self.verify_used = set()
         self.verify_requested = set()
         self.human_used = set()
         self.human_requested = set()
 
-        self.G = nx.Graph()
-        if which_graph == 1:
-            self.G.add_weighted_edges_from([('a', 'b', 6), ('a', 'e', 3), ('a', 'f', -2),
-                                            ('b', 'c', -4), ('b', 'e', -1), ('b', 'f', 1),
-                                            ('c', 'd', 5),
-                                            ('d', 'f', -3),
-                                            ('f', 'g', 4), ('f', 'h', 5),
-                                            ('g', 'h', -2), ('g', 'i', -2), ('g', 'j', 2),
-                                            ('h', 'j', -3), ('i', 'j', 6)])
-            self.no_calls_yet = True
-            self.first_edges = None
+        self.max_delay_before_response = 0
+        self.human_delay_before_response = 0
+        self.verify_delay_before_response = 0
 
+        self.params = {'min_delta_score': -12,
+                       'max_before_sleep': 3,
+                       'seconds_to_sleep' : 0.01,
+                       'seconds_before_restart_queues' : 0.03}
+
+        if which_graph == 0:
+            """
+            This simple example requires the incomparable edges to
+            be eliminated from the graph before convergence. It also
+            induces algorithm "sleeping" and "restarting".
+            """
+            self.weighted_edges = [('a', 'b', 4), ('a', 'c', 3)]
+            self.first_edges = None
+            self.verify_available = {('b', 'c'): 2}
+            self.human_available = {('b', 'c'): 0,  # marks edges as
+                                    ('a', 'c'): 0}  # incomparable
+            self.gt_clustering = {0 : set(['a', 'b', 'c'])}
+            self.max_delay_before_response = 6
+            self.human_delay_before_response = self.max_delay_before_response
+            self.verify_delay_before_response = self.max_delay_before_response
+
+        elif which_graph == 1:
+            """
+            More complicated "ordinary" example
+            """
+            self.weighted_edges = [('a', 'b', 6), ('a', 'e', 3), ('a', 'f', -2),
+                                   ('b', 'c', -4), ('b', 'e', -1), ('b', 'f', 1),
+                                   ('c', 'd', 5),
+                                   ('d', 'f', -3),
+                                   ('f', 'g', 4), ('f', 'h', 5),
+                                   ('g', 'h', -2), ('g', 'i', -2), ('g', 'j', 2),
+                                   ('h', 'j', -3), ('i', 'j', 6)]
+            self.first_edges = None
+            self.gt_clustering = {0 : set(['a', 'b']),
+                                  1 : set(['c', 'd']),
+                                  2 : set(['e']),
+                                  3 : set(['f', 'g', 'h', 'i', 'j'])}
             self.verify_available = {('a', 'g'): -3, ('a', 'h'): -4, ('b', 'g'): -2,
                                      ('b', 'h'): -3, ('e', 'f'): -4, ('e', 'g'): -6,
                                      ('e', 'h'): -5}
-
-            self.human_available = {('a', 'f'): -3, ('b', 'f'): -2, ('f', 'g'): 6,
-                                    ('g', 'h'): 5, ('a', 'e'): -5, ('b', 'e'): -4}
+            self.human_available = {('a', 'b') : 10, ('a', 'c') : -10,
+                                    ('a', 'f'): -8, ('b', 'f'): -8, ('f', 'g'): 9,
+                                    ('g', 'h'): 8, ('a', 'e'): -8, ('b', 'e'): -9}
+            self.max_delay_before_response = 6
+            self.human_delay_before_response = self.max_delay_before_response
+            self.verify_delay_before_response = self.max_delay_before_response
 
         elif which_graph == 2:
-            self.G.add_weighted_edges_from([('a', 'b', -2), ('a', 'c', 6),
-                                            ('b', 'd', 3), ('c', 'd', 1)])
+            """
+            Example where the inconsistent edge ('a', 'b') is never
+            directly removed because it becomes "incomparable", but
+            convergence and the correct answer are reached anyway.
+            """
+            self.weighted_edges = [('a', 'b', -2), ('a', 'c', 6),
+                                   ('b', 'd', 3), ('c', 'd', 1)]
             self.first_edges = None
             self.verify_available = {('a', 'd'): 3, ('b', 'c'): 4}
-            self.human_available = dict()
+            self.human_available = {('a', 'b'): 0}
+            self.gt_clustering = {0 : set(['a', 'b', 'c', 'd'])}
 
         elif which_graph == 3:
-            self.G.add_weighted_edges_from([('a', 'b', -2), ('a', 'c', 6),
-                                            ('b', 'd', 3), ('c', 'd', 1)])
+            """
+            Example where a single node, 'b', is driven out of the
+            clustering based on the human results.
+            """
+            self.weighted_edges = [('a', 'b', -2), ('a', 'c', 6),
+                                   ('b', 'd', 4), ('c', 'd', 1)]
             self.first_edges = None
-            self.verify_available = {('a', 'd'): 3, ('b', 'c'): -4}
-            self.human_available = {('a', 'b'): -5, ('a', 'd'): 8,
+            self.verify_available = {('a', 'd'): 3, ('b', 'c'): -1}
+            self.human_available = {('a', 'b'): -5, ('a', 'c'): 8,
                                     ('b', 'd'): 1, ('b', 'c'): -8}
+            self.gt_clustering = {0 : set(['a', 'c', 'd']),
+                                  1 : set(['b'])}
 
-        elif which_graph == 4:
-            self.G.add_weighted_edges_from([('a', 'b', 2), ('c', 'd', 1)])
+        else: # elif which_graph == 4:
+            """
+            Example where edge pairs are injected into the graph,
+            connecting initial clusters that weren't previously
+            connected. 
+            """
+            self.weighted_edges = [('a', 'b', 2), ('c', 'd', 1)]
             self.first_edges = [('a', 'c', 5), ('a', 'd', -4),
                                 ('b', 'c', -3), ('b', 'd', 2)]
             self.verify_available = dict()
-            self.human_available = dict()
+            self.human_available = {('b', 'd'): 12,
+                                    ('a', 'c'): 11,
+                                    ('a', 'b'): -10,
+                                    ('a', 'd'): -9,
+                                    ('b', 'c'): -8}
+            self.gt_clustering = {0 : set(['a', 'c']),
+                                  1 : set(['b', 'd'])}
+
+        """Complete the set of human available edges, so that a response is
+        obtained for each.  This is not needed for verify edges,
+        because all edges not explicitly provided are 0
+        """ 
+        n2c = ct.build_node_to_cluster_mapping(self.gt_clustering)
+        nodes = sorted(n2c.keys())
+        for i in range(len(nodes)):
+            for j in range(i+1, len(nodes)):
+                ni, nj = (nodes[i], nodes[j])
+                pr = (ni, nj)
+                if pr in self.human_available:
+                    pass
+                elif n2c[ni] == n2c[nj]:
+                    self.human_available[pr] = 10
+                else:
+                    self.human_available[pr] = -10
+
+        self.G = nx.Graph()
+        self.G.add_weighted_edges_from(self.weighted_edges)
 
     def verify_request(self, node_prs):
-        # print("Entering verify_request: node_prs =", node_prs)
         node_prs = set(node_prs)
         node_prs -= self.verify_used
         self.verify_requested |= node_prs
 
     def verify_result(self):
-        # print("Entering verify_result")
         if self.no_calls_yet:
             self.no_calls_yet = False
             if self.first_edges is not None:
                 return self.first_edges
 
+        if self.verify_delay_before_response > 0:
+            self.verify_delay_before_response -= 1
+            return []
+        else:
+            self.verify_delay_before_response = self.max_delay_before_response
+
         #  Only return those that have not already been returned
         edges = []
+
         for pr in self.verify_requested:
             self.verify_used.add(pr)
             if pr in self.verify_available:
@@ -548,18 +838,19 @@ class TestGenerator1(object):
             edges.append(e)
 
         self.verify_requested.clear()
-
-        # print("Returning edges", edges)
         return edges
 
     def human_request(self, node_prs):
-        # print("Entering human_request with node_prs", node_prs)
         node_prs = set(node_prs)
         self.human_requested |= node_prs
         # print("Leaving human_request behind:", self.human_requested)
 
     def human_result(self):
-        # print("Entering human_result")
+        if self.human_delay_before_response > 0:
+            self.human_delay_before_response -= 1
+            return []
+
+        self.human_delay_before_response = self.max_delay_before_response
         edges = []
 
         if self.human_requested.issubset(self.human_used):
@@ -568,30 +859,35 @@ class TestGenerator1(object):
 
         for pr in self.human_requested:
             if pr in self.human_used:
+                print('skipping pair', pr)
                 continue
-
-            if pr in self.human_available:
-                e = (pr[0], pr[1], self.human_available[pr])
-                # print("human available e=", e)
-            elif pr[1] in self.G[pr[0]]:
-                e = (pr[0], pr[1], 2 * self.G[pr[0]][pr[1]]['weight'])
-                # print("taking from graph, e=", e)
-            else:
-                e = (pr[0], pr[1], 0)
-                # print("making up, e=", e)
+            assert(pr in self.human_available)
+            e = (pr[0], pr[1], self.human_available[pr])
             edges.append(e)
             self.human_used.add(pr)
-
         self.human_requested.clear()
-
-        # print("Returning edges", edges)
         return edges
 
 if __name__ == "__main__":
-    tg = TestGenerator1(which_graph=4)
-    params = {'min_delta_score': -10}
+    which_graph = 0
+    if len(sys.argv) == 2:
+        which_graph = int(sys.argv[1])
+        print('Testing graph', which_graph, 'from command line')
+    else:
+        print('Testing graph', which_graph, 'from default')
+    
+    tg = TestGenerator1(which_graph=which_graph)
+    gai = GraphAlgorithm(tg.weighted_edges, tg.params)
+    gai.set_algorithmic_verifiers(tg.verify_request, tg.verify_result)
+    gai.set_human_reviewers(tg.human_request, tg.human_result)
+    num = gai.run_main_loop()
+    gai.show_clustering()
 
-    ga_instance = GraphAlgorithm(tg.G, params)
-    ga_instance.set_algorithmic_verifiers(tg.verify_request, tg.verify_result)
-    ga_instance.set_human_reviewers(tg.human_request, tg.human_result)
-    ga_instance.run_main_loop()
+    num_eq = ct.count_equal_clustering(tg.gt_clustering,
+                                       gai.clustering, gai.node2cid)
+    if num_eq == len(gai.clustering):
+        print("Successfully matches ground truth")
+    else:
+        print("Fails to match ground truth")
+
+    test_initial_graph()

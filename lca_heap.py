@@ -15,7 +15,10 @@ class LCAHeap(object):
         self.lca2index = dict()
 
     def top_Q(self):
-        return self.heap[0]
+        if len(self.heap) > 0:
+            return self.heap[0]
+        else:
+            return None
 
     def __len__(self):
         return len(self.heap)
@@ -32,10 +35,13 @@ class LCAHeap(object):
             self.percolate_down(0)
 
     def remove(self, a):
-        """
-        a.pprint()
+        """ 
         print("len of index", len(self.lca2index))
         print("len of heap", len(self.heap))
+        a.pprint()
+        print('===============')
+        for b in self.lca2index:
+            b.pprint()
         """
         assert(a in self.lca2index)
 

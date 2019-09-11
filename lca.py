@@ -45,6 +45,8 @@ class LCA(object):
         self.num_per_verify = 1
         self.num_per_manual = 1
 
+        self.incomparable_threshold = 3
+
     def __hash__(self):
         return self.__hash_value
 
@@ -58,13 +60,20 @@ class LCA(object):
         return set.union(*self.from_clusters.values())
 
     def set_to_clusters(self, to_clusters, to_score):
-        self.to_clusters = to_clusters
         self.to_score = to_score
-        self.to_n2c = ct.build_node_to_cluster_mapping(self.to_clusters)
-        self.inconsistent_pairs = None
-        self.inconsistent_edges = None
-        self.pairs_for_verification = None
-        self.edges_for_manual = None
+
+        if self.to_clusters is None or \
+           not ct.same_clustering(self.to_clusters, to_clusters):
+            # print("lca::set_to_clusters: new 'to' clustering")
+            self.to_clusters = to_clusters
+            self.to_n2c = ct.build_node_to_cluster_mapping(self.to_clusters)
+            self.inconsistent_pairs = None
+            self.inconsistent_edges = None
+            self.pairs_for_verification = None
+            self.edges_for_manual = None
+        else:
+            # print("lca::set_to_clusters: 'to' clustering has not changed")
+            pass
 
     def delta_score(self):
         return self.to_score - self.from_score
@@ -90,12 +99,15 @@ class LCA(object):
             for j in range(i + 1, len(nodes)):
                 n = nodes[j]
                 if self.node_pair_inconsistent(m, n):
-                    if n in self.subgraph[m]:   # edge exists
-                        self.inconsistent_edges.add((m, n))
-                    else:
+                    if n not in self.subgraph[m]:   # edge does not exist yet
                         self.inconsistent_pairs.add((m, n))
+                    else:
+                        self.inconsistent_edges.add((m, n))
 
     def get_node_pairs_for_verification(self):
+        """
+        Returns list of node pairs.
+        """
         if self.inconsistent_pairs is None:
             self.build_inconsistency_sets()
 
@@ -105,36 +117,54 @@ class LCA(object):
         if len(self.pairs_for_verification) > 0:
             n = min(self.num_per_verify,
                     len(self.pairs_for_verification))
-            v = [self.pairs_for_verification.pop() for i in range(n)]
+            v = {self.pairs_for_verification.pop() for i in range(n)}
             return v
         else:
-            return []
+            return set()
 
     def get_edges_for_manual(self):
+        """
+        Returns list of node pairs.
+        """
         if self.inconsistent_edges is None:
             self.build_inconsistency_sets()
 
-        # print("lca::get_edges_for_manual: inconsistent_edges:", self.inconsistent_edges)
-        if len(self.inconsistent_edges) == 0:
-            return []
-
         """
+        Remove the pairs that are considered "incomparable"
+        """
+        to_remove = set()
+        for pr in self.inconsistent_edges:
+            m, n = pr
+            if 'incomparable' in self.subgraph[m][n] and \
+               self.subgraph[m][n]['incomparable'] >= self.incomparable_threshold:
+                print('lca::get_edges_fxsor_manual: pair', pr, 'will be considered incomparable')
+                to_remove.add(pr)
+        self.inconsistent_edges -= to_remove
+        
+        print("lca::get_edges_for_manual: inconsistent_edges:", self.inconsistent_edges)
+        print('edges_for_manual', self.edges_for_manual)
+        if len(self.inconsistent_edges) == 0:
+            return set()
+
+        """ 
         If the manual augmentation has not started or it has been
         exhausted, (re)start the process.
         """
         if self.edges_for_manual is None or \
            len(self.edges_for_manual) == 0:
             self.edges_for_manual = list(self.inconsistent_edges)
-            self.edges_for_manual.sort(key=lambda e: self.subgraph[e[0]][e[1]]['weight'])
+            self.edges_for_manual.sort(key=lambda e: abs(self.subgraph[e[0]][e[1]]['weight']))
+        
         n = min(self.num_per_manual, len(self.edges_for_manual))
         v = self.edges_for_manual[-n:]
         del self.edges_for_manual[-n:]
-        return v
+        print('n=', n, 'v=', v, 'edges_for_manual', self.edges_for_manual)
+        return set(v)
 
     def add_edge(self, e):
         """
-        Do not change weight here because the graph aliases the overall
-        graph.  Assume the calling function makes this change.
+        Do not change weight here because the subgraph aliases the
+        overall graph.  Assume the calling function makes this change.
         """
         n0, n1, wgt = e
         delta_wgt = wgt

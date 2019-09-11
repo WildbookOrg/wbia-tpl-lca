@@ -128,20 +128,20 @@ def test_all():
     print("keys (should be [0, 1, 2, 4, 5, 7, 8, 9])", sorted(c2a.cid2lcas.keys()))
 
     lca_set = c2a.containing_all_cids([1, 2])
-    print("containg_all_cids [1,2] (should be just 692):")
+    print("containingg_all_cids [1,2] (should be just 692):")
     for a in lca_set:
         print("    ", str(a))
 
     lca_set = c2a.containing_all_cids([2])
-    print("containg_all_cids [2] (should be 692, 710, 826):")
+    print("containing_all_cids [2] (should be 692, 710, 826):")
     for a in lca_set:
         print("    ", str(a))
 
     lca_set = c2a.containing_all_cids([1, 5])
-    print("containg_all_cids [1, 5] (should be len(0)):", len(lca_set))
+    print("containing_all_cids [1, 5] (should be len(0)):", len(lca_set))
 
     lca_set = c2a.containing_all_cids([1, 99])
-    print("containg_all_cids [1, 99] (should be len(0)):", len(lca_set))
+    print("containing_all_cids [1, 99] (should be len(0)):", len(lca_set))
 
     print("========\nDictionary structure")
     c2a.is_consistent()
