@@ -29,7 +29,7 @@ class ExpScores(object):
         positive), along with the np_ratio, as above.
         """
         assert(0 <= error_frac < 0.5)
-        assert(np_ratio >= 1.0)
+        # assert(np_ratio >= 1.0)
         pos_lambda = find_lambda_cdf(1.0, error_frac)
 
         if create_from_pdf:
@@ -334,7 +334,6 @@ def test_create_from_samples():
 
 if __name__ == "__main__":
     test_truncated_exponential()
-    # test_find_np_ratio()
     test_find_lambda()
     test_find_lambda_from_samples()
     test_create_from_error_frac()

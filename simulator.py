@@ -5,9 +5,9 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import random
-from scipy.misc import comb
+from scipy.special import comb
 from scipy.stats import gamma
-# import sys
+import sys
 
 import cluster_tools as ct
 import exp_scores as es
@@ -25,11 +25,14 @@ class Simulator(object):
     def __init__(self, params, wgtr, seed=None):
         self.params = params
         self.wgtr = wgtr
+        self.orig_edges = []
         self.gt_clustering = dict()   # cid -> at first a list of nodes, then a set
         self.gt_node2cid = dict()     # node -> cid
+        self.r_clustering = None      # "reachable" clustering
+        self.r_node2cid = None        # "reachable" node 2 cd=ic mapping
         self.ranker_matches = dict()  # node -> set of nodes
         self.G = nx.Graph()
-        self.G_orig = nx.Graph()  # the generated graph without algorithmic additions
+        self.G_orig = nx.Graph()      # generated graph without algorithmic additions
         self.verify_edges = []
         self.human_edges = []
         if seed is not None:
@@ -38,13 +41,55 @@ class Simulator(object):
         self.human_steps_until_return = -1
         self.verify_steps_until_return = -1
 
-    def generate(self):
-        expected_nodes = 1 + self.params['gamma_shape'] * self.params['gamma_scale']
+    def create_random_clusters(self):
+        """
+        Generate the clusters and the nodes within the clusters according to
+        a gamma distribution.  The information to control this is in the params dictionary.
+        The results are the gt_node2cid mapping and the gt_clustering as a dictionary mapping
+        cluster names to lists of nodes.  In the method generate_from_clusters these lists
+        are turned into sets.
+        :return: None
+        """
 
+        # Compute digit_per_node that controls the generation of the name strings.
+        expected_nodes = 1 + self.params['gamma_shape'] * self.params['gamma_scale']
         digits_per_node = 2 + int(m.log10(expected_nodes))
-        next_index = 0
-        nodes = []                # list of node ids
-        edges = []                # list of edge 3-tuples
+
+        """
+        Determine how many nodes will be in each cluster according to a gamma distribution
+        """
+        samples = np.random.gamma(self.params['gamma_shape'],
+                                  self.params['gamma_scale'],
+                                  self.params['num_clusters'])
+        samples = 1 + np.round(samples).astype(int)
+
+        """
+        Create the nodes within each cluster and a dictionary mapping the (generated)
+        cluster ids to lists of nodes.
+        """
+        ni = 0
+        for cid in range(len(samples)):
+            # print('\nNext cluster')
+            n = samples[cid]
+            nodes = ['n' + str(i).zfill(digits_per_node) for i in range(ni, ni+n)]
+            self.gt_clustering[cid] = nodes
+            for node in nodes:
+                self.gt_node2cid[node] = cid
+            ni += n
+            print("cid %d, n %d, nodes %a, ni %d" % (cid, n, nodes, ni))
+
+    def create_clusters_from_ground_truth(self, clustering):
+        self.gt_clustering = clustering
+        nodes_sets = [set(v) for v in clustering.values()]
+        cluster_nodes = set.union(*nodes_sets)
+        total_nodes = sum([len(s) for s in clustering.values()])
+        assert(len(cluster_nodes) == total_nodes)
+        self.gt_node2cid = ct.build_node_to_cluster_mapping(clustering)
+
+    def generate_from_clusters(self):
+        all_nodes = [n for v in self.gt_clustering.values() for n in v]           # list of node ids
+        print(all_nodes)
+        self.orig_edges = []
 
         num_correct_positive = 0
         num_correct_negative = 0
@@ -53,44 +98,16 @@ class Simulator(object):
         num_incorrect_negative = 0
         num_incorrect_zero = 0
 
-        """
-        Step 0:
-        """
-        samples = np.random.gamma(self.params['gamma_shape'],
-                                  self.params['gamma_scale'],
-                                  self.params['num_clusters'])
-        samples = 1 + np.round(samples)
-        samples = samples.astype(int)
+        for cid in self.gt_clustering:
+            cluster = self.gt_clustering[cid]
+            for nid in cluster:
+                self.ranker_matches[nid] = set()
 
-        """
-        Step 1:
-        Generate the clusters, the nodes within the cluster, and the
-        "correct" inter-cluster edges.  Note that since we are
-        assuming an imperfect ranking algorithm, this does not ensure
-        that each cluster is connected.
-        """
-        for cid in range(len(samples)):
-            # print('\nNext cluster')
-            self.gt_clustering[cid] = list()
-
-            n = samples[cid]
-            # print("cid: %d, %d" % (cid, n))
-
-            # Create the nodes in the cluster
-            for i in range(n):
-                node_id = 'n' + str(next_index).zfill(digits_per_node)
-                next_index += 1
-                nodes.append(node_id)
-                self.gt_clustering[cid].append(node_id)
-                self.gt_node2cid[node_id] = cid
-                self.ranker_matches[node_id] = set()
-
-            #  Create the positive edges between nodes in a cluster.
-            #  These are symmetric
-            for i, ith_node in enumerate(self.gt_clustering[cid]):
-                for j in range(i + 1, len(self.gt_clustering[cid])):
+            #  Examine each pair of nodes in a cluster to determine if they should be "ranker matches"
+            for i, ith_node in enumerate(cluster):
+                for j in range(i + 1, len(cluster)):
                     prob = random.uniform(0, 1)
-                    jth_node = self.gt_clustering[cid][j]
+                    jth_node = cluster[j]
                     # print('i %d, ith_node %s, j %d, jth_node %s, prob %1.3f'
                     #       % (i, ith_node, j, jth_node, prob))
                     if prob < self.params['p_ranker_correct']:
@@ -106,12 +123,12 @@ class Simulator(object):
                             num_correct_negative += 1
 
                         e = (ith_node, jth_node, wgt)
-                        edges.append(e)
+                        self.orig_edges.append(e)
                         # print("adding positive edge", e)
 
         num_from_ranker = self.params['num_from_ranker']
         assert(num_from_ranker > 0)
-        num_nodes = len(nodes)
+        num_nodes = len(all_nodes)
 
         # Change the list to a set
         self.gt_clustering = {cid: set(cluster)
@@ -122,14 +139,15 @@ class Simulator(object):
         Generate "incorrect" match edges, sufficient to have the required
         number of edges generated by the ranking algorithm.
         """
-        for i, ith_node in enumerate(nodes):
+        for i, ith_node in enumerate(all_nodes):
             # print("\nAdding negative edges for node", ith_node)
             matches = self.ranker_matches[ith_node]
             cid = self.gt_node2cid[ith_node]
-            cluster = set(self.gt_clustering[cid])
+            cluster = self.gt_clustering[cid]
 
-            """ In the rare case that there are too many correct
-                matches, i.e. for an extremely large cluster, trim them out
+            """ 
+            In the rare case that there are too many correct
+            matches, i.e. for an extremely large cluster, trim them out
             """
             while len(matches) > num_from_ranker:
                 matches.pop()
@@ -139,7 +157,7 @@ class Simulator(object):
             """
             while len(matches) < num_from_ranker:
                 j = random.randint(0, num_nodes - 1)
-                jth_node = nodes[j]
+                jth_node = all_nodes[j]
                 if jth_node not in matches and jth_node not in cluster:
                     matches.add(jth_node)
                     is_match_correct = False
@@ -156,10 +174,10 @@ class Simulator(object):
                     else:
                         e = (jth_node, ith_node, wgt)
                     # print("adding negative edge", e)
-                    edges.append(e)
+                    self.orig_edges.append(e)
 
-        self.G.add_weighted_edges_from(edges)
-        print("simulator::generate: adding %d edges" % len(edges))
+        self.G.add_weighted_edges_from(self.orig_edges)
+        print("simulator::generate: adding %d edges" % len(self.orig_edges))
         print("%d correct match edges have positive weight" % num_correct_positive)
         print("%d correct match edges have zero weight" % num_correct_zero)
         print("%d correct match edges have negative weight" % num_correct_negative)
@@ -168,7 +186,7 @@ class Simulator(object):
         print("%d incorrect match edges have negative weight" % num_incorrect_negative)
 
         self.G_orig.add_nodes_from(self.G)
-        self.G_orig.add_weighted_edges_from(edges)
+        self.G_orig.add_weighted_edges_from(self.orig_edges)
 
         """
         Step 3: Generate the "reachable" ground truth, the obtainable
@@ -191,10 +209,14 @@ class Simulator(object):
                 print("GT cluster", cc, "is intact")
         self.r_node2cid = ct.build_node_to_cluster_mapping(self.r_clustering)
 
-    def print_clusters(self):
-        print("Ground truth clusters:")
-        for cid in self.gt_clustering:
-            print("%a:" % cid, self.gt_clustering[cid])
+    def print_clusters(self, lca_clustering):
+        print("LCA's clusters:")
+        for cid, c in lca_clustering.items():
+            print("%a:" % cid, c)
+
+        print("\nGround truth clusters:")
+        for cid, c in self.gt_clustering.items():
+            print("%a:" % cid, c)
 
     def save_graph(self):
         pass
@@ -203,6 +225,7 @@ class Simulator(object):
         pass
 
     def verify_request(self, node_pairs):
+        print("Start of verify_request: node_pairs", node_pairs)
         """
         The result of verification is deterministic and symmetric.
         So we need to keep and return the same result if called multiple
@@ -417,6 +440,18 @@ def find_np_ratio(gamma_shape, gamma_scale, ranker_per_node,
     return ratio
 
 
+def find_np_ratio_gt(cluster_sizes, ranker_per_node, prob_match):
+    num_nodes = sum(cluster_sizes)
+    total_matches = num_nodes*ranker_per_node
+    expected_positive = 0
+    for ai in cluster_sizes:
+        ei = min(ai*(ai-1)*prob_match, ranker_per_node*ai)
+        print("ai %d, ei %.4f" % (ai, ei))
+        expected_positive += ei
+    np_ratio = total_matches / expected_positive - 1
+    return np_ratio
+
+
 # def find_np_ratio(num_clusters, nodes_per_cluster, ranker_per_node,
 #                   prob_match):
 #     """
@@ -460,6 +495,18 @@ def test_find_np_ratio():
     ratio = find_np_ratio(gamma_shape, gamma_scale, ranker_per_node, prob_match)
     print("Final np ratio is %1.4f" % ratio)
 
+
+def test_find_np_ratio_gt():
+    cluster_sizes = [4, 8, 2, 1, 6, 6]
+    ranker_per_node = 8
+    prob_match = 0.9
+    np_ratio = find_np_ratio_gt(cluster_sizes, ranker_per_node, prob_match)
+    exp_np_ratio = .846154
+    print("find_np_ratio_gt with cluster sizes", cluster_sizes,
+          "ranker_per_node", ranker_per_node,
+          "prob_match", prob_match,
+          "yields np_ratio %.3f" % np_ratio,
+          "expected np_ratio %.3f" % exp_np_ratio)
 
 def test_after_gen(sim):
     print("\n================================\n"
@@ -547,6 +594,13 @@ def test_after_gen(sim):
 
 
 def get_positive_missing(sim, num_requested):
+    '''
+    Retrieve a number of node pairs that are not edge-connected within a cluster.
+    Results are restricted to at most one edge from each node.
+    :param sim: The simulation
+    :param num_requested: The target number of node pairs.
+    :return: List of node pair tuples, with each tuple in increasting order.  Length of list is <= num_requested
+    '''
     pos_missing = []
     nodes = list(sim.gt_node2cid.keys())
     random.shuffle(nodes)
@@ -555,8 +609,9 @@ def get_positive_missing(sim, num_requested):
         for n1 in sim.gt_clustering[cid0]:
             if n0 != n1 and n1 not in sim.G[n0]:
                 pr = (min(n0, n1), max(n0, n1))
-                pos_missing.append(pr)
-                break
+                if pr not in pos_missing:
+                    pos_missing.append(pr)
+                    break
         if len(pos_missing) == num_requested:
             break
     return pos_missing
@@ -590,7 +645,6 @@ def test_verify(sim):
     num_nodes = len(nodes)
     num_already_there = 2
     for _ in range(num_already_there):
-
         n0 = nodes[random.randint(0, num_nodes - 1)]
         n1 = next(iter(sim.G[n0].keys()))  # first nbr in n1 dictionary
         pr = (min(n0, n1), max(n0, n1))
@@ -606,12 +660,14 @@ def test_verify(sim):
     """
     for tries in range(2):
         # Get missing edges
-        pos_missing = get_positive_missing(sim, tries + 1)
-        neg_missing = get_negative_missing(sim, tries + 2)
+        target_pos = tries+1
+        target_neg = tries+2
+        pos_missing = get_positive_missing(sim, target_pos)
+        neg_missing = get_negative_missing(sim, target_neg)
         missing = pos_missing + neg_missing
         print("Verify request / results try", tries)
-        print("Num pos_missing (should be 3) is", len(pos_missing))
-        print("Num neg_missing (should be 2) is", len(neg_missing))
+        print("Num pos_missing (should be %d) is %d" % (target_pos, len(pos_missing)))
+        print("Num neg_missing (should be %d) is %d" % (target_neg, len(neg_missing)))
 
         #  Make the request for weights for these edges. This does not get them
         #  yet.  Make sure though that it has set the delay.
@@ -726,6 +782,7 @@ def test_human(sim):
 
 if __name__ == "__main__":
     test_find_np_ratio()
+    test_find_np_ratio_gt()
 
     params = dict()
     params['pos_error_frac'] = 0.1
@@ -745,7 +802,7 @@ if __name__ == "__main__":
     #
     params['gamma_shape'] = 1.5
     params['gamma_scale'] = 3
-    num_per_cluster = params['gamma_scale'] * params['gamma_shape'] + 1
+    # num_per_cluster= params['gamma_scale'] * params['gamma_shape'] + 1
     params['p_ranker_correct'] = 0.9
     params['p_human_correct'] = 0.98
     params['num_from_ranker'] = 10
@@ -761,11 +818,35 @@ if __name__ == "__main__":
     wgtr = wgtr.Weighter(scorer, human_prob=params['p_human_correct'])
 
     sim = Simulator(params, wgtr)
-    sim.generate()
-
+    sim.create_random_clusters()
+    sim.generate_from_clusters()
     r_leng = len(sim.r_clustering)
     gt_leng = len(sim.gt_clustering)
     print("gt length", gt_leng, "reachable length", r_leng)
+    test_after_gen(sim)
+    test_verify(sim)
+    test_human(sim)
+
+    prior_clusters = {"cl00": ['n01', 'n02', 'n03'],
+                      "cl01": ['n10', 'n11', 'n12', 'n13', 'n17'],
+                      "cl02": ['n05', 'n07'],
+                      "cl03": ['n41', 'n42', 'n27', 'n31'],
+                      "cl04": ['n29', 'n22', 'n50'],
+                      "cl05": ['n60'],
+                      "cl06": ['n55'],
+                      "cl07": ['n71', 'n75', 'n79', 'n80'],
+                      "cl08": ['n81', 'n82', 'n83', 'n84']}
+    params['num_clusters'] = 10
+    params['num_from_ranker'] = 6
+    sim = Simulator(params, wgtr)
+    sim.create_clusters_from_ground_truth(prior_clusters)
+    sim.generate_from_clusters()
+    r_leng = len(sim.r_clustering)
+    gt_leng = len(sim.gt_clustering)
+    print("gt length", gt_leng, "reachable length", r_leng)
+    test_after_gen(sim)
+    test_verify(sim)
+    test_human(sim)
 
     """
     print("\nClusters")
@@ -789,7 +870,3 @@ if __name__ == "__main__":
             n0, n1 = min(nid, m), max(nid, m)
             print("(%a, %a, %1.4f)" % (n0, n1, sim.G[nid][m]['weight']))
     """
-
-    test_after_gen(sim)
-    test_verify(sim)
-    test_human(sim)
