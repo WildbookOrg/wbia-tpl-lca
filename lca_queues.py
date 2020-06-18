@@ -1,10 +1,33 @@
+'''
+lca_queues.py
+
+Manage the position of the candidate LCAs on three different queues
+and one set: 
+
+. the main priority Q
+
+. the scoring queue, S, which is the set of LCAs waiting to be
+(re)evaluated for alternative local clustering
+
+. the queue, W, of LCAs waiting for an augmentation edge result
+
+. the done set of LCAs no longer under consideration
+
+All current LCAs must be in exactly one of the queues / sets at the
+start of each outer loop of the LCA algoritihm.
+'''
+
+import logging
 import lca_heap as lh
 
 
-class LCAQueues(object):
-
+class lca_queues(object):
     def __init__(self, lcas=None):
-        self.Q = lh.LCAHeap()
+        '''
+        The initializer, putting all LCAs on the scoring queue and
+        making S, W and done all empty.
+        '''
+        self.Q = lh.lca_heap()
         if lcas is None:
             self.S = set()
         else:
@@ -12,34 +35,77 @@ class LCAQueues(object):
         self.W = set()
         self.done = set()
 
+    def num_lcas(self):
+        return len(self.Q) + len(self.S) + len(self.W) + len(self.done)
+
     def top_Q(self):
-        return self.Q.top_Q()
+        '''
+        Access the top LCA on the main priority queue, Q, without
+        removing it. If it is empty, return None
+        '''
+        if len(self.Q) > 0:
+            return self.Q.top_Q()
+        else:
+            return None
 
     def pop_Q(self):
+        '''
+        Remove the top LCA from the main priority queue, Q.
+        '''
         self.Q.pop_Q()
 
     def add_to_Q(self, lcas):
+        '''
+        Add the given LCAs to the main priority queue, Q.
+        '''
         if type(lcas) != list and type(lcas) != set:
             lcas = [lcas]
         for a in lcas:
             self.Q.insert(a)
 
     def get_S(self):
+        '''
+        Access the scoring queue set S
+        '''
         return self.S
 
     def clear_S(self):
+        '''
+        Clear the scoring queue set S.
+        '''
         self.S.clear()
 
     def add_to_S(self, a):
+        '''
+        Add LCA a to the scoring set. This assumes without checking
+        that a is not already on any of the queues.
+        '''
         self.S.add(a)
 
     def add_to_W(self, a):
+        '''
+        Add LCA a to the weight  set. This assumes without checking
+        that a is not already on any of the queues.
+        '''
         self.W.add(a)
 
     def num_on_W(self):
+        '''
+        Return the number of LCAs on the waiting (for edge
+        augmentation) queue.
+        '''
         return len(self.W)
 
+    def add_to_done(self, a):
+        '''
+        Mark an LCA as done -- sufficiently stable.
+        '''
+        self.done.add(a)
+
     def remove(self, lcas):
+        '''
+        Remove the given LCAs from the queues.
+        '''
         if type(lcas) != list and type(lcas) != set:
             lcas = [lcas]
         for a in lcas:
@@ -47,91 +113,162 @@ class LCAQueues(object):
                 self.W.remove(a)
             elif a in self.S:
                 self.S.remove(a)
+            elif a in self.done:
+                self.done.remove(a)
             else:
                 self.Q.remove(a)
 
+    def reset_waiting(self):
+        self.S |= self.W
+        self.W.clear()
+
     def switch_to_splitting(self):
         """
-        Clear all queues prior to the creation of singleton LCAs for splitting
+        Switch to the splitting phase of the computation.  This
+        requires clearing all queues prior to the creation of
+        singleton LCAs for splitting.
         """
         self.Q.clear()
         self.S.clear()
         self.W.clear()
 
     def switch_to_stability(self):
-        """  None of what's below is needed now that we've inserted a splitting phase
-        self.S.update(self.W)
-        self.W.clear()
-        self.S.update(self.Q.get_all())
-        self.Q.clear()
+        """
+        Nothing needs to be be done because of the splitting phase.
         """
         pass
 
-    def add_to_done(self, a):
-        self.done.add(a)
-
     def score_change(self, a, from_delta, to_delta):
-        # print("LCAQueues::score_change from_delta %a to_delta %a."
-        #       % (from_delta, to_delta), "Current queue is", self.which_queue(a))
-        if a in self.S or a in self.done:
-            # print("leaving lca in scoring")
+        '''
+        Move the position of LCA a based on the change to the score
+        for its current local clustering, as recorded in from_delta,
+        and its best alternative, as recorded in to_delta.  The key is
+        the to_delta value because only when this is negative does the
+        alternative clustering need to be recomputed.
+        '''
+        if a in self.S:
             pass   # leave it for an update
         elif to_delta < 0:
-            # print("placing lca in scoring")
             self.remove(a)
             self.add_to_S(a)
         else:
-            # print("placing lca in main Q")
             self.remove(a)
             self.Q.insert(a)
 
     def which_queue(self, a):
+        '''
+        Return a single character string indicating the queue that LCA
+        a is on.  Choices are 'S' (scoring), 'W' (waiting - for
+        augmentation), 'Q' (main queue) or 'D' (done).  If the LCA is
+        not on any of the queues, None is returned.
+        '''
         if a in self.S:
             return "S"
         elif a in self.W:
             return "W"
         elif a in self.Q.heap:
             return "Q"
+        elif a in self.done:
+            return "D"
         else:
             return None
 
     def is_consistent(self):
+        '''
+        Check the consistencu of the queues: the main Q is itself
+        consistent, and all queues are pairwise disjoint from each
+        other.
+        '''
         all_ok = self.Q.is_consistent()
         q_set = set(self.Q.lca2index.keys())
 
         qs = q_set & self.S
         if len(qs) > 0:
-            print("ERROR: LCA queues Q and S intersect")
+            print("LCA queues, Q and S intersect")
             all_ok = False
 
         qw = q_set & self.W
         if len(qw) > 0:
-            print("ERROR: LCA queues Q and W intersect")
+            print("LCA queues, Q and W intersect")
             all_ok = False
 
+        qd = q_set & self.done
+        if len(qd) > 0:
+            print("LCA queues, Q and done queue intersect")
+            all_ok = False
+    
         sw = self.S & self.W
         if len(sw) > 0:
-            print("ERROR: LCA queues S and W intersect")
+            print("LCA queues, S and W intersect")
+            all_ok = False
+
+        sd = self.S & self.done
+        if len(sd) > 0:
+            print("LCA queues, S and done queue intersect")
+            all_ok = False
+
+        wd = self.W & self.done
+        if len(wd) > 0:
+            print("LCA queues, W and done queue intersect")
             all_ok = False
 
         return all_ok
 
+    def log(self):
+        logger = logging.getLogger()
+        logger.info("Number of LCAs on Q %d, W %d, S %d, done %d"
+                    % (len(self.Q), len(self.W), len(self.S), len(self.done)))
+
+    def info_long(self, max_entries=-1):
+        logging.info("LCA Queues:")
+
+        # Log Q
+        spaces = ' '*4
+        if len(self.Q) == 0:
+            logging.info("Q: <empty>")
+        else:
+            if max_entries <= 0 or max_entries > len(self.Q):
+                max_entries = len(self.Q)
+            logging.info("Q: %d entries; printing %d" %
+                          (len(self.Q), max_entries))
+            for i in range(max_entries):
+                initial_str = "%4d: " % i
+                self.Q.heap[i].pprint_short(initial_str=initial_str,
+                                            stop_after_from=False)
+
+        # Log S
+        if len(self.S) == 0:
+            logging.info('S: <empty>')
+        else:
+            logging.info("S: %d entries:" % len(self.S))
+            for lca in self.S:
+                lca.pprint_short(initial_str=spaces, stop_after_from=True)
+
+        # Log W
+        if len(self.W) == 0:
+            logging.info('W: <empty>')
+        else:
+            logging.info("W: %d entries:" % len(self.W))
+            for lca in self.W:
+                lca.pprint_short(initial_str=spaces, stop_after_from=True)
+
 
 def test_all():
-    v = [lh.LCALite(123, 1.0),
-         lh.LCALite(456, 5.3),
-         lh.LCALite(827, 7.8),
-         lh.LCALite(389, 8.9),
-         lh.LCALite(648, 8.6),
-         lh.LCALite(459, 9.4),
-         lh.LCALite(628, 8.2),
-         lh.LCALite(747, 4.7)]
-    queues = LCAQueues(v)
+    v = [lh.lca_lite(123, 1.0),
+         lh.lca_lite(456, 5.3),
+         lh.lca_lite(827, 7.8),
+         lh.lca_lite(389, 8.9),
+         lh.lca_lite(648, 8.6),
+         lh.lca_lite(459, 9.4),
+         lh.lca_lite(628, 8.2),
+         lh.lca_lite(747, 4.7)]
+    queues = lca_queues(v)
 
     print()
-    print("After initialization: lengths should be (0, %d, 0)"
-          " and are (%d, %d, %d)"
-          % (len(v), len(queues.Q), len(queues.S), len(queues.W)))
+    print("After initialization: lengths should be (0, %d, 0, 0)"
+          " and are (%d, %d, %d, %d)"
+          % (len(v), len(queues.Q), len(queues.S), len(queues.W),
+             len(queues.done)))
     queues.get_S()
     queues.clear_S()
     queues.add_to_S(v[0])
@@ -144,7 +281,7 @@ def test_all():
     lcas_on_W = v[-2:]
     print("After moving around: lengths should be (%d, 2, 2)"
           " and are (%d, %d, %d)"
-          % (len(v) - 4, len(queues.Q), len(queues.S), len(queues.W)))
+          % (len(v)-4, len(queues.Q), len(queues.S), len(queues.W)))
     print("num_on_W should be %d, and is %d" % (len(queues.W), queues.num_on_W()))
     print("Which queue: should be S and is", queues.which_queue(lcas_on_S[0]))
     print("Which queue: should be Q and is", queues.which_queue(lcas_on_Q[0]))
@@ -177,6 +314,39 @@ def test_all():
     queues.score_change(lcas_on_W[1], -4, 3)
     print("Negative 'from' score change (positive to) from W should be on Q:",
           queues.which_queue(lcas_on_W[1]))
+
+    v = []
+    queues = lca_queues(v)
+    a = queues.top_Q()
+    print("Empty main queue should have a top of None:", a)
+
+    v = [lh.lca_lite(123, 1.0),
+         lh.lca_lite(459, 9.4),
+         lh.lca_lite(628, 8.2),
+         lh.lca_lite(747, 4.7)]
+    queues = lca_queues(v)
+
+    print()
+    print("After initialization (again): lengths should be (0, %d, 0, 0)"
+          " and are (%d, %d, %d, %d)"
+          % (len(v), len(queues.Q), len(queues.S),
+             len(queues.W), len(queues.done)))
+    queues.clear_S()
+    queues.add_to_Q(v[0])
+    queues.add_to_done(v[1])
+    queues.add_to_done(v[2])
+    queues.add_to_done(v[3])
+    print("After moving around: lengths should be (1, 0, 0, 3)"
+          " and are (%d, %d, %d, %d)"
+          % (len(queues.Q), len(queues.S), len(queues.W), len(queues.done)))
+    queues.remove(v[3])
+    queues.score_change(v[2], from_delta=0, to_delta=-4)
+    print("Which queue: should be Q and is", queues.which_queue(v[0]))
+    print("Which queue: should be D and is", queues.which_queue(v[1]))
+    print("Which queue: should be S and is", queues.which_queue(v[2]))
+    print("At end: lengths should be (1, 1, 0, 1)"
+          " and are (%d, %d, %d, %d)"
+          % (len(queues.Q), len(queues.S), len(queues.W), len(queues.done)))
 
 
 if __name__ == "__main__":

@@ -8,9 +8,10 @@ import test_cluster_tools as tct
 def build_initial_from_constraints(G, in_same):
     """
     Form an initial clustering from the nodes in G such that any pair
-    of nodes in the in_same list is in the same cluster and any
-    node not in one of these pairs is in its own cluster.
-    """
+    of nodes in the in_same list is in the same cluster and any node
+    not in one of these pairs is in its own cluster.
+    """ 
+
     # Use connected components to gather the in_same pairs
     tempG = nx.Graph()
     tempG.add_nodes_from(G.nodes())
@@ -25,7 +26,8 @@ def build_initial_from_constraints(G, in_same):
 
 
 def keep_separate(c0, c1, must_be_in_different):
-    """  Return true if the any pair of nodes in must_be_in_different
+    """
+    Return true if the any pair of nodes in must_be_in_different
     are split across clusters c0 and c1.
     """
     for m, n in must_be_in_different:
@@ -36,20 +38,28 @@ def keep_separate(c0, c1, must_be_in_different):
 
 def lca_alg1_constrained(curr_G, in_same=[], in_different=[],
                          trace_on=False):
+    """
+    Use algorithm 1 to find the best clustering of the current
+    subgraph subject to the constraints that all pairs of nodes from
+    in_same must be in the same cluster and all pairs of nodes from
+    in_different must be in different clusters.
+
+    This does not check that the constraints from in_same and
+    in_different can all be satisfied. In implementation the in_same
+    constraints take precedence, but in use, one of the two in_same
+    and in_different lists will be empty.
+    """
+
     clustering = build_initial_from_constraints(curr_G, in_same)
     node2cid = ct.build_node_to_cluster_mapping(clustering)
 
-    neg_edges, pos_edges = ct.get_weight_lists(curr_G)
+    neg_edges, pos_edges = ct.get_weight_lists(curr_G, sort_positive=True)
     G_prime = nx.Graph()
     G_prime.add_nodes_from(curr_G)
     G_prime.add_weighted_edges_from(neg_edges)
 
-    for pr in in_same:
-        w = curr_G[pr[0]][pr[1]]['weight']
-        e = (pr[0], pr[1], w)
-        # print("lca_alg1_constrained adding", e)
-        G_prime.add_weighted_edges_from([e])
-
+    edges = [(p[0], p[1], curr_G[p[0]][p[1]]['weight']) for p in in_same]
+    G_prime.add_weighted_edges_from(edges)
     score = ct.clustering_score(G_prime, node2cid)
 
     if trace_on:
@@ -98,6 +108,7 @@ def lca_alg1_constrained(curr_G, in_same=[], in_different=[],
                 print("Merging disjoint clusters")
             sc_delta = ct.merge_clusters(n0_cid, n1_cid, G_prime, clustering,
                                          node2cid)
+            assert(sc_delta == 0)
             score += sc_delta + wgt
 
         else:
@@ -128,10 +139,8 @@ def lca_alg1_constrained(curr_G, in_same=[], in_different=[],
 
 
 def inconsistent_edges(G, clustering, node2cid):
-    """
-    Return each negatively-weighted edge that is inside a cluster, or
-    positively-weighted edge that is between clusters.
-    """
+    ''' Return each negatively-weighted edge that is inside a cluster, or
+        positively-weighted edge that is between clusters. '''
     inconsistent = []
     for m, n in G.edges():
         if m > n:
@@ -146,31 +155,30 @@ def inconsistent_edges(G, clustering, node2cid):
 
 
 def best_alternative_len2(G, clustering, node2cid):
-    """
-    Return the best alternative to the current clustering when G has
-    exactly two nodes.
-    """
+    ''' Return the best alternative to the current clustering when G has
+        exactly two nodes.
+    '''
     if len(clustering) == 2:
         alt_clustering = {0: set(G.nodes())}
-        alt_node2cid = ct.build_node_to_cluster_mapping(alt_clustering)
     else:
         alt_clustering = {c: {n} for c, n in enumerate(G.nodes())}
-        alt_node2cid = ct.build_node_to_cluster_mapping(alt_clustering)
+    alt_node2cid = ct.build_node_to_cluster_mapping(alt_clustering)
     alt_score = ct.clustering_score(G, alt_node2cid)
     return alt_clustering, alt_score
 
 
 def lca_alg2(G, clustering, node2cid, trace_on=False):
-    """ If it is a single cluster, then stop the original algorithm when
+    """  If it is a single cluster, then stop the original algorithm when
     there are two clusters.  Perhaps can run alternative multiple times
 
     If there are multiple clusterings, then one option is a merge, but
     add others based on inconsistency
-
-    Don't allow len(G) <= 1it is two, and the
-    nodes are disconnected, there is also no alternative.  If it is two,
-    then split/merging vs. merging/splitting is the alternative.
     """
+
+    """  Don't allow len(G) <= 1it is two, and the
+    nodes are disconnected, there is also no alternative.  If it is two,
+    then split/merging vs. merging/splitting is the alternative."""
+
     assert(len(G) >= 2)
 
     if len(G) == 2:
@@ -289,7 +297,7 @@ def test_lca_alg1_constrained():
     clustering, score = lca_alg1_constrained(G, in_same, in_different)
     node2cid = ct.build_node_to_cluster_mapping(clustering)
     correct_score = ct.clustering_score(G, node2cid)
-
+    
     exp_clustering = {0: {'a', 'b', 'd'}, 1: {'f', 'g', 'h', 'i', 'k'},
                       2: {'c'}, 3: {'e'}, 4: {'j'}}
     is_same = ct.same_clustering(clustering, exp_clustering,
@@ -300,9 +308,9 @@ def test_lca_alg1_constrained():
         print("constrained (d,e) different and (f,i) same: FAIL")
 
     if score != correct_score:
-        print("scoring error:  actual %a, correct %a" % (score, correct_score))
+        print("scoring error:  actual %a, correct %a" %(score, correct_score))
     else:
-        print("scoring correct:  actual %a, correct %a" % (score, correct_score))
+        print("scoring correct:  actual %a, correct %a" %(score, correct_score))
 
 
 def test_inconsistent_edges():
@@ -326,7 +334,7 @@ def test_inconsistent_edges():
         print('Identify inconsistent edges: FAIL')
 
 
-def run_lca_alg2(G, best_clustering, exp_alt_clustering, msg,
+def test_run_lca_alg2(G, best_clustering, exp_alt_clustering, msg,
                  trace_on=False):
     exp_alt_node2cid = ct.build_node_to_cluster_mapping(exp_alt_clustering)
     exp_alt_score = ct.clustering_score(G, exp_alt_node2cid)
@@ -363,12 +371,12 @@ def test_lca_alg2():
     one_cluster = {0: set(['a', 'b'])}
     expected_alt = {0: {'a'}, 1: {'b'}}
     msg = "(1) Two node graph, initially all together:"
-    run_lca_alg2(G, one_cluster, expected_alt, msg)
+    test_run_lca_alg2(G, one_cluster, expected_alt, msg)
 
     two_clusters = {0: set('a'), 1: set('b')}
     expected_alt = {0: {'a', 'b'}}
     msg = "(2) Two node graph, start separate, so should be together:"
-    run_lca_alg2(G, two_clusters, expected_alt, msg)
+    test_run_lca_alg2(G, two_clusters, expected_alt, msg)
 
     G = nx.Graph()
     G.add_weighted_edges_from([('a', 'b', -2), ('a', 'c', 8), ('a', 'd', -1),
@@ -376,12 +384,12 @@ def test_lca_alg2():
     first_clustering = {0: {'a', 'c'}, 1: {'b', 'd'}}
     expected_alt = {0: {'a', 'b', 'c', 'd'}}
     msg = "(3) Testing generation of initial best from two pairs:"
-    run_lca_alg2(G, first_clustering, expected_alt, msg)
+    test_run_lca_alg2(G, first_clustering, expected_alt, msg)
 
     first_clustering = {0: {'a', 'b', 'c', 'd'}}
     expected_alt = {0: {'a', 'c', 'd'}, 1: {'b'}}
     msg = "(4) Testing generation of initial best from single cluster:"
-    run_lca_alg2(G, first_clustering, expected_alt, msg)
+    test_run_lca_alg2(G, first_clustering, expected_alt, msg)
 
     G = nx.Graph()
     G.add_weighted_edges_from([('a', 'b', 9), ('a', 'e', -2),
@@ -392,7 +400,7 @@ def test_lca_alg2():
     first_clustering = {0: {'a', 'b'}, 1: {'c', 'd', 'e', 'f'}}
     expected_alt = {0: {'a', 'b', 'c', 'd', 'e', 'f'}}
     msg = "(5) Testing two components merged into one as alternative:"
-    run_lca_alg2(G, first_clustering, expected_alt, msg)
+    test_run_lca_alg2(G, first_clustering, expected_alt, msg)
 
     G = nx.Graph()
     G.add_weighted_edges_from([('a', 'b', 5), ('a', 'c', 3),
@@ -402,7 +410,7 @@ def test_lca_alg2():
     first_clustering = {0: {'a', 'b'}, 1: {'c', 'd'}}
     expected_alt = {0: {'a', 'c'}, 1: {'b', 'd'}}
     msg = "(6) Testing two components reformed into two others:"
-    run_lca_alg2(G, first_clustering, expected_alt, msg)
+    test_run_lca_alg2(G, first_clustering, expected_alt, msg)
 
     G = nx.Graph()
     G.add_weighted_edges_from([('a', 'b', 8), ('a', 'c', 5),
@@ -413,7 +421,7 @@ def test_lca_alg2():
     first_clustering = {0: {'a', 'b', 'c', 'd', 'e'}}
     expected_alt = {0: {'a', 'b', 'c'}, 1: {'d', 'e'}}
     msg = "(7) Testing one component split into two:"
-    run_lca_alg2(G, first_clustering, expected_alt, msg)
+    test_run_lca_alg2(G, first_clustering, expected_alt, msg)
 
 
 if __name__ == "__main__":

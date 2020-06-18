@@ -31,14 +31,16 @@ def ex_graph_fig4():
     return G
 
 
-# def ex_graph_fig5():
-#     G = nx.Graph()
-#     G.add_weighted_edges_from([('a', 'b', 9), ('a', 'e', -2),
-#                                ('b', 'c', -6), ('b', 'e', 5), ('b', 'f', -2),
-#                                ('c', 'd', 8), ('c', 'e', 4),
-#                                ('d', 'e', 2), ('d', 'f', -1),
-#                                ('e', 'f', 6)])
-#     return G
+'''
+def ex_graph_fig5():
+    G = nx.Graph()
+    G.add_weighted_edges_from([('a', 'b', 9), ('a', 'e', -2),
+                               ('b', 'c', -6), ('b', 'e', 5), ('b', 'f', -2),
+                               ('c', 'd', 8), ('c', 'e', 4),
+                               ('d', 'e', 2), ('d', 'f', -1),
+                               ('e', 'f', 6)])
+    return G
+'''
 
 
 def test_build_clustering_and_mapping():
@@ -77,6 +79,38 @@ def test_build_clustering_and_mapping():
           n2c_optimal == n2c_rebuilt)
 
 
+def test_build_clustering_from_lists():
+    print("================================")
+    print("test_build_clustering_from_lists")
+    clist = [['h', 'i', 'j'], ['k', 'm'], ['p']]
+    n = len(clist)
+    clustering = ct.build_clustering_from_lists(range(n), clist)
+    print("Returned clustering:")
+    print(clustering)
+    correct = len(clustering) == 3
+    print("Correct number of clusters", correct)
+    correct = set(clist[0]) == clustering[0] and \
+        set(clist[1]) == clustering[1] and \
+        set(clist[2]) == clustering[2]
+    print("Clusters are correct:", correct)
+
+    #  Catching error from repeated entry
+    clist = [['h', 'i', 'j'], ['k', 'm'], ['p', 'p']]
+    n = len(clist)
+    try:
+        clustering = ct.build_clustering_from_lists(range(n), clist)
+    except AssertionError:
+        print("Caught error from having repeated entry in one cluster")
+
+    #  Catching error from intersecting lists
+    clist = [['h', 'i', 'k'], ['k', 'm'], ['p', 'q']]
+    n = len(clist)
+    try:
+        clustering = ct.build_clustering_from_lists(range(n), clist)
+    except AssertionError:
+        print("Caught error from having intersecting lists")    
+
+  
 def test_cluster_scoring_and_weights():
     G = ex_graph_fig1()
 
@@ -92,17 +126,17 @@ def test_cluster_scoring_and_weights():
 
     print("=====================")
     print("Testing clustering_score")
-    """ First clustering:  all together """
+    ''' First clustering:  all together '''
     n2c_single_cluster = {n: 0 for n in G.nodes}
     print('Score with all together should be 21.  Score =',
           ct.clustering_score(G, n2c_single_cluster))
 
-    """ Second clustering:  all separate """
+    ''' Second clustering:  all separate '''
     n2c_all_separate = {n: i for i, n in enumerate(G.nodes)}
     print('Score with all together should be -21.  Score =',
           ct.clustering_score(G, n2c_all_separate))
 
-    """ Third clustering: optimal, by hand """
+    ''' Third clustering: optimal, by hand '''
     n2c_optimal = {'a': 0, 'b': 0, 'd': 0, 'e': 0,
                    'c': 1,
                    'h': 2, 'i': 2,
@@ -242,7 +276,7 @@ def test_replace_clusters():
 
 
 def test_form_connected_cluster_pairs():
-    print("===========================")
+    print("=================================")
     print("test form_connected_cluster_pairs")
     G = ex_graph_fig1()
     n2c = {'a': 0, 'b': 0, 'd': 0, 'e': 0,
@@ -265,9 +299,42 @@ def test_form_connected_cluster_pairs():
     print("expecting: ", [(0, 1), (1, 3), (2, 4), (3, 4)])
 
 
+def test_same_clustering():
+    '''
+    '''
+    clustering0 = {0: {'a', 'b'},
+                   3: {'c'},
+                   4: {'d', 'e'},
+                   6: {'f', 'g', 'h'},
+                   8: {'i', 'j', 'k', 'l', 'm'}}
+    clustering1 = {6: {'d', 'e'},
+                   8: {'c'},
+                   16: {'f', 'g', 'h'},
+                   19: {'i', 'k', 'l', 'm', 'j'},
+                   20: {'b', 'a'}}
+    clustering2 = {6: {'d', 'c', 'e'},
+                   16: {'f', 'g', 'h'},
+                   22: {'i', 'j', 'k', 'l', 'm'},
+                   25: {'b', 'a'}}
+
+    print("====================")
+    print("test_same_clustering")
+    print("first test should generate no output and then return True")
+    print(ct.same_clustering(clustering0, clustering1, True))
+    print("second test should generate no output and then return False")
+    print(ct.same_clustering(clustering0, clustering2, False))
+    print("third test should generate mismatch output and then return False")
+    print("Expected:")
+    print("['c'] not in 2nd")
+    print("['d', 'e'] not in 2nd")
+    print("['c', 'd', 'e'] not in 1st")
+    result = ct.same_clustering(clustering0, clustering2, True)
+    print("It returned", result)
+
+    
 def test_comparisons():
-    """
-    """
+    '''
+    '''
     gt = {0: {'a', 'b'},
           3: {'c'},
           4: {'d', 'e'},
@@ -305,9 +372,11 @@ def test_comparisons():
           "5, 1, 0, 0.00, 0.800")
 
     print("------")
-    print("ct.percent_and_PR")
+    print("ct.pairwise_eval")
+    # result = ct.compare_to_ground_truth(est, est_n2c, gt, gt_n2c)
     result = ct.percent_and_PR(est, est_n2c, gt, gt_n2c)
-    print("Result is [%1.3f, %1.3f, %1.3f]" % tuple(result))
+    print("Result is [%1.3f, %1.3f, %1.3f]"
+          % tuple(result))
     num_clusters = len(est)
     num_correct = 5
     tp, fp, fn = 18, 6, 7
@@ -318,8 +387,8 @@ def test_comparisons():
 
 
 def test_count_equal():
-    """
-    """
+    '''
+    '''
     gt = {0: {'a', 'b'},
           3: {'c'},
           4: {'d', 'e'},
@@ -349,6 +418,7 @@ def test_count_equal():
 
 if __name__ == '__main__':
     test_build_clustering_and_mapping()
+    test_build_clustering_from_lists()
     test_cluster_scoring_and_weights()
     test_has_edges_between()
     test_merge()
@@ -356,4 +426,5 @@ if __name__ == '__main__':
     test_replace_clusters()
     test_form_connected_cluster_pairs()
     test_comparisons()
+    test_same_clustering()
     test_count_equal()

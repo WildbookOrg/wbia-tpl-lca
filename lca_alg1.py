@@ -20,16 +20,16 @@ def best_shift(n0, n1, G, clustering, node2cid, trace_on=False):
     for m in H[n0]:
         w = H[n0][m]['weight']
         if node2cid_H[m] == c0_id:
-            delta_s -= 2 * w
+            delta_s -= 2*w
             frontier.add(m)
         else:
-            delta_s += 2 * w
+            delta_s += 2*w
     shift_set = {n0}
 
     if trace_on:
         print("Initial values:")
 
-    while len(frontier) > 0 and len(shift_set) < len(c0) - 1:
+    while len(frontier) > 0 and len(shift_set) < len(c0)-1:
         if trace_on:
             print("delta_s:", delta_s)
             print("shift_set:", shift_set)
@@ -40,9 +40,9 @@ def best_shift(n0, n1, G, clustering, node2cid, trace_on=False):
             new_delta = delta_s
             for m1 in H[m]:
                 if m1 in c1 or m1 in shift_set:
-                    new_delta += 2 * H[m][m1]['weight']  # 2* since neg -> pos
+                    new_delta += 2*H[m][m1]['weight']  # 2* since neg -> pos
                 else:
-                    new_delta -= 2 * H[m][m1]['weight']  # 2* since pos -> neg
+                    new_delta -= 2*H[m][m1]['weight']  # 2* since pos -> neg
             if trace_on:
                 print('m %s, new_delta %a' % (m, new_delta))
             if new_delta > best_delta:
@@ -75,7 +75,7 @@ def lca_alg1(curr_G, stop_at_two=False, trace_on=False):
         clustering = {0: set(curr_G.nodes())}
         return clustering, 0
 
-    neg_edges, pos_edges = ct.get_weight_lists(curr_G)
+    neg_edges, pos_edges = ct.get_weight_lists(curr_G, sort_positive=True)
     clustering = {c: {n} for c, n in enumerate(sorted(curr_G.nodes()))}
     node2cid = ct.build_node_to_cluster_mapping(clustering)
 
@@ -120,6 +120,7 @@ def lca_alg1(curr_G, stop_at_two=False, trace_on=False):
                 print("Merging disjoint clusters")
             sc_delta = ct.merge_clusters(n0_cid, n1_cid, G_prime, clustering,
                                          node2cid)
+            assert(sc_delta == 0)
             score += sc_delta + wgt  # why might sc_delta be non-zero here???
         else:
             sc_merged = ct.score_delta_after_merge(n0_cid, n1_cid,
@@ -144,7 +145,8 @@ def lca_alg1(curr_G, stop_at_two=False, trace_on=False):
                     print("sc_n0_to_n1=%a, n0_to_move=%a"
                           % (sc_n0_to_n1, n0_to_move))
                 sc_n1_to_n0, n1_to_move = best_shift(n1, n0, G_prime,
-                                                     clustering, node2cid)
+                                                     clustering, node2cid,
+                                                     trace_on=trace_on)
                 sc_n1_to_n0 += wgt
                 if trace_on:
                     print("sc_n1_to_n0=%a, n1_to_move=%a"
@@ -227,7 +229,7 @@ def test_best_shift(trace_on=False):
         print('Test 2 (smaller to larger): success')
 
 
-def run_lca_alg1(G, expected_clustering, msg,
+def test_run_lca_alg1(G, expected_clustering, msg,
                  stop_at_two=False, trace_on=False):
     node2cid = ct.build_node_to_cluster_mapping(expected_clustering)
     expected_score = ct.clustering_score(G, node2cid)
@@ -256,35 +258,35 @@ def test_overall(trace_on=False):
 
     G = nx.Graph()
     expected_clustering = dict()
-    run_lca_alg1(G, expected_clustering,
-                 "lca_alg1 (1) on empty graph:",
-                 trace_on=trace_on)
+    test_run_lca_alg1(G, expected_clustering,
+                      "lca_alg1 (1) on empty graph:",
+                      trace_on=trace_on)
 
     G.add_nodes_from(['a'])
     expected_clustering = {0: {'a'}}
-    run_lca_alg1(G, expected_clustering,
-                 "lca_alg1 (2) on single node graph:",
-                 trace_on=trace_on)
+    test_run_lca_alg1(G, expected_clustering,
+                      "lca_alg1 (2) on single node graph:",
+                      trace_on=trace_on)
 
     G.add_nodes_from(['b'])
     expected_clustering = {0: {'a'}, 1: {'b'}}
-    run_lca_alg1(G, expected_clustering,
-                 "lca_alg1 (3) on disjoint pair graph:",
-                 trace_on=trace_on)
+    test_run_lca_alg1(G, expected_clustering,
+                      "lca_alg1 (3) on disjoint pair graph:",
+                      trace_on=trace_on)
 
     G = nx.Graph()
     G.add_weighted_edges_from([('a', 'b', 4)])
     expected_clustering = {0: {'a', 'b'}}
-    run_lca_alg1(G, expected_clustering,
-                 "lca_alg1 (4) on one edge graph:",
-                 trace_on=trace_on)
+    test_run_lca_alg1(G, expected_clustering,
+                      "lca_alg1 (4) on one edge graph:",
+                      trace_on=trace_on)
 
     G = nx.Graph()
     G.add_weighted_edges_from([('a', 'b', -6)])
     expected_clustering = {0: {'a'}, 1: {'b'}}
-    run_lca_alg1(G, expected_clustering,
-                 "lca_alg1 (5) on one (negative) edge graph:",
-                 trace_on=trace_on)
+    test_run_lca_alg1(G, expected_clustering,
+                      "lca_alg1 (5) on one (negative) edge graph:",
+                      trace_on=trace_on)
 
     G = nx.Graph()   # From Figure 2
     G.add_weighted_edges_from([('a', 'b', 9), ('a', 'e', -2),
@@ -293,9 +295,9 @@ def test_overall(trace_on=False):
                                ('d', 'e', 3), ('d', 'f', -1),
                                ('e', 'f', 6)])
     expected_clustering = {0: {'a', 'b'}, 1: {'c', 'd', 'e', 'f'}}
-    run_lca_alg1(G, expected_clustering,
-                 "lca_alg1 (6) on Figure 2 graph:",
-                 trace_on=trace_on)
+    test_run_lca_alg1(G, expected_clustering,
+                      "lca_alg1 (6) on Figure 2 graph:",
+                      trace_on=trace_on)
 
     G = nx.Graph()  # Three component graph
     G.add_weighted_edges_from([('a', 'b', 1), ('a', 'd', 6),
@@ -307,16 +309,16 @@ def test_overall(trace_on=False):
                                ('d', 'e', 1),
                                ('e', 'f', 1)])
     expected_clustering = {0: {'a', 'd'}, 1: {'b', 'e'}, 2: {'c', 'f'}}
-    run_lca_alg1(G, expected_clustering,
-                 "lca_alg1 (7) on three-component graph:",
-                 trace_on=trace_on)
+    test_run_lca_alg1(G, expected_clustering,
+                      "lca_alg1 (7) on three-component graph:",
+                      trace_on=trace_on)
 
     G = tct.ex_graph_fig1()
     expected_clustering = {0: {'a', 'b', 'd', 'e'}, 1: {'c'},
                            2: {'f', 'g', 'j', 'k'}, 3: {'h', 'i'}}
-    run_lca_alg1(G, expected_clustering,
-                 "lca_alg1 (8) on Figure 1 graph:",
-                 trace_on=trace_on)
+    test_run_lca_alg1(G, expected_clustering,
+                      "lca_alg1 (8) on Figure 1 graph:",
+                      trace_on=trace_on)
 
 
 def test_no_final_merge(trace_on=False):
@@ -329,14 +331,14 @@ def test_no_final_merge(trace_on=False):
                                ('b', 'c', 6), ('b', 'd', 3), ('b', 'e', 1),
                                ('c', 'f', 1), ('d', 'e', 4), ('e', 'f', 5)])
     expected_clustering = {0: {'a', 'b', 'c'}, 1: {'d', 'e', 'f'}}
-    run_lca_alg1(G, expected_clustering,
-                 "(1) No final merge allowed:",
-                 stop_at_two=True, trace_on=trace_on)
+    test_run_lca_alg1(G, expected_clustering,
+                      "(1) No final merge allowed:",
+                      stop_at_two=True, trace_on=trace_on)
 
     expected_clustering = {0: {'a', 'b', 'c', 'd', 'e', 'f'}}
-    run_lca_alg1(G, expected_clustering,
-                 "(2) Final merge allowed:",
-                 stop_at_two=False, trace_on=trace_on)
+    test_run_lca_alg1(G, expected_clustering,
+                      "(2) Final merge allowed:",
+                      stop_at_two=False, trace_on=trace_on)
 
 
 if __name__ == '__main__':

@@ -2,8 +2,7 @@
 import networkx as nx
 import cluster_tools as ct
 
-"""
-Given a simulator, a lower threshold and an upper threshold.
+'''Given a simulator, a lower threshold and an upper threshold.
 
 0. Copy the nodes of the graph from the simulator into the new graph.
 
@@ -15,10 +14,10 @@ b. if its weight is above the upper threshold, keep it
 
 c. otherwise, ask the human verifier to make a decision about it, and
    insert into the new graph if it is positive
-"""
+'''
 
 
-class BaselineGraph(object):
+class baseline(object):
 
     def __init__(self, G, human_request, human_result):
         self.G = G
@@ -50,7 +49,7 @@ class BaselineGraph(object):
     def evaluate_baseline(self, sim, out_prefix, n_min, n_max, n_inc=10):
         gt_results = []
         r_results = []
-        for n in range(n_min, n_max + 1, n_inc):
+        for n in range(n_min, n_max+1, n_inc):
             clustering, node2cid = self.generate_clustering(n)
             result = sim.incremental_stats(n, clustering, node2cid,
                                            sim.gt_clustering, sim.gt_node2cid)
@@ -63,13 +62,14 @@ class BaselineGraph(object):
         sim.plot_convergence(gt_results, out_name)
         out_name = out_prefix + "_reach_gt.pdf"
         sim.plot_convergence(r_results, out_name)
-        # sim.csv_output(out_prefix + "_gt.csv", sim_i.gt_results)
-        # sim.csv_output(out_prefix + "_r.csv", sim_i.r_results)
-
-        # ##  ADD CSV OUTPUT BOTH HERE AND IN SIMULATOR.
+        sim.csv_output(out_prefix + "_gt.csv", sim_i.gt_results)
+        sim.csv_output(out_prefix + "_r.csv", sim_i.r_results)
 
 
-"""
+        ###  ADD CSV OUTPUT BOTH HERE AND IN SIMULATOR.
+
+
+""" 
 
 1. For each edge, generate the simulation result as though it is
 human review and add to a dictionary.
@@ -86,8 +86,7 @@ structure.  Add to the accumulated results.
 
 """
 
-
-class BaselineSimulator(object):
+class baseline(object):
 
     def __init__(self, sim):
         self.sim = sim
@@ -98,7 +97,7 @@ class BaselineSimulator(object):
         edges = [(min(e[0], e[1]), max(e[0], e[1]), e[2]) for e in edges]
         self.edges_by_abs_wgt = sorted(edges, key=lambda e: abs(e[2]))
         # print("edges_by_abs_wgt:", self.edges_by_abs_wgt)
-        prs = [(min(e[0], e[1]), max(e[0], e[1])) for e in edges]
+        prs = [(min(e[0],e[1]), max(e[0], e[1])) for e in edges]
         self.dict_human = {pr: sim.gen_human_wgt(pr) for pr in prs}
         # print("dict_human:", self.dict_human)
         self.gt_results = []
@@ -128,7 +127,7 @@ class BaselineSimulator(object):
         return clustering, node2cid
 
     def all_iterations(self, n_min, n_max, n_inc):
-        for n in range(n_min, n_max + 1, n_inc):
+        for n in range(n_min, n_max+1, n_inc):
             clustering, node2cid = self.one_iteration(n)
             result = self.sim.incremental_stats(n, clustering, node2cid,
                                                 self.sim.gt_clustering,
@@ -144,3 +143,4 @@ class BaselineSimulator(object):
         self.sim.plot_convergence(self.gt_results, out_name)
         out_name = out_prefix + "_reach_gt.pdf"
         self.sim.plot_convergence(self.r_results, out_name)
+
