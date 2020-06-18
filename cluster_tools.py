@@ -1,4 +1,4 @@
-
+# -*- coding: utf-8 -*-
 def build_clustering(node2cluster):
     '''
     node2cluster: mapping from node id to cluster id
@@ -20,11 +20,11 @@ def build_clustering_from_lists(cids, cluster_list):
     list and only once in that list. An assert failure occurs if
     either of these conditions is violated.
     """
-    assert(len(cids) == len(cluster_list))
+    assert len(cids) == len(cluster_list)
     num_nodes = sum([len(c) for c in cluster_list])
     as_sets = [set(c) for c in cluster_list]
     num_unique = len(set.union(*as_sets))
-    assert(num_nodes == num_unique)
+    assert num_nodes == num_unique
     clustering = {id: c for id, c in zip(cids, as_sets)}
     return clustering
 
@@ -57,7 +57,7 @@ def cid_list_score(G, clustering, node2cid, cid_list):
     for cid0 in cid_list:
         for n0 in clustering[cid0]:
             for n1 in G[n0]:
-                if n0 >= n1: # only count when n0 < n1
+                if n0 >= n1:  # only count when n0 < n1
                     continue
                 cid_n1 = node2cid[n1]
                 if cid0 == cid_n1:
@@ -71,8 +71,14 @@ def clustering_score(G, node2cid):
     '''
     Return the objective function score for the entire graph.
     '''
-    score = sum([sign_from_clusters(n1, n2, node2cid) * G[n1][n2]['weight']
-                 for n1 in G for n2 in G[n1] if n1 < n2])
+    score = sum(
+        [
+            sign_from_clusters(n1, n2, node2cid) * G[n1][n2]['weight']
+            for n1 in G
+            for n2 in G[n1]
+            if n1 < n2
+        ]
+    )
     return score
 
 
@@ -83,8 +89,7 @@ def get_weight_lists(G, sort_positive=True):
     The negative edge list is unordered.
     The positive edge list is in decreasing order if requested.
     '''
-    weight_list = [(n1, n2, G[n1][n2]['weight'])
-                   for n1 in G for n2 in G[n1] if n1 < n2]
+    weight_list = [(n1, n2, G[n1][n2]['weight']) for n1 in G for n2 in G[n1] if n1 < n2]
     negatives = [t for t in weight_list if t[2] < 0]
     positives = [t for t in weight_list if t[2] >= 0]
     if sort_positive:
@@ -144,7 +149,7 @@ def merge_clusters(cid0, cid1, G, clustering, node2cid):
         cid_small, cid_large = cid1, cid0
 
     adjoining_wgts = weights_between(c_small, c_large, G)
-    delta_score = 2*sum(adjoining_wgts)
+    delta_score = 2 * sum(adjoining_wgts)
     c_large |= c_small
     for n in c_small:
         node2cid[n] = cid_large
@@ -165,19 +170,18 @@ def score_delta_after_merge(cid0, cid1, G, clustering):
         c_small, c_large = cluster1, cluster0
 
     adjoining_wgts = weights_between(c_small, c_large, G)
-    delta_score = 2*sum(adjoining_wgts)
+    delta_score = 2 * sum(adjoining_wgts)
     return delta_score
 
 
-def shift_between_clusters(cid0, nodes_to_move, cid1,
-                           clustering, node2cid):
+def shift_between_clusters(cid0, nodes_to_move, cid1, clustering, node2cid):
     '''
     Move nodes from cluster 0 to cluster 1, changing the clustering
     and the node-to-cluster mapping.  This move must be such that at
     least one node is left in cluster 0.
     '''
     cluster0, cluster1 = clustering[cid0], clustering[cid1]
-    assert(len(nodes_to_move) < len(cluster0))
+    assert len(nodes_to_move) < len(cluster0)
 
     for n in nodes_to_move:
         node2cid[n] = cid1
@@ -216,23 +220,22 @@ def print_structures(G, clustering, node2cid, score):
     '''
     Output the graph, the clusters, and the node-to-cluster mapping.
     '''
-    print("Graph:")
+    print('Graph:')
     for n in sorted(G.nodes()):
-        print("    %a: " % n, end="")
+        print('    %a: ' % n, end='')
         for m in sorted(G[n]):
-            print(" %a/%a" % (m, G[n][m]['weight']), end="")
+            print(' %a/%a' % (m, G[n][m]['weight']), end='')
         print()
-    print("Clusters:")
+    print('Clusters:')
     for c in sorted(clustering):
-        print("    %d:" % c, end="")
+        print('    %d:' % c, end='')
         for n in sorted(clustering[c]):
-            print(" %a" % n, end="")
+            print(' %a' % n, end='')
         print()
-    print("Node to cluster:")
+    print('Node to cluster:')
     for n in sorted(G.nodes()):
-        print("    %a: %d " % (n, node2cid[n]))
-    print("input score %a, actual score %a" %
-          (score, clustering_score(G, node2cid)))
+        print('    %a: %d ' % (n, node2cid[n]))
+    print('input score %a, actual score %a' % (score, clustering_score(G, node2cid)))
 
 
 def same_clustering(clustering0, clustering1, output_differences=False):
@@ -245,20 +248,22 @@ def same_clustering(clustering0, clustering1, output_differences=False):
     if len(clustering0) != len(clustering1):
         same = False
         if output_differences:
-            print("clustering lengths are different %d vs. %d"
-                  % (len(clustering0), len(clustering1)))
+            print(
+                'clustering lengths are different %d vs. %d'
+                % (len(clustering0), len(clustering1))
+            )
 
     for c in clustering0.values():
         if c not in clustering1.values():
             same = False
             if output_differences:
-                print("cluster", sorted(c), "not in 2nd clustering")
+                print('cluster', sorted(c), 'not in 2nd clustering')
 
     for c in clustering1.values():
         if c not in clustering0.values():
             same = False
             if output_differences:
-                print("cluster", sorted(c), "not in 1st clustering")
+                print('cluster', sorted(c), 'not in 1st clustering')
 
     return same
 
@@ -295,15 +300,19 @@ def compare_by_lengths(est, est_n2c, gt):
         else:
             gt_iou_dict[gt_lng] = [best_iou]
 
-    print("cluster length, number of clusters, number of exact matches, "
-          "fraction exact, average IOU")
+    print(
+        'cluster length, number of clusters, number of exact matches, '
+        'fraction exact, average IOU'
+    )
     for gt_lng in sorted(gt_iou_dict.keys()):
         val = gt_iou_dict[gt_lng]
-        num_exact = val.count(1)   # how many have exact overlap
+        num_exact = val.count(1)  # how many have exact overlap
         frac_exact = num_exact / len(val)
         avg_iou = sum(val) / len(val)
-        print("%d, %d, %d, %1.2f, %1.3f"
-              % (gt_lng, len(val), num_exact, frac_exact, avg_iou))
+        print(
+            '%d, %d, %d, %1.2f, %1.3f'
+            % (gt_lng, len(val), num_exact, frac_exact, avg_iou)
+        )
 
 
 def count_equal_clustering(from_clustering, to_clustering, to_n2c):
@@ -312,8 +321,8 @@ def count_equal_clustering(from_clustering, to_clustering, to_n2c):
     '''
     n = 0
     for from_c in from_clustering.values():
-        node = from_c.pop()   # ugly, but need to get a node from the
-        from_c.add(node)      # cluster set and put it back
+        node = from_c.pop()  # ugly, but need to get a node from the
+        from_c.add(node)  # cluster set and put it back
         to_c = to_clustering[to_n2c[node]]
 
         if from_c == to_c:
@@ -331,7 +340,7 @@ def precision_recall(est, est_n2c, gt, gt_n2c):
     for est_c in est.values():
         est_c_list = list(est_c)
         for i, ni in enumerate(est_c_list):
-            for j in range(i+1, len(est_c_list)):
+            for j in range(i + 1, len(est_c_list)):
                 nj = est_c_list[j]
                 if gt_n2c[ni] == gt_n2c[nj]:
                     tp += 1
@@ -343,10 +352,10 @@ def precision_recall(est, est_n2c, gt, gt_n2c):
     cluster is a FN
     '''
     fn = 0
-    for gt_c in gt.values():   # check: is this a list?  a set?
+    for gt_c in gt.values():  # check: is this a list?  a set?
         gt_c_list = list(gt_c)
         for i, ni in enumerate(gt_c_list):
-            for j in range(i+1, len(gt_c_list)):
+            for j in range(i + 1, len(gt_c_list)):
                 nj = gt_c_list[j]
                 if est_n2c[ni] != est_n2c[nj]:
                     fn += 1
@@ -360,4 +369,4 @@ def percent_and_PR(est, est_n2c, gt, gt_n2c):
     num_eq = count_equal_clustering(est, gt, gt_n2c)
     pr, rec = precision_recall(est, est_n2c, gt, gt_n2c)
     lng = len(est)
-    return (num_eq/lng, pr, rec)
+    return (num_eq / lng, pr, rec)

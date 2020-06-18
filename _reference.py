@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function
 from ibeis.control import controller_inject
 from ibeis.constants import IMAGE_TABLE, ANNOTATION_TABLE
@@ -9,6 +10,7 @@ import vtool as vt
 import ibeis
 import tqdm
 import os
+
 (print, rrr, profile) = ut.inject2(__name__)
 
 
@@ -218,7 +220,7 @@ _, register_ibs_method = controller_inject.make_ibs_register_decorator(__name__)
 # original request metadata, and retrieve any results.  The job engine supports
 # automatic callbacks with a specified URL and HTTP method when the job is
 # complete.
-register_api   = controller_inject.get_ibeis_flask_api(__name__)
+register_api = controller_inject.get_ibeis_flask_api(__name__)
 register_route = controller_inject.get_ibeis_flask_route(__name__)
 
 
@@ -580,7 +582,7 @@ def ibeis_lca_hello_world(ibs):
         >>> ibs = ibeis.opendb(dbdir=dbdir)
         >>> ut.embed()
     """
-    args = (ibs, )
+    args = (ibs,)
     resp = '[ibeis_lca] hello world with IBEIS controller %r' % args
     return resp
 
@@ -604,7 +606,7 @@ def ibeis_lca_file_download(file_url):
         >>> # ENABLE_DOCTEST
         >>> from ibeis_lca._plugin import *  # NOQA
         >>> import utool as ut
-        >>> file_url = 'https://cthulhu.dyn.wildme.io/public/data/lena.png'
+        >>> file_url = 'https://wildbookiarepository.azureedge.net/data/lena.png'
         >>> file_filepath = ibeis_lca_file_download(file_url)
         >>> file_bytes = open(file_filepath, 'rb').read()
         >>> file_hash_content = ut.hash_data(file_bytes)
@@ -615,7 +617,7 @@ def ibeis_lca_file_download(file_url):
         >>> # ENABLE_DOCTEST
         >>> from ibeis_lca._plugin import *  # NOQA
         >>> import utool as ut
-        >>> file_url = 'https://cthulhu.dyn.wildme.io/public/data/lena.png'
+        >>> file_url = 'https://wildbookiarepository.azureedge.net/data/lena.png'
         >>> file_filepath = ibeis_lca_file_download(file_url)
         >>> # Force a deletion event on this file to force a re-download
         >>> ut.delete(file_filepath)
@@ -640,10 +642,10 @@ def ibeis_lca_file_download(file_url):
 
     # ut.Timer() is a handy context that allows for you to quickly get the run-time
     # of the code block under its indentation.
-    print('Download / verification tool %0.02f seconds' % (timer.ellapsed, ))
+    print('Download / verification tool %0.02f seconds' % (timer.ellapsed,))
 
     # Ensure that the image exists locally
-    print('File located at: %r' % (file_filepath, ))
+    print('File located at: %r' % (file_filepath,))
     assert os.path.exists(file_filepath)
 
     # Return the download local file's absolute path
@@ -675,19 +677,23 @@ class IdentificationExampleImageHashConfig(dt.Config):  # NOQA
         >>> print(result)
         IdentificationExampleImageHash(hash_algorithm=sha256,hash_rounds=100,hash_salt=b'test')
     """
+
     _param_info_list = [
-        ut.ParamInfo('hash_algorithm',  default='sha1',   valid_values=['sha1', 'sha256']),
-        ut.ParamInfo('hash_rounds',     default=int(1e6), type_=int),
-        ut.ParamInfo('hash_salt',       default=None,     hideif=None),
+        ut.ParamInfo('hash_algorithm', default='sha1', valid_values=['sha1', 'sha256']),
+        ut.ParamInfo('hash_rounds', default=int(1e6), type_=int),
+        ut.ParamInfo('hash_salt', default=None, hideif=None),
     ]
 
 
 @register_preproc_image(
-    tablename='IdentificationExampleImageHash', parents=[IMAGE_TABLE],
-    colnames=['hash', 'salt'], coltypes=[str, str],
+    tablename='IdentificationExampleImageHash',
+    parents=[IMAGE_TABLE],
+    colnames=['hash', 'salt'],
+    coltypes=[str, str],
     configclass=IdentificationExampleImageHashConfig,
     fname='identification_example',
-    chunksize=4)
+    chunksize=4,
+)
 def ibeis_lca_image_hash(depc, gid_list, config):
     r"""
     A toy example of creating a crypto-graphically secure (salted) hash of an on-disk image.
@@ -779,8 +785,8 @@ def ibeis_lca_image_hash(depc, gid_list, config):
     # Parameter validation should be done with the Config class for this
     # function, no need to check here.  Simply unpack and rename as needed
     algorithm = config['hash_algorithm']
-    rounds    = config['hash_rounds']
-    salt      = config['hash_salt']
+    rounds = config['hash_rounds']
+    salt = config['hash_salt']
     rounds = int(rounds)
 
     # Load the images and compute the PBKDF2 (Password-Based Key Derivation Function 2)
@@ -796,7 +802,10 @@ def ibeis_lca_image_hash(depc, gid_list, config):
         # Convert key to hex data
         hash_ = binascii.hexlify(derived_key)
         # Return the 2-tuple of the same size
-        yield (hash_, salt_, )
+        yield (
+            hash_,
+            salt_,
+        )
 
 
 class IdentificationExampleImageHashSumConfig(dt.Config):  # NOQA
@@ -812,17 +821,21 @@ class IdentificationExampleImageHashSumConfig(dt.Config):  # NOQA
         >>> print(result)
         IdentificationExampleImageHashSumConfig()
     """
+
     _param_info_list = [
         ut.ParamInfo('hash_sum_mod', default=None, hideif=None),
     ]
 
 
 @register_preproc_image(
-    tablename='IdentificationExampleImageHashSum', parents=['IdentificationExampleImageHash'],
-    colnames=['sum'], coltypes=[int],
+    tablename='IdentificationExampleImageHashSum',
+    parents=['IdentificationExampleImageHash'],
+    colnames=['sum'],
+    coltypes=[int],
     configclass=IdentificationExampleImageHashSumConfig,
     fname='identification_example',
-    chunksize=100)
+    chunksize=100,
+)
 def ibeis_lca_image_hash_sum(depc, image_hash_rowid_list, config):
     r"""
     A toy example of creating a sum for a crypto-graphically secure (salted) hash,
@@ -881,7 +894,9 @@ def ibeis_lca_image_hash_sum(depc, image_hash_rowid_list, config):
     # while we always pass a gid_list into depc.get() we will always receive the
     # parent rowids in this function.  We want to ask our depc for the values
     # for the correct table and using the native rowids, thus we use depc.get_native().
-    hash_list = depc.get_native('IdentificationExampleImageHash', image_hash_rowid_list, 'hash')
+    hash_list = depc.get_native(
+        'IdentificationExampleImageHash', image_hash_rowid_list, 'hash'
+    )
 
     for hash_ in hash_list:
         # Keep a running total
@@ -895,8 +910,7 @@ def ibeis_lca_image_hash_sum(depc, image_hash_rowid_list, config):
             if modulus is not None:
                 total %= modulus
 
-        yield (total, )
-
+        yield (total,)
 
 
 class IdentificationExampleImageHashProdConfig(dt.Config):  # NOQA
@@ -912,17 +926,21 @@ class IdentificationExampleImageHashProdConfig(dt.Config):  # NOQA
         >>> print(result)
         IdentificationExampleImageHashProd(hash_prod_mod=1000)
     """
+
     _param_info_list = [
         ut.ParamInfo('hash_prod_mod', default=1000),
     ]
 
 
 @register_preproc_image(
-    tablename='IdentificationExampleImageHashProd', parents=['IdentificationExampleImageHash'],
-    colnames=['product'], coltypes=[int],
+    tablename='IdentificationExampleImageHashProd',
+    parents=['IdentificationExampleImageHash'],
+    colnames=['product'],
+    coltypes=[int],
     configclass=IdentificationExampleImageHashProdConfig,
     fname='identification_example',
-    chunksize=100)
+    chunksize=100,
+)
 def ibeis_lca_image_hash_prod(depc, image_hash_rowid_list, config):
     r"""
     A toy example of creating a product for a crypto-graphically secure (salted) hash,
@@ -961,9 +979,13 @@ def ibeis_lca_image_hash_prod(depc, image_hash_rowid_list, config):
     """
     # Get the configuration
     modulus = config['hash_prod_mod']
-    assert -1e7 <= modulus and modulus <= 1e7, 'modulus should be relatively small (within a million of zero)'
+    assert (
+        -1e7 <= modulus and modulus <= 1e7
+    ), 'modulus should be relatively small (within a million of zero)'
 
-    hash_list = depc.get_native('IdentificationExampleImageHash', image_hash_rowid_list, 'hash')
+    hash_list = depc.get_native(
+        'IdentificationExampleImageHash', image_hash_rowid_list, 'hash'
+    )
 
     for hash_ in hash_list:
         # Keep a running total
@@ -984,7 +1006,7 @@ def ibeis_lca_image_hash_prod(depc, image_hash_rowid_list, config):
             # Get out of here, zeros... you're doing this to yourselves
             total += 1
 
-        yield (total, )
+        yield (total,)
 
 
 class IdentificationExampleOracleRequest(dt.base.VsOneSimilarityRequest):  # NOQA
@@ -1044,8 +1066,9 @@ class IdentificationExampleOracleRequest(dt.base.VsOneSimilarityRequest):  # NOQ
         # HACK FOR WEB VIEWER
         overlay = kwargs.get('draw_fmatches')
         # Compute the chips for each aid of the features (if any)
-        chips = request.get_fmatch_overlayed_chip([cm.qaid, aid], overlay=overlay,
-                                                  config=request.config)
+        chips = request.get_fmatch_overlayed_chip(
+            [cm.qaid, aid], overlay=overlay, config=request.config
+        )
         # Stack the images into a single image canvas
         out_img = vt.stack_image_list(chips)
 
@@ -1054,12 +1077,12 @@ class IdentificationExampleOracleRequest(dt.base.VsOneSimilarityRequest):  # NOQ
 
     def _get_match_results(request, depc, qaid_list, daid_list, score_list, config):
         r""" converts table results into format for ipython notebook """
-        #qaid_list, daid_list = request.get_parent_rowids()
-        #score_list = request.score_list
-        #config = request.config
+        # qaid_list, daid_list = request.get_parent_rowids()
+        # score_list = request.score_list
+        # config = request.config
 
         unique_qaids, groupxs = ut.group_indices(qaid_list)
-        #grouped_qaids_list = ut.apply_grouping(qaid_list, groupxs)
+        # grouped_qaids_list = ut.apply_grouping(qaid_list, groupxs)
         grouped_daids = ut.apply_grouping(daid_list, groupxs)
         grouped_scores = ut.apply_grouping(score_list, groupxs)
 
@@ -1076,7 +1099,7 @@ class IdentificationExampleOracleRequest(dt.base.VsOneSimilarityRequest):  # NOQ
             daid_list_ = np.array(daids)
             dnid_list_ = np.array(dnids)
 
-            is_valid = (daid_list_ != qaid)
+            is_valid = daid_list_ != qaid
             daid_list_ = daid_list_.compress(is_valid)
             dnid_list_ = dnid_list_.compress(is_valid)
             annot_scores = annot_scores.compress(is_valid)
@@ -1090,7 +1113,9 @@ class IdentificationExampleOracleRequest(dt.base.VsOneSimilarityRequest):  # NOQ
             match_result._update_daid_index()
             match_result._update_unique_nid_index()
 
-            grouped_annot_scores = vt.apply_grouping(annot_scores, match_result.name_groupxs)
+            grouped_annot_scores = vt.apply_grouping(
+                annot_scores, match_result.name_groupxs
+            )
             name_scores = np.array([np.sum(dists) for dists in grouped_annot_scores])
             match_result.set_cannonical_name_score(annot_scores, name_scores)
             yield match_result
@@ -1102,8 +1127,9 @@ class IdentificationExampleOracleRequest(dt.base.VsOneSimilarityRequest):  # NOQ
         # retrieve the matching score results
         score_list = ut.take_column(result_list, 0)
         # Repackage the results by re-balancing the scores as nessecary
-        cm_iter = request._get_match_results(request.depc, qaid_list, daid_list,
-                                             score_list, request.config)
+        cm_iter = request._get_match_results(
+            request.depc, qaid_list, daid_list, score_list, request.config
+        )
         # Resolve the iterator here, computing the ChipMatch list on demand
         cm_list = list(cm_iter)
         return cm_list
@@ -1113,16 +1139,15 @@ class IdentificationExampleOracleRequest(dt.base.VsOneSimilarityRequest):  # NOQ
         kwargs['use_cache'] = False
 
         # Compute the ID matching results using this algorithm
-        result_list = super(IdentificationExampleOracleRequest, request).execute(*args, **kwargs)
+        result_list = super(IdentificationExampleOracleRequest, request).execute(
+            *args, **kwargs
+        )
 
         # Check if the query aids (qaids) has been specified
         # If so, only return those results and filter the output
         qaids = kwargs.pop('qaids', None)
         if qaids is not None:
-            result_list = [
-                result for result in result_list
-                if result.qaid in qaids
-            ]
+            result_list = [result for result in result_list if result.qaid in qaids]
         return result_list
 
 
@@ -1139,6 +1164,7 @@ class IdentificationExampleOracleConfig(dt.Config):  # NOQA
         >>> print(result)
         IdentificationExampleOracle(oracle_fallibility=0.1)
     """
+
     def get_param_info_list(self):
         return [
             ut.ParamInfo('oracle_fallibility', 0.1),
@@ -1146,12 +1172,15 @@ class IdentificationExampleOracleConfig(dt.Config):  # NOQA
 
 
 @register_preproc_annot(
-    tablename='IdentificationExampleOracle', parents=[ANNOTATION_TABLE, ANNOTATION_TABLE],
-    colnames=['score'], coltypes=[float],
+    tablename='IdentificationExampleOracle',
+    parents=[ANNOTATION_TABLE, ANNOTATION_TABLE],
+    colnames=['score'],
+    coltypes=[float],
     configclass=IdentificationExampleOracleConfig,
     requestclass=IdentificationExampleOracleRequest,
     fname='identification_example',
-    chunksize=None)
+    chunksize=None,
+)
 def ibeis_lca_oracle(depc, qaid_list, daid_list, config):
     r"""
     This function is called automatically by the IdentificationExampleOracleRequest
@@ -1303,6 +1332,7 @@ def ibeis_lca_oracle(depc, qaid_list, daid_list, config):
         >>> result_dict = ibs.query_chips_graph(qaid_list, daid_list, query_config_dict=query_config_dict)
     """
     import random
+
     ibs = depc.controller
 
     # Error rate
@@ -1323,7 +1353,10 @@ def ibeis_lca_oracle(depc, qaid_list, daid_list, config):
     original_qnid_dict = dict(zip(original_qaid_list, original_qnid_list))
     original_dnid_dict = dict(zip(original_daid_list, original_dnid_list))
 
-    args = (len(original_qaid_list), len(original_daid_list), )
+    args = (
+        len(original_qaid_list),
+        len(original_daid_list),
+    )
     print('Running ID on %d query annotations against %d database annotations' % args)
 
     pair_list = list(zip(qaid_list, daid_list))
@@ -1343,7 +1376,7 @@ def ibeis_lca_oracle(depc, qaid_list, daid_list, config):
         # 1.0 for a prediction of same, 0.0 for different
         score = 1.0 if result else 0.0
 
-        yield (score, )
+        yield (score,)
 
 
 if __name__ == '__main__':
@@ -1352,6 +1385,8 @@ if __name__ == '__main__':
         python -m ibeis_lca._plugin --allexamples
     """
     import multiprocessing
+
     multiprocessing.freeze_support()  # for win32
     import utool as ut  # NOQA
+
     ut.doctest_funcs()

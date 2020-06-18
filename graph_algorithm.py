@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import datetime as dt
 import networkx as nx
 
@@ -14,7 +15,7 @@ import weight_manager as wm
 '''
 Construction:
 
-1. List of weighted edges, each of which is a 4-tuple with 
+1. List of weighted edges, each of which is a 4-tuple with
    . node_id0,
    . node_id1,
    . weight,
@@ -106,7 +107,7 @@ Returns: a 3-tuple containing the following
 . iter_num: the ending iteration number.  This allows the iteration
             numbering to continue from where it left off in the
             next call to run_main_loop
-. converged: boolean that will be true if the algorithm converged 
+. converged: boolean that will be true if the algorithm converged
 
 '''
 
@@ -156,7 +157,7 @@ Data structures:
 2. weight_mgr: the object that manages the interface to the
 augmentation callbacks, including choosing the appropriate callback.
 The rest of the code knows nothing about the choice of augmentation
-methods. 
+methods.
 
 3. clustering: cid -> set of nodes; each node is in exactly one set
 
@@ -196,55 +197,66 @@ logger = logging.getLogger()
 def default_params():
     min_delta = -10  # must be negative
     min_delta_ratio = 8  # must be greater than one. not an important constant
-    p = {'prob_human_correct': 0.97,
-         'max_edge_weight': 999,
-         'min_delta_score_converge': min_delta,
-         'min_delta_stability_ratio': min_delta_ratio,
-         'min_delta_score_stability': min_delta / min_delta_ratio,
-         'num_per_augmentation': 2,
-         'tries_before_edge_done': 4,
-         'log_level': logging.INFO,
-         'draw_iterations': False,
-         'drawing_prefix': 'default_prefix'}
+    p = {
+        'prob_human_correct': 0.97,
+        'max_edge_weight': 999,
+        'min_delta_score_converge': min_delta,
+        'min_delta_stability_ratio': min_delta_ratio,
+        'min_delta_score_stability': min_delta / min_delta_ratio,
+        'num_per_augmentation': 2,
+        'tries_before_edge_done': 4,
+        'log_level': logging.INFO,
+        'draw_iterations': False,
+        'drawing_prefix': 'default_prefix',
+    }
     return p
 
 
 class graph_algorithm(object):
-    def __init__(self, edges, clusters, aug_names, params, aug_request_cb,
-                 aug_result_cb, log_full_path):
+    def __init__(
+        self,
+        edges,
+        clusters,
+        aug_names,
+        params,
+        aug_request_cb,
+        aug_result_cb,
+        log_full_path,
+    ):
         self.params = params
-        log_format = "%(levelname)-6s [%(filename)18s:%(lineno)3d] %(message)s"
-        logging.basicConfig(filename=log_full_path,
-                            level=params["log_level"],
-                            format=log_format)
-        logger.info("======================================")
-        logger.info("Construction of graph_algorithm object")
-        logger.info(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-        logger.info("Parameters dictionary")
+        log_format = '%(levelname)-6s [%(filename)18s:%(lineno)3d] %(message)s'
+        logging.basicConfig(
+            filename=log_full_path, level=params['log_level'], format=log_format
+        )
+        logger.info('======================================')
+        logger.info('Construction of graph_algorithm object')
+        logger.info(dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        logger.info('Parameters dictionary')
         for k, v in self.params.items():
-            logger.info("%a: %a" % (k, v))
-        self.weight_mgr = wm.weight_manager(aug_names, params, aug_request_cb,
-                                            aug_result_cb)
+            logger.info('%a: %a' % (k, v))
+        self.weight_mgr = wm.weight_manager(
+            aug_names, params, aug_request_cb, aug_result_cb
+        )
         self.G = nx.Graph()
         weighted_edges = self.weight_mgr.get_initial_edges(edges)
         self.G.add_weighted_edges_from(weighted_edges)
-        logger.info("Initial graph has %d nodes and %d edges" %
-                    (len(self.G.nodes), len(self.G.edges)))
+        logger.info(
+            'Initial graph has %d nodes and %d edges'
+            % (len(self.G.nodes), len(self.G.edges))
+        )
         self._next_cid = 0
         self.build_clustering(clusters)
         self.node2cid = ct.build_node_to_cluster_mapping(self.clustering)
         self.score = ct.clustering_score(self.G, self.node2cid)
 
-        self.phase = "scoring"
+        self.phase = 'scoring'
         self.cid2lca = cid_to_lca.CID2LCA()
         self.queues = lca_queues.lca_queues()
-        self.new_lcas(self.clustering.keys(), use_pairs=True,
-                      use_singles=False)
+        self.new_lcas(self.clustering.keys(), use_pairs=True, use_singles=False)
         if self.queues.num_lcas() == 0:
             logger.info("Phase shift immediately into 'splitting'")
-            self.phase = "splitting"
-            self.new_lcas(self.clustering.keys(), use_pairs=False,
-                          use_singles=True)
+            self.phase = 'splitting'
+            self.new_lcas(self.clustering.keys(), use_pairs=False, use_singles=True)
         self.queues.info_long(max_entries=10)
 
         self.num_verifier_results = 0
@@ -266,7 +278,7 @@ class graph_algorithm(object):
         self.trace_start_human_gt_cb = None
         self.trace_iter_compare_to_gt_cb = None
         self.should_stop_cb = None
-        logger.info("Completed graph algorithm initialization")
+        logger.info('Completed graph algorithm initialization')
 
     def set_remove_nodes_cb(self, cb):
         '''
@@ -310,17 +322,17 @@ class graph_algorithm(object):
             # Form an initial clustering where every node starts in its own
             # singleton cluster.
             new_cids = self.generate_new_cids(len(self.G))
-            self.clustering = {cid: {n}
-                               for cid, n in zip(new_cids, self.G.nodes)}
-            logger.info("Initial clusters are singletons with length %d"
-                        ", formed from the graph nodes" % len(self.clustering))
+            self.clustering = {cid: {n} for cid, n in zip(new_cids, self.G.nodes)}
+            logger.info(
+                'Initial clusters are singletons with length %d'
+                ', formed from the graph nodes' % len(self.clustering)
+            )
         else:
             # Form the initial clustering from a previous clustering,
             # and then add clusters from graph nodes that may not be
             # in any clusters.
             new_cids = self.generate_new_cids(len(cluster_list))
-            self.clustering = ct.build_clustering_from_lists(new_cids,
-                                                             cluster_list)
+            self.clustering = ct.build_clustering_from_lists(new_cids, cluster_list)
             num_previous = len(new_cids)
 
             graph_nodes = set(self.G.nodes())
@@ -333,11 +345,11 @@ class graph_algorithm(object):
 
             missing_nodes = cluster_nodes - graph_nodes
             self.G.add_nodes_from(missing_nodes)
-            logger.info("Initial clusters include %d from previous clusters, "
-                        "plus %d new clusters from singletons" %
-                        (num_previous, len(new_cids)))
-            logger.info("Added %d missing nodes to the graph" %
-                        len(missing_nodes))
+            logger.info(
+                'Initial clusters include %d from previous clusters, '
+                'plus %d new clusters from singletons' % (num_previous, len(new_cids))
+            )
+            logger.info('Added %d missing nodes to the graph' % len(missing_nodes))
 
     def which_lca_types(self):
         from_pairs = self.phase in ['scoring', 'stability']
@@ -353,11 +365,11 @@ class graph_algorithm(object):
         #  individuals or both, depending on the phase of the computation.
         tuples = []
         if from_pairs:
-            tuples = ct.form_connected_cluster_pairs(self.G, self.clustering,
-                                                     self.node2cid, new_cids)
+            tuples = ct.form_connected_cluster_pairs(
+                self.G, self.clustering, self.node2cid, new_cids
+            )
         if from_singles:
-            tuples.extend([(cid,) for cid in new_cids
-                           if len(self.clustering[cid]) > 1])
+            tuples.extend([(cid,) for cid in new_cids if len(self.clustering[cid]) > 1])
         return tuples
 
     def create_lcas_from_tuples(self, tuples):
@@ -373,24 +385,29 @@ class graph_algorithm(object):
             else:
                 nodes = self.clustering[cids[0]] | self.clustering[cids[1]]
             subG = self.G.subgraph(nodes)
-            from_score = ct.cid_list_score(subG, self.clustering,
-                                           self.node2cid, cids)
+            from_score = ct.cid_list_score(subG, self.clustering, self.node2cid, cids)
             a = lca.LCA(subG, self.clustering, cids, from_score)
             self.cid2lca.add(a)
             self.queues.add_to_S(a)
             num_created += 1
-        logger.info("Created %d new LCAs" % num_created)
+        logger.info('Created %d new LCAs' % num_created)
 
     def run_main_loop(self, iter_num=0, max_iterations=None):
         halt_requested = False
         should_pause = False
         converged = False
 
-        while (max_iterations is None or iter_num < max_iterations) and\
-              not (halt_requested or should_pause or converged):
+        # TODO: Added by JP due to linting errors
+        should_wait_for_edges = False
+        stop_requested = False
+        # /TODO
+
+        while (max_iterations is None or iter_num < max_iterations) and not (
+            halt_requested or should_pause or converged
+        ):
             iter_num += 1
             logger.info('')
-            logger.info("*** Iteration %d ***" % iter_num)
+            logger.info('*** Iteration %d ***' % iter_num)
 
             #  Prepare for the start of the next iteration
             self.remove_nodes()
@@ -411,7 +428,7 @@ class graph_algorithm(object):
 
             # Step 2a: Apply the LCA if it improves the score:
             if a is not None and a.delta_score() > 0:
-                logger.info("Decision: apply LCA")
+                logger.info('Decision: apply LCA')
                 # Note: no need to explicitly remove a from the top of
                 # the heap because this is done during the replacement
                 # process itself.
@@ -420,36 +437,39 @@ class graph_algorithm(object):
 
             # Step 2b: since the delta is <= 0, if we are in "scoring"
             # switch to splitting
-            elif self.phase == "scoring":
-                logger.info("Decision: switch phases to splitting")
-                self.phase = "splitting"
+            elif self.phase == 'scoring':
+                logger.info('Decision: switch phases to splitting')
+                self.phase = 'splitting'
                 self.queues.switch_to_splitting()
                 self.cid2lca.clear()
-                self.new_lcas(self.clustering.keys(), use_pairs=False,
-                              use_singles=True)
+                self.new_lcas(self.clustering.keys(), use_pairs=False, use_singles=True)
                 self.queues.info_long(max_entries=10)
                 if self.trace_start_human_gt_cb is not None:
                     self.trace_start_human_gt_cb(self.clustering, self.node2cid)
 
             # Step 2c: consider shift from splitting to stability
-            elif self.phase == "splitting" and \
-                 (a is None or \
-                  a.delta_score() < self.params["min_delta_score_stability"]):
-                logger.info("Decision: switch phases to stability")
-                self.phase = "stability"
+            elif self.phase == 'splitting' and (
+                a is None or a.delta_score() < self.params['min_delta_score_stability']
+            ):
+                logger.info('Decision: switch phases to stability')
+                self.phase = 'stability'
                 self.queues.switch_to_stability()
-                self.new_lcas(self.clustering.keys(), use_pairs=True,
-                              use_singles=False)  # singles will be kept
+                self.new_lcas(
+                    self.clustering.keys(), use_pairs=True, use_singles=False
+                )  # singles will be kept
                 self.queues.info_long(max_entries=10)
 
             # Step 2d: at this point we should run augmentation if
             # there is still a significant chance of a change
-            elif a is not None and \
-                 self.params["min_delta_score_converge"] < a.delta_score():
-                logger.info("Decision: augment graph from top LCA")
+            elif (
+                a is not None
+                and self.params['min_delta_score_converge'] < a.delta_score()
+            ):
+                logger.info('Decision: augment graph from top LCA')
                 self.queues.pop_Q()
-                prs = a.get_inconsistent(self.params["num_per_augmentation"],
-                                         self.weight_mgr.futile_tester)
+                prs = a.get_inconsistent(
+                    self.params['num_per_augmentation'], self.weight_mgr.futile_tester
+                )
                 if len(prs) == 0:
                     logger.info("LCA marked as 'futile'. Moved to done list.")
                     self.queues.add_to_done(a)
@@ -459,42 +479,52 @@ class graph_algorithm(object):
 
             # Step 2e: at this point the only remaining active LCAs are
             # waiting for edges, so need to pause.
-            elif a is not None and \
-                 self.params["min_delta_score_converge"] >= a.delta_score() and \
-                 self.queues.num_on_W() > 0:
+            elif (
+                a is not None
+                and self.params['min_delta_score_converge'] >= a.delta_score()
+                and self.queues.num_on_W() > 0
+            ):
                 should_pause = True
-                logger.info("Decision: top LCA delta is too low, but non-empty"
-                            "  waiting queue, so need to pause")
-    
+                logger.info(
+                    'Decision: top LCA delta is too low, but non-empty'
+                    '  waiting queue, so need to pause'
+                )
+
             # Step 2f: At this point, all active LCAs are waiting, and
             # if there are none then the algorithm has converged!
             else:
                 assert self.queues.num_on_W() == 0
-                logger.info("Decision: all deltas too low and empty waiting"
-                            " queue W, so done")
+                logger.info(
+                    'Decision: all deltas too low and empty waiting' ' queue W, so done'
+                )
                 converged = True
 
             #  Check to
             if not converged and not should_pause:
-                should_pause = self.check_wait_for_edges() or \
-                    self.stop_request_check()
+                should_pause = self.check_wait_for_edges() or self.stop_request_check()
 
-                if logger.getEffectiveLevel() <= logging.DEBUG and \
-                   (not should_wait_for_edges) and (not stop_requested):
+                if (
+                    logger.getEffectiveLevel() <= logging.DEBUG
+                    and (not should_wait_for_edges)
+                    and (not stop_requested)
+                ):
                     if len(self.weight_mgr.waiting_for) == 0:
-                        logger.debug("Waiting for edges: <none>")
+                        logger.debug('Waiting for edges: <none>')
                     else:
-                        logger.debug("Waiting for edges: %a" %
-                                     self.weight_mgr.waiting_for)
+                        logger.debug(
+                            'Waiting for edges: %a' % self.weight_mgr.waiting_for
+                        )
 
             if self.params['draw_iterations']:
-                self.draw_obj.draw_iteration(self.G, self.clustering,
-                                             self.node2cid, iter_num)
+                self.draw_obj.draw_iteration(
+                    self.G, self.clustering, self.node2cid, iter_num
+                )
 
             if self.trace_iter_compare_to_gt_cb is not None:
                 num_human = self.weight_mgr.num_human_decisions()
-                self.trace_iter_compare_to_gt_cb(self.clustering, self.node2cid,
-                                                 num_human)
+                self.trace_iter_compare_to_gt_cb(
+                    self.clustering, self.node2cid, num_human
+                )
 
         return (should_pause, iter_num, converged)
 
@@ -503,22 +533,20 @@ class graph_algorithm(object):
         Apply the LCA.  This involves (1) removing all other LCAs
         whose "from" set of clusters intersects a's "from" clusters,
         (2) forming new clusters, (3) generating new cluster
-        singletons and/or pairs, and (4) forming new LCAs from them. 
+        singletons and/or pairs, and (4) forming new LCAs from them.
         '''
         # Step 1: Get the cids of the clusters to be removed and get
         # the lcas to be removed
         old_cids = a.from_cids()
         old_lcas = self.cid2lca.remove_with_cids(old_cids)
         self.queues.remove(old_lcas)
-        logger.info("Removing %d LCAs" % len(old_lcas))
+        logger.info('Removing %d LCAs' % len(old_lcas))
 
         # Step 2: Form the new clusters and replace the old ones
         new_clusters = a.to_clusters.values()
         new_cids = self.generate_new_cids(len(new_clusters))
-        added_clusters = {id: nodes for id, nodes in zip(new_cids,
-                                                         new_clusters)}
-        ct.replace_clusters(old_cids, added_clusters, self.clustering,
-                            self.node2cid)
+        added_clusters = {id: nodes for id, nodes in zip(new_cids, new_clusters)}
+        ct.replace_clusters(old_cids, added_clusters, self.clustering, self.node2cid)
 
         #  Step 3: Form a list of CID singleton and/or pairs involving
         #  at least one of the new clusters.  Whether singletons or
@@ -532,11 +560,12 @@ class graph_algorithm(object):
     def compute_lca_scores(self):
         lcas_for_scoring = self.queues.get_S()
         for a in lcas_for_scoring:
-            if self.phase == "scoring":
+            if self.phase == 'scoring':
                 to_c, to_score = alg1.lca_alg1(a.subgraph)
             else:
-                to_c, to_score = alg2.lca_alg2(a.subgraph, a.from_cids(),
-                                               a.from_node2cid())
+                to_c, to_score = alg2.lca_alg2(
+                    a.subgraph, a.from_cids(), a.from_node2cid()
+                )
             a.set_to_clusters(to_c, to_score)
         self.queues.add_to_Q(lcas_for_scoring)
         self.queues.clear_S()
@@ -555,11 +584,10 @@ class graph_algorithm(object):
         new_cid_pairs = []
         for e in self.weight_mgr.get_weight_changes():
             if e[0] in self.removed_nodes or e[1] in self.removed_nodes:
-                logger.info("Rejected edge %s because node was removed"
-                            % str(e))
+                logger.info('Rejected edge %s because node was removed' % str(e))
                 continue
 
-            logger.info("Inserting edge %s" % str(e))
+            logger.info('Inserting edge %s' % str(e))
 
             #  For any new node, add it as an isolated cluster
             for node in (e[0], e[1]):
@@ -568,8 +596,7 @@ class graph_algorithm(object):
                     self.node2cid[node] = new_cid
                     self.clustering[new_cid] = set([node])
                     num_new_nodes += 1
-                    logger.info("New node %a, created new cid %a" %
-                                (node, new_cid))
+                    logger.info('New node %a, created new cid %a' % (node, new_cid))
 
             cids = self.cids_for_edge(e)
             lcas_to_change = self.cid2lca.containing_all_cids(cids)
@@ -601,7 +628,7 @@ class graph_algorithm(object):
                 self.score -= e[2]
 
         # At the end, generate new LCAs for newly connected pairs.
-        if len(new_cid_pairs) > 0 and self.phase != "splitting":
+        if len(new_cid_pairs) > 0 and self.phase != 'splitting':
             self.create_lcas_from_tuples(new_cid_pairs)
 
         # return (num_new_nodes, num_new_edges)
@@ -615,7 +642,7 @@ class graph_algorithm(object):
             if old_node not in self.G.nodes:
                 continue
 
-            logger.info("Removing node %a" % old_node)
+            logger.info('Removing node %a' % old_node)
 
             self.removed_nodes.add(old_node)
             num_removed += 1
@@ -653,8 +680,7 @@ class graph_algorithm(object):
             cc = [comp for comp in nx.connected_components(subG)]
             new_cids = self.generate_new_cids(len(cc))
             new_clusters = {cid: c for cid, c in zip(new_cids, cc)}
-            ct.replace_clusters([old_cid], new_clusters, self.clustering,
-                                self.node2cid)
+            ct.replace_clusters([old_cid], new_clusters, self.clustering, self.node2cid)
 
             # Form the LCAs
             use_pairs, use_singles = self.which_lca_types()
@@ -681,53 +707,61 @@ class graph_algorithm(object):
     def reset_waiting(self):
         self.weight_mgr.reset_waiting()
         self.queues.reset_waiting()
-        logger.info("Cleared waiting set. Scoring set now has %d LCAs" %
-                    len(self.queues.get_S))
+        logger.info(
+            'Cleared waiting set. Scoring set now has %d LCAs' % len(self.queues.get_S)
+        )
 
     def show_clustering(self):
         ct.print_structures(self.G, self.clustering, self.node2cid, self.score)
 
     def show_queues_debug(self):
-        logger.debug("Scoring queue:")
-        spaces = ' '*4
+        logger.debug('Scoring queue:')
+        spaces = ' ' * 4
         if len(self.queues.S) == 0:
-            logger.debug("  empty")
+            logger.debug('  empty')
         else:
             for a in self.queues.S:
                 a.pprint_short(initial_str=spaces, stop_after_from=True)
 
-        logger.debug("Waiting queue:")
+        logger.debug('Waiting queue:')
         if len(self.queues.W) == 0:
-            logger.debug("  empty")
+            logger.debug('  empty')
         else:
             for a in self.queues.W:
                 a.pprint_short(initial_str=spaces, stop_after_from=True)
 
-        logger.debug("Main queue:")
+        logger.debug('Main queue:')
         if len(self.queues.Q.heap) == 0:
-            logger.debug("  empty")
+            logger.debug('  empty')
         else:
             for i, a in enumerate(self.queues.Q.heap):
-                initial_str = "%3d:" % i
+                initial_str = '%3d:' % i
                 a.pprint_short(initial_str=initial_str, stop_after_from=False)
 
     def show_brief_state(self):
-        logger.info("LCAs %d, clusters %d, new edges: %s"
-                    % (self.queues.num_lcas(), len(self.clustering),
-                       self.weight_mgr.edge_counts()))
+        logger.info(
+            'LCAs %d, clusters %d, new edges: %s'
+            % (
+                self.queues.num_lcas(),
+                len(self.clustering),
+                self.weight_mgr.edge_counts(),
+            )
+        )
 
-        logger.info("Queue lengths: main Q %d, scoring %d, waiting %d"
-                    % (len(self.queues.Q), len(self.queues.S),
-                       self.queues.num_on_W()))
+        logger.info(
+            'Queue lengths: main Q %d, scoring %d, waiting %d'
+            % (len(self.queues.Q), len(self.queues.S), self.queues.num_on_W())
+        )
 
         if len(self.queues.Q) == 0:
-            logger.debug("Top LCA:  <none>")
+            logger.debug('Top LCA:  <none>')
         else:
-            self.queues.top_Q().pprint_short(initial_str="Top LCA: ",
-                                             stop_after_from=False)
+            self.queues.top_Q().pprint_short(
+                initial_str='Top LCA: ', stop_after_from=False
+            )
 
     def is_consistent(self):
-        ''' Each edge between two different clusters should be 
+        ''' Each edge between two different clusters should be
         '''
         all_ok = self.queues.is_consistent()
         return all_ok  # Need to add a lot more here.....

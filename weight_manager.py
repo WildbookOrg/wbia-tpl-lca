@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Manage the request and return of weights for edges based on the
 results from verification algorithms and human reviewers. Together,
@@ -28,13 +29,16 @@ import collections
 import logging
 import os
 
+from graph_algorithm import default_params
+
 logger = logging.getLogger()
 
 
 def empty_gen(n):
     # Create a function to generate a list with n False values.
     def gen():
-        return[0]*n
+        return [0] * n
+
     return gen
 
 
@@ -54,7 +58,7 @@ class weight_manager(object):
         self.num_names = len(self.aug_names)
         self.augment_count = collections.defaultdict(empty_gen(self.num_names))
         self.waiting_for = set()
-        self.counts = [0]*self.num_names
+        self.counts = [0] * self.num_names
 
     def _name_to_index(self, name):
         """
@@ -88,7 +92,7 @@ class weight_manager(object):
             w = e[2]
             i = self._name_to_index(e[3])
             ac = self.augment_count[pr]
-            if (ac[i] == 0) or (i == self.num_names-1):
+            if (ac[i] == 0) or (i == self.num_names - 1):
                 ac[i] += 1
                 ret_edges[pr] += w
 
@@ -117,7 +121,7 @@ class weight_manager(object):
             if req not in self.waiting_for:
                 self.waiting_for.add(req)
                 req_list.append(req)
-        logger.info("Request edges: %s" % str(req_list))
+        logger.info('Request edges: %s' % str(req_list))
         self.request_cb(req_list)
 
     def get_weight_changes(self):
@@ -142,7 +146,7 @@ class weight_manager(object):
             ac = self.augment_count[pr]  # creates list if not there
             i = self._name_to_index(a_name)
 
-            if i == len(self.aug_names)-1 or ac[i] == 0:
+            if i == len(self.aug_names) - 1 or ac[i] == 0:
                 e = (n0, n1, new_wgt)
                 ac[i] += 1
                 self.counts[i] += 1
@@ -185,8 +189,7 @@ class test_callbacks(object):
 
     def result_cb(self):
         self.ntr_index = (self.ntr_index + 1) % len(self.num_to_return)
-        k = min(self.num_to_return[self.ntr_index],
-                len(self.edges_requested))
+        k = min(self.num_to_return[self.ntr_index], len(self.edges_requested))
         ret_edges = []
         if len(self.unexpected_edges) > 0:
             ret_edges += self.unexpected_edges
@@ -196,90 +199,102 @@ class test_callbacks(object):
             k -= 1
             for i, ae in enumerate(self.edges_to_return):
                 if n0 == ae[0] and n1 == ae[1] and a_name == ae[3]:
-                    _ = self.edges_to_return.pop(i)
+                    self.edges_to_return.pop(i)
                     ret_edges.append(ae)
                     break
         return ret_edges
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     log_fname = './test.log'
     try:
         os.remove(log_fname)
-    except:
+    except Exception:
         pass
 
+    p = default_params()
+
     aug_names = ['vamp', 'siamese', 'human']
-    log_format = "%(levelname)-6s [%(filename)18s:%(lineno)d] %(message)s"
-    log_level = logging.INFO 
-    logging.basicConfig(filename=log_fname,
-                        level=p["log_level"],
-                        format=log_format)
-    init_edges = [(0, 1,  0.5, 'vamp'),
-                  (0, 1, -0.3, 'siamese'),
-                  (0, 1,  0.7, 'human'),
-                  (1, 2, -0.8, 'vamp'),
-                  (0, 2,  0.8, 'siamese'),
-                  (1, 2, -0.4, 'human'),
-                  (1, 2,  0.7, 'vamp'),    # should be ignored...
-                  (1, 2, -1.0, 'siamese'),
-                  (0, 1,  0.8, 'human')]   # should not be ignored...
+    log_format = '%(levelname)-6s [%(filename)18s:%(lineno)d] %(message)s'
+    log_level = logging.INFO
+    logging.basicConfig(filename=log_fname, level=p['log_level'], format=log_format)
+    init_edges = [
+        (0, 1, 0.5, 'vamp'),
+        (0, 1, -0.3, 'siamese'),
+        (0, 1, 0.7, 'human'),
+        (1, 2, -0.8, 'vamp'),
+        (0, 2, 0.8, 'siamese'),
+        (1, 2, -0.4, 'human'),
+        (1, 2, 0.7, 'vamp'),  # should be ignored...
+        (1, 2, -1.0, 'siamese'),
+        (0, 1, 0.8, 'human'),
+    ]  # should not be ignored...
     aug_names = ['vamp', 'siamese', 'human']
 
-    unrequested_edges = [(0, 4, 0.5, 'vamp'),
-                        (6, 7, -0.1, 'vamp')]
-    edges_to_add = [(0, 1,  0.9, 'human'),
-                    (0, 1,  0.7, 'human'),
-                    (0, 2,  0.4, 'human'),
-                    (0, 2,  0.5, 'vamp'),
-                    (0, 2,  0.7, 'siamese'),  # should be ignored
-                    (0, 2, -1.5, 'human'),
-                    (1, 2,  1.0, 'vamp'),     # should be ignored
-                    (1, 2,  1.4, 'human'),    # should be used
-                    (1, 3,  0.1, 'siamese'),
-                    (1, 3,  1.2, 'vamp'),
-                    (1, 3,  1.3, 'human'),
-                    (1, 2,  1.6, 'human'),
-                    (6, 7,  1.0, 'siamese')]
+    unrequested_edges = [(0, 4, 0.5, 'vamp'), (6, 7, -0.1, 'vamp')]
+    edges_to_add = [
+        (0, 1, 0.9, 'human'),
+        (0, 1, 0.7, 'human'),
+        (0, 2, 0.4, 'human'),
+        (0, 2, 0.5, 'vamp'),
+        (0, 2, 0.7, 'siamese'),  # should be ignored
+        (0, 2, -1.5, 'human'),
+        (1, 2, 1.0, 'vamp'),  # should be ignored
+        (1, 2, 1.4, 'human'),  # should be used
+        (1, 3, 0.1, 'siamese'),
+        (1, 3, 1.2, 'vamp'),
+        (1, 3, 1.3, 'human'),
+        (1, 2, 1.6, 'human'),
+        (6, 7, 1.0, 'siamese'),
+    ]
 
     num_to_return = [1, 2, 2, 3]
     tc = test_callbacks(edges_to_add, num_to_return, unrequested_edges)
 
     wm = weight_manager(aug_names, p, tc.request_cb, tc.result_cb)
-    print("Output should be (0, 1, 1.7), (0, 2, -0.8), (1, 2, -2.2)")
+    print('Output should be (0, 1, 1.7), (0, 2, -0.8), (1, 2, -2.2)')
     for e in wm.get_initial_edges(init_edges):
         print(e)
     print('Aug count', wm.augment_count)
-    print('After get_initial_edges:\n'
-          '  len(wm.augment_count) should be 3 and is', len(wm.augment_count))
-    print('  wm.augment_count((0, 1)) should be [1, 1, 2] and is',
-          wm.augment_count[(0, 1)])
-    print('  wm.augment_count((0, 2)) should be [0, 1, 0] and is',
-          wm.augment_count[(0, 2)])
-    print('  wm.augment_count((1, 2)) should be [1, 1, 1] and is',
-          wm.augment_count[(1, 2)])
+    print(
+        'After get_initial_edges:\n' '  len(wm.augment_count) should be 3 and is',
+        len(wm.augment_count),
+    )
+    print(
+        '  wm.augment_count((0, 1)) should be [1, 1, 2] and is', wm.augment_count[(0, 1)]
+    )
+    print(
+        '  wm.augment_count((0, 2)) should be [0, 1, 0] and is', wm.augment_count[(0, 2)]
+    )
+    print(
+        '  wm.augment_count((1, 2)) should be [1, 1, 1] and is', wm.augment_count[(1, 2)]
+    )
 
     pairs = [(0, 1), (1, 3), (1, 3)]
     wm.request_new_weights(pairs)
 
-    print("==========")
-    print("First set of changes:")
-    print("Should get (0, 1, 0.9) plus unrequested"
-          "(0, 4, 0.5) and (6, 7, -0.1)")
+    print('==========')
+    print('First set of changes:')
+    print('Should get (0, 1, 0.9) plus unrequested' '(0, 4, 0.5) and (6, 7, -0.1)')
     for res in wm.get_weight_changes():
         print(res)
-    print('After first set of changes:\n'
-          '  len(wm.augment_count) should be 6 and is', len(wm.augment_count))
-    print('  wm.augment_count((0, 1)) should be [1, 1, 3] and is',
-          wm.augment_count[(0, 1)])
-    print('  wm.augment_count((1, 3)) should be [0, 0, 0] and is',
-          wm.augment_count[(1, 3)])
-    print('  wm.augment_count((6, 7)) should be [1, 0, 0] and is',
-          wm.augment_count[(6, 7)])
+    print(
+        'After first set of changes:\n' '  len(wm.augment_count) should be 6 and is',
+        len(wm.augment_count),
+    )
+    print(
+        '  wm.augment_count((0, 1)) should be [1, 1, 3] and is', wm.augment_count[(0, 1)]
+    )
+    print(
+        '  wm.augment_count((1, 3)) should be [0, 0, 0] and is', wm.augment_count[(1, 3)]
+    )
+    print(
+        '  wm.augment_count((6, 7)) should be [1, 0, 0] and is', wm.augment_count[(6, 7)]
+    )
 
-    print("==========")
-    print("Second set of changes, with new edge (1,3).")
-    print("Should get (1, 3) only once, with weight 1.2, despite two requests.")
+    print('==========')
+    print('Second set of changes, with new edge (1,3).')
+    print('Should get (1, 3) only once, with weight 1.2, despite two requests.')
     for res in wm.get_weight_changes():
         print(res)
 
@@ -287,47 +302,45 @@ if __name__ == "__main__":
     wm.request_new_weights(pairs)
     pairs = [(0, 2), (0, 1)]  # obtain the result from vamp and then human
     wm.request_new_weights(pairs)
-    print("==========")
-    print("Third set of changes. Should be (1, 3, 0.1) and (0, 2, 0.5).")
+    print('==========')
+    print('Third set of changes. Should be (1, 3, 0.1) and (0, 2, 0.5).')
     for e in wm.get_weight_changes():
         print(e)
 
-    print("==========")
-    print("Fourth set of changes.")
-    print("Before: futile_tester(0, 1) should be False. It is",
-          wm.futile_tester(0, 1))
-    print("Should be (0, 1, 0.7) - the fourth human result for (0,1)")
+    print('==========')
+    print('Fourth set of changes.')
+    print('Before: futile_tester(0, 1) should be False. It is', wm.futile_tester(0, 1))
+    print('Should be (0, 1, 0.7) - the fourth human result for (0,1)')
     for e in wm.get_weight_changes():
         print(e)
-    print("After: futile_tester(0, 1) should be True. It is",
-          wm.futile_tester(0, 1))
+    print('After: futile_tester(0, 1) should be True. It is', wm.futile_tester(0, 1))
 
     pairs = [(1, 3), (0, 2)]
     wm.request_new_weights(pairs)
-    print("==========")
-    print("Fifth set of changes.")
-    print("Should be (1, 3, 1.3)")
+    print('==========')
+    print('Fifth set of changes.')
+    print('Should be (1, 3, 1.3)')
     for e in wm.get_weight_changes():
         print(e)
 
-    print("==========")
-    print("Sixth set of changes.")
-    print("Should be (0, 2, 0.4)")
+    print('==========')
+    print('Sixth set of changes.')
+    print('Should be (0, 2, 0.4)')
     for e in wm.get_weight_changes():
         print(e)
 
     pairs = [(1, 2), (1, 2)]  # both human, but only one returned.
     wm.request_new_weights(pairs)
-    print("==========")
-    print("Duplicate human reviews.")
-    print("Should only get (1, 2, 1.4)")
+    print('==========')
+    print('Duplicate human reviews.')
+    print('Should only get (1, 2, 1.4)')
     for e in wm.get_weight_changes():
         print(e)
 
     pairs = [(6, 7)]
     wm.request_new_weights(pairs)
-    print("==========")
-    print("Finally, testing that we can work with the unrequested edges")
-    print("Should (6, 7, 1.0)")
+    print('==========')
+    print('Finally, testing that we can work with the unrequested edges')
+    print('Should (6, 7, 1.0)')
     for e in wm.get_weight_changes():
         print(e)

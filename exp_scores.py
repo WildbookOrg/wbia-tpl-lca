@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import logging
 import math as m
 import random
@@ -23,14 +24,13 @@ class exp_scores(object):
         self.trunc_exp_neg = truncated_exponential(neg_lambda)
 
     @classmethod
-    def create_from_error_frac(cls, error_frac, np_ratio,
-                               create_from_pdf=True):
+    def create_from_error_frac(cls, error_frac, np_ratio, create_from_pdf=True):
         '''Create an exp_scores object from a model of the expected fraction
         of scores that are in error (negative when they should be
         positive), along with the np_ratio, as above.
         '''
-        assert(0 <= error_frac < 0.5)
-        assert(np_ratio >= 1.0)
+        assert 0 <= error_frac < 0.5
+        assert np_ratio >= 1.0
         pos_lambda = find_lambda_cdf(1.0, error_frac)
 
         if create_from_pdf:
@@ -40,10 +40,10 @@ class exp_scores(object):
 
         # Debugging output
         trunc_exp_pos = truncated_exponential(pos_lambda)
-        print("ERROR FRAC %1.3f" % error_frac)
+        print('ERROR FRAC %1.3f' % error_frac)
         print('POS ERROR RATE %1.3f' % (1 - trunc_exp_pos.cdf(0.5)))
         trunc_exp_neg = truncated_exponential(neg_lambda)
-        print('NEG ERROR RATE %1.3f' % (np_ratio*(1-trunc_exp_neg.cdf(0.5))))
+        print('NEG ERROR RATE %1.3f' % (np_ratio * (1 - trunc_exp_neg.cdf(0.5))))
 
         return cls(np_ratio, pos_lambda, neg_lambda)
 
@@ -59,10 +59,10 @@ class exp_scores(object):
         np_ratio = len(neg_samples) / len(pos_samples)
         pos_lambda = find_lambda_from_samples(pos_samples, is_positive=True)
         neg_lambda = find_lambda_from_samples(neg_samples, is_positive=False)
-        logging.info("negative positive ratio: %.3f" % np_ratio)
-        logging.info("positive lambda for expoential: %.3f" % pos_lambda)
-        logging.info("negative lambda for expoential: %.3f" % neg_lambda)
-        
+        logging.info('negative positive ratio: %.3f' % np_ratio)
+        logging.info('positive lambda for expoential: %.3f' % pos_lambda)
+        logging.info('negative lambda for expoential: %.3f' % neg_lambda)
+
         return cls(np_ratio, pos_lambda, neg_lambda)
 
     def get_pos_neg(self, score):
@@ -77,7 +77,7 @@ class exp_scores(object):
         is the match will be sample from the positive or negative
         distributions and then sample from the histograms.
         '''
-        is_match_correct = random.random() > self.np_ratio / (self.np_ratio+1)
+        is_match_correct = random.random() > self.np_ratio / (self.np_ratio + 1)
         s = self.random_score(is_match_correct)
         return self.get_pos_neg(s), is_match_correct
 
@@ -94,22 +94,21 @@ class exp_scores(object):
 
 
 class truncated_exponential(object):
-
     def __init__(self, lmbda):
         self.lmbda = lmbda
         self.normalize = 1 - m.exp(-self.lmbda)
 
     def pdf(self, x):
-        assert(0 <= x <= 1)
+        assert 0 <= x <= 1
         return self.lmbda * m.exp(-self.lmbda * x) / self.normalize
 
     def cdf(self, x):
-        assert(0 <= x <= 1)
+        assert 0 <= x <= 1
         return (1 - m.exp(-self.lmbda * x)) / self.normalize
 
     def sample(self):
         p = random.random()
-        x = -m.log(1 - self.normalize*p) / self.lmbda
+        x = -m.log(1 - self.normalize * p) / self.lmbda
         return x
 
     def mean(self):
@@ -172,7 +171,7 @@ def find_lambda_pdf(np_ratio, lambda_p):
 
 def find_lambda_from_samples(samples, is_positive=True):
     if is_positive:
-        samples = [1-s for s in samples]
+        samples = [1 - s for s in samples]
     pop_mean = sum(samples) / len(samples)
     min_beta = 0.001
     max_beta = 0.999
@@ -198,27 +197,27 @@ def test_truncated_exponential():
     lmbda = 1 / 0.3
     te = truncated_exponential(lmbda)
     n = 20
-    for i in range(n+1):
+    for i in range(n + 1):
         x = i / n
         p = te.pdf(x)
         c = te.cdf(x)
-        print("%4.2f: %5.3f %5.3f" % (x, p, c))
+        print('%4.2f: %5.3f %5.3f' % (x, p, c))
 
     n = 10000
     s = 0
     for i in range(n):
         s += te.sample()
-    print("Average from sample %.4f" % (s/n))
+    print('Average from sample %.4f' % (s / n))
 
     # Numerically integrate:
     integral = 0
     n = 1000
-    delta = 1/n
+    delta = 1 / n
     for i in range(n):
-        x = (i+0.5) / n
+        x = (i + 0.5) / n
         integral += te.pdf(x)
     integral *= delta
-    print("PDF integrates to %1.4f" % integral)
+    print('PDF integrates to %1.4f' % integral)
 
 
 def test_find_lambda():
@@ -230,24 +229,23 @@ def test_find_lambda():
         '''
         print('----------')
         print('test find_lambda_cdf ')
-        print("r =", r, "err =", err)
-        lmbda_pos = find_lambda_cdf(1, err)   # find the positive match lambda
-        lmbda_neg = find_lambda_cdf(r, err)   # find the negative match lambda
-        print("lmbda_pos =", lmbda_pos)
+        print('r =', r, 'err =', err)
+        lmbda_pos = find_lambda_cdf(1, err)  # find the positive match lambda
+        lmbda_neg = find_lambda_cdf(r, err)  # find the negative match lambda
+        print('lmbda_pos =', lmbda_pos)
         te_pos = truncated_exponential(lmbda_pos)
         te_neg = truncated_exponential(lmbda_neg)
-        print("goal: positive frac below 0.5 prob =", err)
-        print("estimated: negative frac above 0.5 =", r*(1-te_neg.cdf(0.5)))
+        print('goal: positive frac below 0.5 prob =', err)
+        print('estimated: negative frac above 0.5 =', r * (1 - te_neg.cdf(0.5)))
 
         print('----------')
         lmbda_neg = find_lambda_pdf(r, lmbda_pos)
         print('test find_lambda_pdf ')
-        print("r =", r, "lmbda_pos =", lmbda_pos)
-        print("lmbda_neg =", lmbda_neg)
+        print('r =', r, 'lmbda_pos =', lmbda_pos)
+        print('lmbda_neg =', lmbda_neg)
         te_neg = truncated_exponential(lmbda_neg)
-        print("goal: pdf of positive at 0.5 = %.4f" % te_pos.pdf(0.5))
-        print("est: scaled pdf of negative at 0.5 = %.4f"
-              % (r * te_neg.pdf(0.5)))
+        print('goal: pdf of positive at 0.5 = %.4f' % te_pos.pdf(0.5))
+        print('est: scaled pdf of negative at 0.5 = %.4f' % (r * te_neg.pdf(0.5)))
         print()
 
 
@@ -256,8 +254,7 @@ def test_find_lambda_from_samples():
     lmbda = 1 / beta
     te = truncated_exponential(lmbda)
 
-    print("-----------\n"
-          "test_find_lambda_from_samples")
+    print('-----------\n' 'test_find_lambda_from_samples')
     n = 100000
     samples = [te.sample() for i in range(n)]
     s_mean = sum(samples) / len(samples)
@@ -272,16 +269,19 @@ def test_create_from_error_frac():
     error_frac = 0.3
     corr_lambda_pos = 1.6946
     corr_lambda_neg = 8.1818
-    print("------------\n"
-          "test_create_from_error_frac\n")
-    score_obj = exp_scores.create_from_error_frac(error_frac, np_ratio,
-                                                  create_from_pdf=True)
-    print("corr_lambda_pos %.4f, object's lambda %.4f"
-          % (corr_lambda_pos, score_obj.trunc_exp_pos.lmbda))
-    print("corr_lambda_neg %.4f, object's lambda %.4f"
-          % (corr_lambda_neg, score_obj.trunc_exp_neg.lmbda))
-    print("corr np_ratio %.2f, object's np_ratio %.2f"
-          % (np_ratio, score_obj.np_ratio))
+    print('------------\n' 'test_create_from_error_frac\n')
+    score_obj = exp_scores.create_from_error_frac(
+        error_frac, np_ratio, create_from_pdf=True
+    )
+    print(
+        "corr_lambda_pos %.4f, object's lambda %.4f"
+        % (corr_lambda_pos, score_obj.trunc_exp_pos.lmbda)
+    )
+    print(
+        "corr_lambda_neg %.4f, object's lambda %.4f"
+        % (corr_lambda_neg, score_obj.trunc_exp_neg.lmbda)
+    )
+    print("corr np_ratio %.2f, object's np_ratio %.2f" % (np_ratio, score_obj.np_ratio))
 
     """  See if we can recreate the error fraction on positives from sampling
     """
@@ -298,23 +298,24 @@ def test_create_from_error_frac():
         elif neg < pos:
             num_neg_err += 1
 
-    exp_match_frac = 1 / (np_ratio+1)
-    print("expected match frac %.4f, actual %.4f" % (exp_match_frac, num_match/n))
+    exp_match_frac = 1 / (np_ratio + 1)
+    print('expected match frac %.4f, actual %.4f' % (exp_match_frac, num_match / n))
     exp_pos_error = round(n * exp_match_frac * error_frac)
-    print("expected num positive (and negative) errors:", exp_pos_error)
-    print("actual num positive errors:", num_pos_err)
-    print("actual num negative errors:", num_neg_err)
-    print("pos pdf at 0.5: %.4f" % (score_obj.trunc_exp_pos.pdf(0.5)))
-    print("np_ratio * neg pdf at 0.5: %.4f" % (np_ratio * score_obj.trunc_exp_neg.pdf(0.5)))
+    print('expected num positive (and negative) errors:', exp_pos_error)
+    print('actual num positive errors:', num_pos_err)
+    print('actual num negative errors:', num_neg_err)
+    print('pos pdf at 0.5: %.4f' % (score_obj.trunc_exp_pos.pdf(0.5)))
+    print(
+        'np_ratio * neg pdf at 0.5: %.4f' % (np_ratio * score_obj.trunc_exp_neg.pdf(0.5))
+    )
     cdf_at_half = score_obj.trunc_exp_neg.cdf(0.5)
     exp_neg_mistakes_from_cdf = round((1 - exp_match_frac) * n * (1 - cdf_at_half))
-    print("cdf_at_half (negative) = %.4f" % cdf_at_half)
-    print("exp_neg_mistakes_from_cid =", exp_neg_mistakes_from_cdf)
+    print('cdf_at_half (negative) = %.4f' % cdf_at_half)
+    print('exp_neg_mistakes_from_cid =', exp_neg_mistakes_from_cdf)
 
 
 def test_create_from_samples():
-    print("------------\n"
-          "test_create_from_error_from_samples\n")
+    print('------------\n' 'test_create_from_error_from_samples\n')
     np_ratio = 5.0
     n_pos = 100000
     n_neg = int(n_pos * np_ratio)
@@ -330,15 +331,18 @@ def test_create_from_samples():
     neg_samples = [te_neg.sample() for _ in range(n_neg)]
 
     score_obj = exp_scores.create_from_samples(pos_samples, neg_samples)
-    print("pos_lambda %.4f, object's pos_lambda %.4f"
-          % (pos_lambda, score_obj.trunc_exp_pos.lmbda))
-    print("neg_lambda %.4f, object's neg_lambda %.4f"
-          % (neg_lambda, score_obj.trunc_exp_neg.lmbda))
-    print("np_ratio %.2f, object's np_ratio %.2f"
-          % (np_ratio, score_obj.np_ratio))
+    print(
+        "pos_lambda %.4f, object's pos_lambda %.4f"
+        % (pos_lambda, score_obj.trunc_exp_pos.lmbda)
+    )
+    print(
+        "neg_lambda %.4f, object's neg_lambda %.4f"
+        % (neg_lambda, score_obj.trunc_exp_neg.lmbda)
+    )
+    print("np_ratio %.2f, object's np_ratio %.2f" % (np_ratio, score_obj.np_ratio))
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     test_truncated_exponential()
     # test_find_np_ratio()
     test_find_lambda()

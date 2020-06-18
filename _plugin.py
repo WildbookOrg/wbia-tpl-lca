@@ -1,14 +1,16 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function
 from ibeis.control import controller_inject
 from ibeis.constants import CONTAINERIZED, PRODUCTION  # NOQA
 import utool as ut
 from ibeis_lca import graph_algorithm
+
 (print, rrr, profile) = ut.inject2(__name__)
 
 
 _, register_ibs_method = controller_inject.make_ibs_register_decorator(__name__)
 
-register_api   = controller_inject.get_ibeis_flask_api(__name__)
+register_api = controller_inject.get_ibeis_flask_api(__name__)
 register_route = controller_inject.get_ibeis_flask_route(__name__)
 
 register_preproc_image = controller_inject.register_preprocs['image']
@@ -64,9 +66,9 @@ def ibeis_plugin_lca_init(ibs):
         }
     """
     ut.embed()
-    graph = graph_algorithm.graph_algorithm()
+    graph = graph_algorithm.graph_algorithm()  # NOQA
 
-    args = (ibs, )
+    args = (ibs,)
     resp = '[ibeis_lca] hello world with IBEIS controller %r' % args
     return resp
 
@@ -77,6 +79,8 @@ if __name__ == '__main__':
         python -m ibeis_lca._plugin --allexamples
     """
     import multiprocessing
+
     multiprocessing.freeze_support()  # for win32
     import utool as ut  # NOQA
+
     ut.doctest_funcs()

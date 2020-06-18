@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 2020-06-15:
 
@@ -17,8 +18,7 @@ import graph_algorithm as ga
 import weighter
 
 
-def generate_weighter(gt_pos_probs, gt_neg_probs,
-                      prob_human_correct, max_weight):
+def generate_weighter(gt_pos_probs, gt_neg_probs, prob_human_correct, max_weight):
     """
     Create the object that will generate weights. Input parameters:
 
@@ -61,11 +61,15 @@ class edge_generator(object):
         database as weights. In this example, however, I start with
         probabilities and human decisions and convert them to weights.
         """
-        self.pre_existing_vamp_edges = {('a', 'b'): self.wgtr.wgt(0.85),
-                                        ('b', 'e'): self.wgtr.wgt(0.2),
-                                        ('e', 'f'): self.wgtr.wgt(0.35)}
-        self.pre_existing_human_edges = {('a', 'b'): self.wgtr.human_wgt(True),
-                                         ('e', 'f'): self.wgtr.human_wgt(False)}
+        self.pre_existing_vamp_edges = {
+            ('a', 'b'): self.wgtr.wgt(0.85),
+            ('b', 'e'): self.wgtr.wgt(0.2),
+            ('e', 'f'): self.wgtr.wgt(0.35),
+        }
+        self.pre_existing_human_edges = {
+            ('a', 'b'): self.wgtr.human_wgt(True),
+            ('e', 'f'): self.wgtr.human_wgt(False),
+        }
 
         """
         Source 2: New edges for the new nodes at the start of the
@@ -75,10 +79,12 @@ class edge_generator(object):
         it is not done here, these weights should be stored in the
         database after they are generated.
         """
-        self.initial_vamp_probs = {('a', 'c'): 0.65,
-                                   ('a', 'd'): 0.1,
-                                   ('c', 'e'): 0.75,
-                                   ('d', 'e'): 0.7}
+        self.initial_vamp_probs = {
+            ('a', 'c'): 0.65,
+            ('a', 'd'): 0.1,
+            ('c', 'e'): 0.75,
+            ('d', 'e'): 0.7,
+        }
 
         """
         Subsequently, during its computation, the graph algorithm will
@@ -91,29 +97,33 @@ class edge_generator(object):
         the database. Again, this is not done in this example here.
         """
         self.initial_human_decisions = {('a', 'b'): True}
-        self.vamp_probs = {('a', 'e'): 0.35,
-                           ('a', 'f'): 0.2,
-                           ('b', 'c'): 0.8,
-                           ('b', 'd'): 0.25,
-                           ('b', 'f'): 0.05,
-                           ('c', 'd'): 0.1,
-                           ('c', 'f'): 0.1,
-                           ('d', 'f'): 0.05}
-        self.human_decisions = {('a', 'b'): True,
-                                ('a', 'c'): True,
-                                ('a', 'd'): False,
-                                ('a', 'e'): False,
-                                ('a', 'f'): False,
-                                ('b', 'c'): True,
-                                ('b', 'd'): False,
-                                ('b', 'e'): False,
-                                ('b', 'f'): False,
-                                ('c', 'd'): False,
-                                ('c', 'e'): False,
-                                ('c', 'f'): False,
-                                ('d', 'e'): True,
-                                ('d', 'f'): False,
-                                ('e', 'f'): False}
+        self.vamp_probs = {
+            ('a', 'e'): 0.35,
+            ('a', 'f'): 0.2,
+            ('b', 'c'): 0.8,
+            ('b', 'd'): 0.25,
+            ('b', 'f'): 0.05,
+            ('c', 'd'): 0.1,
+            ('c', 'f'): 0.1,
+            ('d', 'f'): 0.05,
+        }
+        self.human_decisions = {
+            ('a', 'b'): True,
+            ('a', 'c'): True,
+            ('a', 'd'): False,
+            ('a', 'e'): False,
+            ('a', 'f'): False,
+            ('b', 'c'): True,
+            ('b', 'd'): False,
+            ('b', 'e'): False,
+            ('b', 'f'): False,
+            ('c', 'd'): False,
+            ('c', 'e'): False,
+            ('c', 'f'): False,
+            ('d', 'e'): True,
+            ('d', 'f'): False,
+            ('e', 'f'): False,
+        }
 
         """
         Information to demo the removal of nodes. Removal only occurs
@@ -164,7 +174,7 @@ class edge_generator(object):
         the calls to VAMP and to human reviewers will be launched.  In this
         example, however, the requests are simply stored because we
         have hand-generated results to result in the result
-        function.  
+        function.
         """
         self.edge_requests += req_list
 
@@ -207,7 +217,7 @@ class edge_generator(object):
         return to_remove
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     """
     Assign the default parameterts. These are modified below.  Need a
     better way to handle this.
@@ -222,14 +232,14 @@ if __name__ == "__main__":
     log_file = 'example.log'
     try:
         os.remove(log_file)
-    except:
+    except Exception:
         pass
-    log_format = "%(levelname)-6s [%(filename)18s:%(lineno)3d] %(message)s"
-    logging.basicConfig(filename=log_file,
-                        level=ga_params["log_level"],
-                        format=log_format)
-    logging.info("=================================")
-    logging.info("Start of example to demo the GA.")
+    log_format = '%(levelname)-6s [%(filename)18s:%(lineno)3d] %(message)s'
+    logging.basicConfig(
+        filename=log_file, level=ga_params['log_level'], format=log_format
+    )
+    logging.info('=================================')
+    logging.info('Start of example to demo the GA.')
 
     """
     Here is a hand-generated set of probabilities that might be
@@ -241,18 +251,37 @@ if __name__ == "__main__":
     multiple verification algorithms, the weighter will need to be
     revised. This should not be too hard.
     """
-    gt_pos_probs = [0.98, 0.60, 0.80,  0.93, 0.97, 0.45, 0.83, 0.92,
-                    0.85, 0.79, 0.66]
-    gt_neg_probs = [0.01, 0.55, 0.24, 0.16, 0.05, 0.02, 0.60, 0.04,
-                    0.32, 0.25, 0.43, 0.01, 0.02, 0.33, 0.41, 0.23,
-                    0.04, 0.23]
+    gt_pos_probs = [0.98, 0.60, 0.80, 0.93, 0.97, 0.45, 0.83, 0.92, 0.85, 0.79, 0.66]
+    gt_neg_probs = [
+        0.01,
+        0.55,
+        0.24,
+        0.16,
+        0.05,
+        0.02,
+        0.60,
+        0.04,
+        0.32,
+        0.25,
+        0.43,
+        0.01,
+        0.02,
+        0.33,
+        0.41,
+        0.23,
+        0.04,
+        0.23,
+    ]
 
     """
     Form the parameters, and the weighter.
     """
-    wgtr = generate_weighter(gt_pos_probs, gt_neg_probs,
-                             ga_params['prob_human_correct'],
-                             ga_params['max_edge_weight'])
+    wgtr = generate_weighter(
+        gt_pos_probs,
+        gt_neg_probs,
+        ga_params['prob_human_correct'],
+        ga_params['max_edge_weight'],
+    )
 
     """
     Form the edge generator. This is the object to pay closest
@@ -276,21 +305,24 @@ if __name__ == "__main__":
     """
     min_converge = -0.9 * (wgtr.human_wgt(True) - wgtr.human_wgt(False))
     ga_params['min_delta_score_converge'] = min_converge
-    ga_params["min_delta_score_stability"] = \
-        min_converge / ga_params["min_delta_stability_ratio"]
+    ga_params['min_delta_score_stability'] = (
+        min_converge / ga_params['min_delta_stability_ratio']
+    )
     ga_params['compare_to_ground_truth'] = False
 
     """
     Build the graph algorithm object
     """
-    aug_names = ["vamp", "human"]
-    gai = ga.graph_algorithm(eg.initial_edges(),
-                             old_clustering.values(),
-                             aug_names,
-                             ga_params,
-                             eg.edge_request_cb,
-                             eg.edge_result_cb,
-                             log_file)
+    aug_names = ['vamp', 'human']
+    gai = ga.graph_algorithm(
+        eg.initial_edges(),
+        old_clustering.values(),
+        aug_names,
+        ga_params,
+        eg.edge_request_cb,
+        eg.edge_result_cb,
+        log_file,
+    )
 
     """
     Add call backs for removing nodes, pausing, getting intermediate
@@ -299,12 +331,12 @@ if __name__ == "__main__":
     gai.set_remove_nodes_cb(eg.remove_nodes_cb)
 
     """
-    Could add other callbacks, such as 
+    Could add other callbacks, such as
     gai.set_status_check_cbs(...)  # Get GA status. Details TBD
     gai.set_result_cbs(...)  # Get current clustering
-    gai.set_log_contents_cbs(...)  # 
+    gai.set_log_contents_cbs(...)  #
     """
-    
+
     """
     This runs the main loop 10 iterations at a time in a while
     loop. Currently, it is written to run synchronously, but of course
@@ -316,14 +348,18 @@ if __name__ == "__main__":
     paused = False
     while not converged:
         num_iter_to_run = 10
-        paused, iter_num, converged = gai.run_main_loop(iter_num, iter_num + num_iter_to_run)
+        paused, iter_num, converged = gai.run_main_loop(
+            iter_num, iter_num + num_iter_to_run
+        )
 
     """
     Output final information --- clusters:  This will be in the form
     of the changes to the clusters.  Singletons, all new, extended,
     merge, split and merge/split.  This is what I'm working on net
     """
-    changes = cc.compare_clusterings(old_clustering,
-                                     ct.build_node_to_cluster_mapping(old_clusters),
-                                     ga.clustering,
-                                     ga.node2cid)
+    changes = cc.compare_clusterings(
+        old_clustering,
+        ct.build_node_to_cluster_mapping(old_clustering),
+        ga.clustering,
+        ga.node2cid,
+    )

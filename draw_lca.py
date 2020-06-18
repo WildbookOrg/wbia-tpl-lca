@@ -1,9 +1,10 @@
+# -*- coding: utf-8 -*-
 """
 Draw the LCA clustering and graph. This works effectively for up to
 about a dozen nodes. After that the drawing gets too cluttered.
 
 All nodes within the same cluster are shown in the same randomly
-generated color. 
+generated color.
 
 Positive weight edges within a cluster are shown in solid black
 Negative weight edges within a cluster are shown in solid red.
@@ -45,7 +46,7 @@ def add_random_offset(pos, delta):
 
 
 class draw_lca(object):
-    def __init__(self, prefix, ext=".png", max_iterations=1000):
+    def __init__(self, prefix, ext='.png', max_iterations=1000):
         self.prefix = prefix
         n = m.ceil(m.log10(max_iterations))
         self.iter_format = '{:0>%d}' % n
@@ -71,8 +72,13 @@ class draw_lca(object):
         for cid in clustering:
             if cid not in self.cluster_clr:
                 self.cluster_clr[cid] = random_hex_rgb()
-            nx.draw_networkx_nodes(G, self.pos, nodelist=clustering[cid],
-                                   alpha=0.5, node_color=self.cluster_clr[cid])
+            nx.draw_networkx_nodes(
+                G,
+                self.pos,
+                nodelist=clustering[cid],
+                alpha=0.5,
+                node_color=self.cluster_clr[cid],
+            )
 
         # Split the edges into pos / neg and within and between clusters
         pos_in, neg_in, pos_out, neg_out = [], [], [], []
@@ -88,14 +94,18 @@ class draw_lca(object):
                 pos_out.append(e)
             else:
                 neg_out.append(e)
-        nx.draw_networkx_edges(G, self.pos, edgelist=pos_in,
-                               edge_color='k', style='solid')
-        nx.draw_networkx_edges(G, self.pos, edgelist=neg_in,
-                               edge_color='r', style='solid')
-        nx.draw_networkx_edges(G, self.pos, edgelist=pos_out,
-                               edge_color='k', style='dotted')
-        nx.draw_networkx_edges(G, self.pos, edgelist=neg_out,
-                               edge_color='r', style='dotted')
+        nx.draw_networkx_edges(
+            G, self.pos, edgelist=pos_in, edge_color='k', style='solid'
+        )
+        nx.draw_networkx_edges(
+            G, self.pos, edgelist=neg_in, edge_color='r', style='solid'
+        )
+        nx.draw_networkx_edges(
+            G, self.pos, edgelist=pos_out, edge_color='k', style='dotted'
+        )
+        nx.draw_networkx_edges(
+            G, self.pos, edgelist=neg_out, edge_color='r', style='dotted'
+        )
 
         nx.draw_networkx_edge_labels(G, self.pos, edge_labels=weight_labels)
         nx.draw_networkx_labels(G, self.pos)
@@ -107,5 +117,5 @@ class draw_lca(object):
         plt.clf()
 
         logger = logging.getLogger()
-        logger.debug("Wrote iteration graph " + out_name)
+        logger.debug('Wrote iteration graph ' + out_name)
         print(out_name)

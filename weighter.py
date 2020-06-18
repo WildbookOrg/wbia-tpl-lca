@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import logging
 import math as m
 import random
@@ -14,13 +15,16 @@ class weighter(object):
     the weights. Specifically, the human_prob -> max_weight and
     nothing can be outside the range -max_weight to max_weight
     '''
+
     def __init__(self, scorer, human_prob=0.98, max_weight=999):
         self.scorer = scorer
         self.human_prob = human_prob
-        self.max_weight = int(max_weight)   # just to be sure
+        self.max_weight = int(max_weight)  # just to be sure
         self.max_raw_weight = self.raw_wgt_(human_prob)
-        logging.info("built weighter with human_prob %1.2f and max_weight %1.2f"
-                     % (self.human_prob, max_weight))
+        logging.info(
+            'built weighter with human_prob %1.2f and max_weight %1.2f'
+            % (self.human_prob, max_weight)
+        )
 
     def wgt(self, score):
         '''  Given a verification score produce a (scalar) weight '''
@@ -50,8 +54,9 @@ class weighter(object):
         '''
         p = random.random()
         correct_decision = p <= self.human_prob
-        if (correct_decision and is_marked_correct) or \
-           (not correct_decision and not is_marked_correct):
+        if (correct_decision and is_marked_correct) or (
+            not correct_decision and not is_marked_correct
+        ):
             return self.max_weight
         else:
             return -self.max_weight
@@ -61,7 +66,7 @@ class weighter(object):
         the scorer to get positive and negative histogram values.
         '''
         hp, hn = self.scorer.get_pos_neg(s)
-        epsilon = 0.000001   # to prevent overflow
+        epsilon = 0.000001  # to prevent overflow
         ratio = hp / (hn + epsilon)
         wgt = m.log(ratio)
         return wgt
@@ -69,13 +74,12 @@ class weighter(object):
     def scale_and_trunc_(self, w0):
         '''  Map the weight into an integer in the range -max_weight,
         ... max_weight. '''
-        w0 = max(-self.max_raw_weight,
-                 min(self.max_raw_weight, w0))
+        w0 = max(-self.max_raw_weight, min(self.max_raw_weight, w0))
         w = round(w0 / self.max_raw_weight * self.max_weight)
         return w
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     error_frac = 0.15
     neg_pos_ratio = 5.0
     scorer = es.exp_scores.create_from_error_frac(error_frac, neg_pos_ratio)
@@ -84,11 +88,11 @@ if __name__ == "__main__":
     max_weight = 999
     s2w = weighter(scorer, human_prob, max_weight)
 
-    print("\nSampling of weights:")
+    print('\nSampling of weights:')
     n = 100
-    for i in range(n+1):
+    for i in range(n + 1):
         s = i / n
-        print("score: %4.2f, wgt %d" % (s, s2w.wgt(s)))
+        print('score: %4.2f, wgt %d' % (s, s2w.wgt(s)))
 
     '''
     n = 25
