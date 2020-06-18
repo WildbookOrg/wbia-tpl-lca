@@ -1,4 +1,6 @@
+# -*- coding: utf-8 -*-
 import collections
+
 
 class CID2LCA(object):
     """
@@ -75,26 +77,33 @@ class CID2LCA(object):
         for c in self.cid2lcas:
             for a in self.cid2lcas[c]:
                 if c not in a.from_cids():
-                    print("CID2LCA.is_consistent, error found")
-                    print("LCA in set for cluster", c, "but does not contain it")
+                    print('CID2LCA.is_consistent, error found')
+                    print('LCA in set for cluster', c, 'but does not contain it')
                     all_ok = False
 
                 for cp in a.from_cids():
                     if cp != c and a not in self.cid2lcas[cp]:
-                        print("CID2LCA.is_consistent, error found")
-                        print("LCA with from_cids", a.from_cids,
-                              "is in set for cid", c, "but not for cid", cp)
+                        print('CID2LCA.is_consistent, error found')
+                        print(
+                            'LCA with from_cids',
+                            a.from_cids,
+                            'is in set for cid',
+                            c,
+                            'but not for cid',
+                            cp,
+                        )
                         all_ok = False
         return all_ok
 
     def print_structure(self):
         for c in sorted(self.cid2lcas.keys()):
-            print("cid", c, "has the following LCAs:")
+            print('cid', c, 'has the following LCAs:')
             for a in self.cid2lcas[c]:
-                print("    ", str(a))
+                print('    ', str(a))
 
 
-#############  Testing code  ######################
+################################  Testing code  ################################  # NOQA
+
 
 class lca_lite(object):
     def __init__(self, hv, cids):
@@ -111,73 +120,77 @@ class lca_lite(object):
         return self.m_cids
 
     def __str__(self):
-        return "hash = %d, cids = %a" % (self.__hash_value, self.m_cids)
+        return 'hash = %d, cids = %a' % (self.__hash_value, self.m_cids)
 
 
 def test_all():
-    lcas = [lca_lite(747, [0, 1]),
-            lca_lite(692, [1, 2]),
-            lca_lite(381, [1]),
-            lca_lite(826, [2, 5]),
-            lca_lite(124, [7, 5]),
-            lca_lite(243, [7, 8]),
-            lca_lite(710, [2, 4]),
-            lca_lite(459, [9, 7])]
+    lcas = [
+        lca_lite(747, [0, 1]),
+        lca_lite(692, [1, 2]),
+        lca_lite(381, [1]),
+        lca_lite(826, [2, 5]),
+        lca_lite(124, [7, 5]),
+        lca_lite(243, [7, 8]),
+        lca_lite(710, [2, 4]),
+        lca_lite(459, [9, 7]),
+    ]
 
     c2a = CID2LCA()
     for a in lcas:
         c2a.add(a)
 
-    print("len (should be )", len(c2a.cid2lcas))
-    print("keys (should be [0, 1, 2, 4, 5, 7, 8, 9])", sorted(c2a.cid2lcas.keys()))
+    print('len (should be )', len(c2a.cid2lcas))
+    print('keys (should be [0, 1, 2, 4, 5, 7, 8, 9])', sorted(c2a.cid2lcas.keys()))
 
     lca_set = c2a.containing_all_cids([1, 2])
-    print("containg_all_cids [1,2] (should be just 692):")
+    print('containg_all_cids [1,2] (should be just 692):')
     for a in lca_set:
-        print("    ", str(a))
+        print('    ', str(a))
 
     lca_set = c2a.containing_all_cids([2])
-    print("containg_all_cids [2] (should be 692, 710, 826):")
+    print('containg_all_cids [2] (should be 692, 710, 826):')
     for a in lca_set:
-        print("    ", str(a))
+        print('    ', str(a))
 
     lca_set = c2a.containing_all_cids([1, 5])
-    print("containg_all_cids [1, 5] (should be len(0)):", len(lca_set))
+    print('containg_all_cids [1, 5] (should be len(0)):', len(lca_set))
 
     lca_set = c2a.containing_all_cids([1, 99])
-    print("containg_all_cids [1, 99] (should be len(0)):", len(lca_set))
-    
-    print("========\nDictionary structure")
+    print('containg_all_cids [1, 99] (should be len(0)):', len(lca_set))
+
+    print('========\nDictionary structure')
     if c2a.is_consistent():
         print('All consistent.')
     c2a.print_structure()
     lca_set = c2a.remove_with_cids([2, 5])
-    print("after removing [2, 5] returned LCAs should be 124, 692, 710, 826")
+    print('after removing [2, 5] returned LCAs should be 124, 692, 710, 826')
     for a in lca_set:
-        print("    ", str(a))
+        print('    ', str(a))
 
-    print("========\nDictionary structure")
+    print('========\nDictionary structure')
     if c2a.is_consistent():
         print('All consistent.')
     c2a.print_structure()
     lca_set = c2a.remove_with_cids([1])
-    print("after removing [1] returned LCAs should be 381, 747")
+    print('after removing [1] returned LCAs should be 381, 747')
     for a in lca_set:
-        print("    ", str(a))
+        print('    ', str(a))
 
-    print("========\nDictionary structure")
+    print('========\nDictionary structure')
     if c2a.is_consistent():
         print('All consistent.')
     c2a.print_structure()
     lca_set = c2a.remove_with_cids([4])
-    print("after removing [4]; should have returned the empty set, did it? ",
-          len(lca_set) == 0)
+    print(
+        'after removing [4]; should have returned the empty set, did it? ',
+        len(lca_set) == 0,
+    )
 
-    print("========\nDictionary structure (final)")
+    print('========\nDictionary structure (final)')
     if c2a.is_consistent():
         print('All consistent.')
     c2a.print_structure()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     test_all()

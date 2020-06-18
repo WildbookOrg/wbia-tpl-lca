@@ -1,4 +1,4 @@
-
+# -*- coding: utf-8 -*-
 import networkx as nx
 import cluster_tools as ct
 
@@ -18,7 +18,6 @@ c. otherwise, ask the human verifier to make a decision about it, and
 
 
 class baseline(object):
-
     def __init__(self, G, human_request, human_result):
         self.G = G
         self.human_request = human_request
@@ -49,27 +48,32 @@ class baseline(object):
     def evaluate_baseline(self, sim, out_prefix, n_min, n_max, n_inc=10):
         gt_results = []
         r_results = []
-        for n in range(n_min, n_max+1, n_inc):
+        for n in range(n_min, n_max + 1, n_inc):
             clustering, node2cid = self.generate_clustering(n)
-            result = sim.incremental_stats(n, clustering, node2cid,
-                                           sim.gt_clustering, sim.gt_node2cid)
+            result = sim.incremental_stats(
+                n, clustering, node2cid, sim.gt_clustering, sim.gt_node2cid
+            )
             gt_results.append(result)
-            result = sim.incremental_stats(n, clustering, node2cid,
-                                           sim.r_clustering, sim.r_node2cid)
+            result = sim.incremental_stats(
+                n, clustering, node2cid, sim.r_clustering, sim.r_node2cid
+            )
             r_results.append(result)
 
-        out_name = out_prefix + "_gt.pdf"
+        # TODO: Added by JP due to linting errors, is this correct?
+        sim_i = sim
+        # /TODO
+
+        out_name = out_prefix + '_gt.pdf'
         sim.plot_convergence(gt_results, out_name)
-        out_name = out_prefix + "_reach_gt.pdf"
+        out_name = out_prefix + '_reach_gt.pdf'
         sim.plot_convergence(r_results, out_name)
-        sim.csv_output(out_prefix + "_gt.csv", sim_i.gt_results)
-        sim.csv_output(out_prefix + "_r.csv", sim_i.r_results)
+        sim.csv_output(out_prefix + '_gt.csv', sim_i.gt_results)
+        sim.csv_output(out_prefix + '_r.csv', sim_i.r_results)
+
+        # ADD CSV OUTPUT BOTH HERE AND IN SIMULATOR.
 
 
-        ###  ADD CSV OUTPUT BOTH HERE AND IN SIMULATOR.
-
-
-""" 
+"""
 
 1. For each edge, generate the simulation result as though it is
 human review and add to a dictionary.
@@ -86,8 +90,9 @@ structure.  Add to the accumulated results.
 
 """
 
-class baseline(object):
 
+# TODO: Added by JP for Liniting errors, cannot have multiple baseline object definitions
+class baseline_alternate(object):
     def __init__(self, sim):
         self.sim = sim
         self.nodes = sim.G_orig.nodes
@@ -97,7 +102,7 @@ class baseline(object):
         edges = [(min(e[0], e[1]), max(e[0], e[1]), e[2]) for e in edges]
         self.edges_by_abs_wgt = sorted(edges, key=lambda e: abs(e[2]))
         # print("edges_by_abs_wgt:", self.edges_by_abs_wgt)
-        prs = [(min(e[0],e[1]), max(e[0], e[1])) for e in edges]
+        prs = [(min(e[0], e[1]), max(e[0], e[1])) for e in edges]
         self.dict_human = {pr: sim.gen_human_wgt(pr) for pr in prs}
         # print("dict_human:", self.dict_human)
         self.gt_results = []
@@ -127,20 +132,19 @@ class baseline(object):
         return clustering, node2cid
 
     def all_iterations(self, n_min, n_max, n_inc):
-        for n in range(n_min, n_max+1, n_inc):
+        for n in range(n_min, n_max + 1, n_inc):
             clustering, node2cid = self.one_iteration(n)
-            result = self.sim.incremental_stats(n, clustering, node2cid,
-                                                self.sim.gt_clustering,
-                                                self.sim.gt_node2cid)
+            result = self.sim.incremental_stats(
+                n, clustering, node2cid, self.sim.gt_clustering, self.sim.gt_node2cid
+            )
             self.gt_results.append(result)
-            result = self.sim.incremental_stats(n, clustering, node2cid,
-                                                self.sim.r_clustering,
-                                                self.sim.r_node2cid)
+            result = self.sim.incremental_stats(
+                n, clustering, node2cid, self.sim.r_clustering, self.sim.r_node2cid
+            )
             self.r_results.append(result)
 
     def generate_plots(self, out_prefix):
-        out_name = out_prefix + "_gt.pdf"
+        out_name = out_prefix + '_gt.pdf'
         self.sim.plot_convergence(self.gt_results, out_name)
-        out_name = out_prefix + "_reach_gt.pdf"
+        out_name = out_prefix + '_reach_gt.pdf'
         self.sim.plot_convergence(self.r_results, out_name)
-

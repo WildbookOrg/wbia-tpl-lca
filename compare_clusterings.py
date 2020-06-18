@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import networkx as nx
 
 '''Old clustering:
@@ -10,7 +11,7 @@ New nodes:
 
 New clusters:
 . list of tuples, where each tuple contains all the node ids of one
-cluster.  
+cluster.
 
 Goal is to return:
 
@@ -35,12 +36,11 @@ subset of nodes from a previous cluster. New nodes may be added.
 
 
 '''
-def 
-def bipartite_cc(from_visited,
-                 from_nbrs,
-                 to_visited,
-                 to_nbrs,
-                 from_nodes):  # on this, marked visited
+
+
+def bipartite_cc(
+    from_visited, from_nbrs, to_visited, to_nbrs, from_nodes
+):  # on this, marked visited
     to_nodes = set()
     for v in from_nodes:
         for t in from_nbrs[v]:
@@ -50,18 +50,15 @@ def bipartite_cc(from_visited,
     if len(to_nodes) == 0:
         return from_nodes, set()
     else:
-        to_rec, from_rec = bipartite_cc(to_visited, to_nbrs,
-                                        from_visited, from_nbrs,
-                                        to_nodes)
-        return from_rec+from_nodes, to_rec
+        to_rec, from_rec = bipartite_cc(
+            to_visited, to_nbrs, from_visited, from_nbrs, to_nodes
+        )
+        return from_rec + from_nodes, to_rec
 
 
-def compare_clusterings(old_clustering,
-                        old_n2c,
-                        new_clustering,
-                        new_n2c):
+def compare_clusterings(old_clustering, old_n2c, new_clustering, new_n2c):
     # build graph....
-     n
+    # n
     pairs = set()
     for cid, nodes in old_clustering.values():
         new_nbrs = {new_n2c[n] for n in nodes}
@@ -69,15 +66,11 @@ def compare_clusterings(old_clustering,
 
     g = nx.Graph()
     g.add_edges(pairs)
-    for cc in nx.connected_components(g):
-        old_cids = {c for c in cc if 
+    # for cc in nx.connected_components(g):
+    #     old_cids = {c for c in cc if True}
 
-    
-    
-
-    
-    old_to_new = {cid: set() for cid in old_clustering}
-    new_to_old = {cid: set() for cid in new_clustering}
+    old_to_new = {cid: set([]) for cid in old_clustering}
+    new_to_old = {cid: set([]) for cid in new_clustering}
     for cid, nodes in old_clustering.values:
         for n in nodes:
             if n in new_n2c:  # might have been dropped
@@ -89,11 +82,8 @@ def compare_clusterings(old_clustering,
                 new_to_old[cid].add(old_n2c[n])
 
     old_visited = {cid: False for cid in old_clustering}
-    new_visited = {cid: False for cid in new_clustering}
+    # new_visited = {cid: False for cid in new_clustering}
 
     for cid, b in old_visited.values():
         if b:
             continue
-
-        
-        

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import logging
 import networkx as nx
 
@@ -29,7 +30,7 @@ logger = logging.getLogger()
 
 class LCA(object):
     def __init__(self, subG, clustering, cids, score):
-        self.subgraph = subG   # Restricted to the clustering
+        self.subgraph = subG  # Restricted to the clustering
         self.from_clusters = {c: clustering[c] for c in cids}
         self.from_cids_sorted = tuple(sorted(cids))
         self.__hash_value = hash(self.from_cids_sorted)
@@ -73,7 +74,7 @@ class LCA(object):
             no_edge = []
             has_edge = []
             for i, m in enumerate(nodes):
-                for j in range(i+1, len(nodes)):
+                for j in range(i + 1, len(nodes)):
                     n = nodes[j]
 
                     # Skip node pairs that are categorized the same
@@ -85,18 +86,16 @@ class LCA(object):
                     if same_in_from == same_in_to:
                         continue
                     if is_futile_tester(m, n):
-                        logger.info("Edge %a, %a skipped: too many tests"
-                                    % (m, n))
+                        logger.info('Edge %a, %a skipped: too many tests' % (m, n))
                         continue
 
-                    if n in self.subgraph[m]:   # edge exists
+                    if n in self.subgraph[m]:  # edge exists
                         has_edge.append((m, n, self.subgraph[m][n]['weight']))
                     else:
                         no_edge.append((m, n))
 
             has_edge.sort(key=lambda e: abs(e[2]))
-            self.inconsistent = \
-                [(m, n) for m, n, _ in has_edge] + no_edge
+            self.inconsistent = [(m, n) for m, n, _ in has_edge] + no_edge
 
         #  Return the last num_to_return - the highest priority pairs
         new_len = max(0, len(self.inconsistent) - num_to_return)
@@ -144,71 +143,83 @@ class LCA(object):
             self.inconsistent.remove((n0, n1))
         except ValueError:
             pass
-        
+
         # Finally, return the score changes
         return (from_score_change, to_score_change)
 
     def pprint_short(self, initial_str='', stop_after_from=False):
-        out_str = initial_str + "From cids:"
+        out_str = initial_str + 'From cids:'
         for cid in sorted(self.from_clusters.keys()):
-            out_str += " %d: %a" % (cid, sorted(self.from_clusters[cid]))
+            out_str += ' %d: %a' % (cid, sorted(self.from_clusters[cid]))
 
         if logger.getEffectiveLevel() <= logging.DEBUG:
             check_score = ct.clustering_score(self.subgraph, self.from_n2c)
-            if abs(check_score-self.from_score) > 1e-7:
-                out_str += "from score error: should be %a, but is %a" % \
-                    (check_score, self.from_score)
+            if abs(check_score - self.from_score) > 1e-7:
+                out_str += 'from score error: should be %a, but is %a' % (
+                    check_score,
+                    self.from_score,
+                )
         if stop_after_from or self.to_clusters is None:
             logger.info(out_str)
             return
 
-        out_str += "; to:"
+        out_str += '; to:'
         for cid in sorted(self.to_clusters.keys()):
-            out_str += " %a" % sorted(self.to_clusters[cid])
+            out_str += ' %a' % sorted(self.to_clusters[cid])
 
         if logger.getEffectiveLevel() <= logging.DEBUG:
             check_score = ct.clustering_score(self.subgraph, self.to_n2c)
             if check_score != self.to_score:
-                out_str += "\nto score error: should be %a, but is %a\n" % \
-                    (check_score, self.to_score)
-        out_str += "; delta %1.1f" % self.delta_score()
+                out_str += '\nto score error: should be %a, but is %a\n' % (
+                    check_score,
+                    self.to_score,
+                )
+        out_str += '; delta %1.1f' % self.delta_score()
         logger.info(out_str)
 
     def pprint(self, stop_after_from=False):
-        print("from_n2c:", self.from_n2c)
-        print("subgraph nodes", self.subgraph.nodes())
+        print('from_n2c:', self.from_n2c)
+        print('subgraph nodes', self.subgraph.nodes())
         check_score = ct.clustering_score(self.subgraph, self.from_n2c)
-        print("from clusters (score = %a, checking %a):"
-              % (self.from_score, check_score))
+        print('from clusters (score = %a, checking %a):' % (self.from_score, check_score))
         if self.from_score != check_score:
-            print("lca: SCORING ERROR in from")
+            print('lca: SCORING ERROR in from')
         for cid in sorted(self.from_clusters.keys()):
-            print("    %d: %a" % (cid, self.from_clusters[cid]))
+            print('    %d: %a' % (cid, self.from_clusters[cid]))
         if stop_after_from:
             return
 
         check_score = ct.clustering_score(self.subgraph, self.to_n2c)
-        print("to clusters (score = %a, checking = %a):"
-              % (self.to_score, check_score))
+        print('to clusters (score = %a, checking = %a):' % (self.to_score, check_score))
         if self.to_score != check_score:
-            print("SCORING ERROR in to")
+            print('SCORING ERROR in to')
         for cid in sorted(self.to_clusters.keys()):
-            print("    %d: %a" % (cid, self.to_clusters[cid]))
-        print("score_difference %a" % self.delta_score())
+            print('    %d: %a' % (cid, self.to_clusters[cid]))
+        print('score_difference %a' % self.delta_score())
 
-        print("inconsistent_pairs:", self.inconsistent)
+        print('inconsistent_pairs:', self.inconsistent)
 
 
 # ################################
 # ######    Testing code    ######
 # ################################
 
+
 def build_example_LCA():
     G = tct.ex_graph_fig1()
-    n2c_optimal = {'a': 0, 'b': 0, 'd': 0, 'e': 0,
-                   'c': 1,
-                   'h': 2, 'i': 2,
-                   'f': 3, 'g': 3, 'j': 3, 'k': 3}
+    n2c_optimal = {
+        'a': 0,
+        'b': 0,
+        'd': 0,
+        'e': 0,
+        'c': 1,
+        'h': 2,
+        'i': 2,
+        'f': 3,
+        'g': 3,
+        'j': 3,
+        'k': 3,
+    }
     clustering_opt = ct.build_clustering(n2c_optimal)
     cid0 = 2
     cid1 = 3
@@ -220,8 +231,7 @@ def build_example_LCA():
 
     to_clusters = {0: {'f', 'h', 'i', 'j'}, 1: {'g', 'k'}}
     subG = G.subgraph(nodes_in_clusters)
-    to_node2cid = {n: cid for cid in range(len(to_clusters))
-                   for n in to_clusters[cid]}
+    to_node2cid = {n: cid for cid in range(len(to_clusters)) for n in to_clusters[cid]}
     to_score = ct.clustering_score(subG, to_node2cid)
     a.set_to_clusters(to_clusters, to_score)
 
@@ -233,62 +243,65 @@ def futile_tester_default(n0, n1):
 
 
 def test_LCA_class():
-    print("===========================")
-    print("=====  test_LCA_class =====")
-    print("===========================")
+    print('===========================')
+    print('=====  test_LCA_class =====')
+    print('===========================')
 
     a, G = build_example_LCA()
 
-    print("a.from_cids should return [2, 3]; returns", sorted(a.from_cids()))
-    print("a.nodes should return ['f', 'g', 'h', 'i', 'j', 'k']; returns",
-          sorted(a.nodes()))
+    print('a.from_cids should return [2, 3]; returns', sorted(a.from_cids()))
+    print(
+        "a.nodes should return ['f', 'g', 'h', 'i', 'j', 'k']; returns", sorted(a.nodes())
+    )
 
-    print("a.delta_score should be -18 and it is", a.delta_score())
+    print('a.delta_score should be -18 and it is', a.delta_score())
 
-    print("Running pprint")
+    print('Running pprint')
     a.pprint()
 
-    print("Running pprint_short")
+    print('Running pprint_short')
     a.pprint_short()
 
     n = 3
-    print("-------")
-    print("1st call to get_inconsistent should return"
-          "(f, g), (f, h), (h, j):")
+    print('-------')
+    print('1st call to get_inconsistent should return' '(f, g), (f, h), (h, j):')
     prs = a.get_inconsistent(n, futile_tester_default)
     print(prs)
 
-    print("-------")
-    print("2nd call to get_inconsistent should return"
-          "(g, j), (i, j), (j, k)")
+    print('-------')
+    print('2nd call to get_inconsistent should return' '(g, j), (i, j), (j, k)')
     prs = a.get_inconsistent(n, futile_tester_default)
     print(prs)
 
-    print("-------")
-    print("3rd call to get_inconsistent should return"
-          "(f, i), (f, k)")
+    print('-------')
+    print('3rd call to get_inconsistent should return' '(f, i), (f, k)')
     prs = a.get_inconsistent(n, futile_tester_default)
     print(prs)
 
-    print("-------")
-    print("4th call should regenerate and return"
-          "(f, h), (h, j)")
+    print('-------')
+    print('4th call should regenerate and return' '(f, h), (h, j)')
     n = 2
     prs = a.get_inconsistent(n, futile_tester_default)
     print(prs)
-    print("At this point, the inconsistent list should be length 6. It is",
-          len(a.inconsistent))
-    print("The first pair on the inconsistent list should be (f, i) and is",
-          a.inconsistent[0])
-    print("The last pair on the inconsistent list should be (f, g) and is",
-          a.inconsistent[-1])
+    print(
+        'At this point, the inconsistent list should be length 6. It is',
+        len(a.inconsistent),
+    )
+    print(
+        'The first pair on the inconsistent list should be (f, i) and is',
+        a.inconsistent[0],
+    )
+    print(
+        'The last pair on the inconsistent list should be (f, g) and is',
+        a.inconsistent[-1],
+    )
 
 
 def test_LCA_add_edge_method():
-    print("\n")
-    print("==============================")
-    print("====  test LCA.add_edge  =====")
-    print("==============================")
+    print('\n')
+    print('==============================')
+    print('====  test LCA.add_edge  =====')
+    print('==============================')
 
     a, G = build_example_LCA()
     a.pprint()
@@ -296,36 +309,47 @@ def test_LCA_add_edge_method():
     print('Changing an existing edge')
     change_edge = tuple(['i', 'j', 3])
     (from_change, to_change) = a.add_edge(change_edge)
-    print("Change edge:", change_edge, "delta_wgt should be (-3, 3)"
-          " and is (%d, %d)" % (from_change, to_change))
-    print("a.delta_score should be -12 and it is", a.delta_score())
+    print(
+        'Change edge:',
+        change_edge,
+        'delta_wgt should be (-3, 3)' ' and is (%d, %d)' % (from_change, to_change),
+    )
+    print('a.delta_score should be -12 and it is', a.delta_score())
     G['i']['j']['weight'] += change_edge[2]
 
     print('--------------')
     change_edge = tuple(['i', 'j', -3])
     (from_change, to_change) = a.add_edge(change_edge)
-    print("Changing back by adding:", change_edge,
-          "delta_wgt should be (3, -3)"
-          " and is (%d, %d)" % (from_change, to_change))
-    print("a.delta_score should be back to -18 and it is", a.delta_score())
+    print(
+        'Changing back by adding:',
+        change_edge,
+        'delta_wgt should be (3, -3)' ' and is (%d, %d)' % (from_change, to_change),
+    )
+    print('a.delta_score should be back to -18 and it is', a.delta_score())
     G['i']['j']['weight'] += change_edge[2]
 
     print('--------------')
     print('Adding a new edge')
     change_edge = tuple(['f', 'h', 4])
     (from_change, to_change) = a.add_edge(change_edge)
-    print("Change edge:", change_edge, "delta_wgt should be (-4, 4)"
-          " and is (%d, %d)" % (from_change, to_change))
-    print("a.delta_score should be -10 and it is", a.delta_score())
+    print(
+        'Change edge:',
+        change_edge,
+        'delta_wgt should be (-4, 4)' ' and is (%d, %d)' % (from_change, to_change),
+    )
+    print('a.delta_score should be -10 and it is', a.delta_score())
     G.add_edge('f', 'h', weight=change_edge[2])
 
     print('-------')
     print('Adding a change to an existing, consistent edge')
     change_edge = tuple(['h', 'i', 9])
     (from_change, to_change) = a.add_edge(change_edge)
-    print("Change edge:", change_edge, "delta_wgt should be (9, 9)"
-          " and is (%d, %d)" % (from_change, to_change))
-    print("a.delta_score should still be -10 and it is", a.delta_score())
+    print(
+        'Change edge:',
+        change_edge,
+        'delta_wgt should be (9, 9)' ' and is (%d, %d)' % (from_change, to_change),
+    )
+    print('a.delta_score should still be -10 and it is', a.delta_score())
     G['h']['i']['weight'] += change_edge[2]
 
     print('-------')
@@ -334,36 +358,49 @@ def test_LCA_add_edge_method():
     a.pprint()
     n = 2
     prs = a.get_inconsistent(n, futile_tester_default)
-    print("First check of get_inconsistent: prs should be [(f, h), (h,j)]",
-          "and are ", prs)
-    print("Length of inconsistent_pairs should be 6 and is",
-          len(a.inconsistent))
+    print(
+        'First check of get_inconsistent: prs should be [(f, h), (h,j)]', 'and are ', prs
+    )
+    print('Length of inconsistent_pairs should be 6 and is', len(a.inconsistent))
 
     n = 3
     delta_score_pre = a.delta_score()
     ce = tuple(['h', 'j', 10])
     (from_change, to_change) = a.add_edge(ce)
-    print("Change edge:", ce, "delta_wgt should be (-10, 10)"
-          " and is (%d, %d)" % (from_change, to_change))
-    print("a.delta_score be %d and it is %d" %
-          (delta_score_pre + 20, a.delta_score()))
+    print(
+        'Change edge:',
+        ce,
+        'delta_wgt should be (-10, 10)' ' and is (%d, %d)' % (from_change, to_change),
+    )
+    print('a.delta_score be %d and it is %d' % (delta_score_pre + 20, a.delta_score()))
     G.add_edge(ce[0], ce[1], weight=ce[2])
     pr = ce[:2]
-    print("Pair", pr, "should not be on the inconsistent list. Is it?",
-          pr in a.inconsistent)
+    print(
+        'Pair', pr, 'should not be on the inconsistent list. Is it?', pr in a.inconsistent
+    )
 
     ce = tuple(['f', 'k', -6])
-    print("Before add_edge pr", ce[:2], "should be on a.inconsistent. Is it?",
-          ce[:2] in a.inconsistent)
+    print(
+        'Before add_edge pr',
+        ce[:2],
+        'should be on a.inconsistent. Is it?',
+        ce[:2] in a.inconsistent,
+    )
     delta_score_pre = a.delta_score()
     (from_change, to_change) = a.add_edge(ce)
-    print("Change edge:", ce, "delta_wgt should be (-6, 6)"
-          " and is (%d, %d)" % (from_change, to_change))
-    print("a.delta_score be %d and it is %d" %
-          (delta_score_pre + 12, a.delta_score()))
+    print(
+        'Change edge:',
+        ce,
+        'delta_wgt should be (-6, 6)' ' and is (%d, %d)' % (from_change, to_change),
+    )
+    print('a.delta_score be %d and it is %d' % (delta_score_pre + 12, a.delta_score()))
     G.add_edge(ce[0], ce[1], weight=ce[2])
-    print("Pair", pr, "should not be in the inconsistent list and result is",
-          ce[:2] in a.inconsistent)
+    print(
+        'Pair',
+        pr,
+        'should not be in the inconsistent list and result is',
+        ce[:2] in a.inconsistent,
+    )
 
 
 class futile_wrapper(object):
@@ -395,13 +432,15 @@ def test_futility_check():
     fw = futile_wrapper(edge_counts, futile_thresh)
     num_to_return = 3
     prs = a.get_inconsistent(num_to_return, fw.is_futile_tester)
-    print('***********\n'
-          'Testing get_inconsistent with futility check on edges.')
-    print("For simple three-node graph the non-futile, inconsistent pairs\n"
-          "should be just [('b', 'c')] and is: ", prs)
+    print('***********\n' 'Testing get_inconsistent with futility check on edges.')
+    print(
+        'For simple three-node graph the non-futile, inconsistent pairs\n'
+        "should be just [('b', 'c')] and is: ",
+        prs,
+    )
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     test_LCA_class()
     test_LCA_add_edge_method()
     test_futility_check()
