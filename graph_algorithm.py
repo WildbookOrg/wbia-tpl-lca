@@ -462,7 +462,7 @@ class graph_algorithm(object):
             # Step 2e: at this point the only remaining active LCAs are
             # waiting for edges, so need to pause.
             elif (
-                (a is None or 
+                (a is None or
                  self.params['min_delta_score_converge'] >= a.delta_score())
                 and self.queues.num_on_W() > 0
             ):
@@ -679,7 +679,7 @@ class graph_algorithm(object):
         if self.log_request_cb is None or self.log_return_cb is None:
             return
     '''
-        
+
     def check_wait_for_edges(self):
         return False
 
