@@ -2,77 +2,6 @@
 import networkx as nx
 import cluster_tools as ct
 
-'''Given a simulator, a lower threshold and an upper threshold.
-
-0. Copy the nodes of the graph from the simulator into the new graph.
-
-1. For each edge of the old graph
-
-a. if its weight is below the lower threshold, eliminate it
-
-b. if its weight is above the upper threshold, keep it
-
-c. otherwise, ask the human verifier to make a decision about it, and
-   insert into the new graph if it is positive
-'''
-
-
-class baseline(object):
-    def __init__(self, G, human_request, human_result):
-        self.G = G
-        self.human_request = human_request
-        self.human_result = human_result
-
-    def generate_clustering(self, num_to_review):
-        H = nx.Graph()
-        H.add_nodes_from(self.G.nodes)
-        kept_edges = []
-        request_pairs = []
-        edges = [e for e in self.G.edges.data('weight')]
-        by_abs_wgt = sorted(edges, key=lambda e: abs(e[2]))
-        request_pairs = [e[:2] for e in by_abs_wgt[:num_to_review]]
-        kept_edges = [e for e in by_abs_wgt[num_to_review:] if e[2] > 0]
-        self.human_request(request_pairs)
-        human_edges = self.human_result()
-        kept_edges += [e for e in human_edges if e[2] > 0]
-        H.add_edges_from(kept_edges)
-
-        idx = 0
-        clustering = dict()
-        for cc in nx.connected_components(H):
-            clustering[idx] = cc
-
-        node2cid = ct.build_node_to_cluster_mapping(clustering)
-        return clustering, node2cid
-
-    def evaluate_baseline(self, sim, out_prefix, n_min, n_max, n_inc=10):
-        gt_results = []
-        r_results = []
-        for n in range(n_min, n_max + 1, n_inc):
-            clustering, node2cid = self.generate_clustering(n)
-            result = sim.incremental_stats(
-                n, clustering, node2cid, sim.gt_clustering, sim.gt_node2cid
-            )
-            gt_results.append(result)
-            result = sim.incremental_stats(
-                n, clustering, node2cid, sim.r_clustering, sim.r_node2cid
-            )
-            r_results.append(result)
-
-        # TODO: Added by JP due to linting errors, is this correct?
-        sim_i = sim
-        # /TODO
-
-        out_name = out_prefix + '_gt.pdf'
-        sim.plot_convergence(gt_results, out_name)
-        out_name = out_prefix + '_reach_gt.pdf'
-        sim.plot_convergence(r_results, out_name)
-        sim.csv_output(out_prefix + '_gt.csv', sim_i.gt_results)
-        sim.csv_output(out_prefix + '_r.csv', sim_i.r_results)
-
-        # ADD CSV OUTPUT BOTH HERE AND IN SIMULATOR.
-
-
 """
 
 1. For each edge, generate the simulation result as though it is
@@ -91,8 +20,7 @@ structure.  Add to the accumulated results.
 """
 
 
-# TODO: Added by JP for Liniting errors, cannot have multiple baseline object definitions
-class baseline_alternate(object):
+class baseline(object):
     def __init__(self, sim):
         self.sim = sim
         self.nodes = sim.G_orig.nodes
