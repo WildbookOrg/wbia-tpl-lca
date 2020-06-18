@@ -235,7 +235,7 @@ class graph_algorithm(object):
         for k, v in self.params.items():
             logger.info('%a: %a' % (k, v))
         self.weight_mgr = wm.weight_manager(
-            aug_names, params, aug_request_cb, aug_result_cb
+            aug_names, params['tries_before_edge_done'], aug_request_cb, aug_result_cb
         )
         self.G = nx.Graph()
         weighted_edges = self.weight_mgr.get_initial_edges(edges)
@@ -397,11 +397,6 @@ class graph_algorithm(object):
         should_pause = False
         converged = False
 
-        # TODO: Added by JP due to linting errors
-        should_wait_for_edges = False
-        stop_requested = False
-        # /TODO
-
         while (max_iterations is None or iter_num < max_iterations) and not (
             halt_requested or should_pause or converged
         ):
@@ -499,21 +494,17 @@ class graph_algorithm(object):
                 )
                 converged = True
 
-            #  Check to
+            #  Check 
             if not converged and not should_pause:
                 should_pause = self.check_wait_for_edges() or self.stop_request_check()
 
-                if (
-                    logger.getEffectiveLevel() <= logging.DEBUG
-                    and (not should_wait_for_edges)
-                    and (not stop_requested)
-                ):
-                    if len(self.weight_mgr.waiting_for) == 0:
-                        logger.debug('Waiting for edges: <none>')
-                    else:
-                        logger.debug(
-                            'Waiting for edges: %a' % self.weight_mgr.waiting_for
-                        )
+            if should_pause and logger.getEffectiveLevel() <= logging.DEBUG:
+                if len(self.weight_mgr.waiting_for) == 0:
+                    logger.debug('Waiting for edges: <none>')
+                else:
+                    logger.debug(
+                        'Waiting for edges: %a' % self.weight_mgr.waiting_for
+                    )
 
             if self.params['draw_iterations']:
                 self.draw_obj.draw_iteration(

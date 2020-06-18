@@ -6,7 +6,6 @@ import sys
 import baseline
 import cluster_tools as ct
 
-# import default_params
 import exp_scores as es
 import graph_algorithm as ga
 import simulator as sim
