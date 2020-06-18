@@ -29,8 +29,6 @@ import collections
 import logging
 import os
 
-from graph_algorithm import default_params
-
 logger = logging.getLogger()
 
 
@@ -43,7 +41,7 @@ def empty_gen(n):
 
 
 class weight_manager(object):
-    def __init__(self, aug_names, params, request_cb, result_cb):
+    def __init__(self, aug_names, tries_before_edge_done, request_cb, result_cb):
         """
         Initialize with a single request callback, a single result
         callback and the names of the augmentation methods. This list
@@ -51,7 +49,7 @@ class weight_manager(object):
         and the set of edges that we are waiting for.
         """
         self.aug_names = aug_names
-        self.tries_before_done = params['tries_before_edge_done']
+        self.tries_before_done = tries_before_edge_done
         self.request_cb = request_cb
         self.result_cb = result_cb
         assert self.aug_names[-1] == 'human'
@@ -212,12 +210,10 @@ if __name__ == '__main__':
     except Exception:
         pass
 
-    p = default_params()
-
     aug_names = ['vamp', 'siamese', 'human']
     log_format = '%(levelname)-6s [%(filename)18s:%(lineno)d] %(message)s'
     log_level = logging.INFO
-    logging.basicConfig(filename=log_fname, level=p['log_level'], format=log_format)
+    logging.basicConfig(filename=log_fname, level=log_level, format=log_format)
     init_edges = [
         (0, 1, 0.5, 'vamp'),
         (0, 1, -0.3, 'siamese'),
@@ -251,7 +247,8 @@ if __name__ == '__main__':
     num_to_return = [1, 2, 2, 3]
     tc = test_callbacks(edges_to_add, num_to_return, unrequested_edges)
 
-    wm = weight_manager(aug_names, p, tc.request_cb, tc.result_cb)
+    tries_before_edge_done = 4
+    wm = weight_manager(aug_names, tries_before_edge_done, tc.request_cb, tc.result_cb)
     print('Output should be (0, 1, 1.7), (0, 2, -0.8), (1, 2, -2.2)')
     for e in wm.get_initial_edges(init_edges):
         print(e)
