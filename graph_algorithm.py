@@ -36,10 +36,9 @@ will coincide at all times.
 3. List of names of augmentation methods. This list gives the order in
 which they are tried.  The list must end with "human", and the length
 of the list might only be 1, meaning that no verification algorithms
-have been tried and only human input will be used.
+have been provided and only human input will be used.
 
 4. params - dictionary of tuning parameters and debugging controls.
-See the default_params function below.
 
 5. Augmentation request callback: pointer to function that accepts
 request for augmentation in the form of a list of 3-tuples. Each
@@ -50,10 +49,6 @@ method.
 results of augmentation in the form of a list of 4-tuples. Each
 4-tuple contains the two node ids, the wgt and the name of the
 augmentation method that produced the result
-
-7. log full path  - absolute path to the file to write logging
-file. The path must exist, although the actual file may not. If the
-file exists it will be added to.
 '''
 
 
@@ -86,9 +81,7 @@ removed and the second giving the clusters that have been added. If a
 cluster has been both removed and added (back) it will not be
 returned.
 
-4. Ask for log file contents and return as (large!!) string.
-
-5. Stop check: ask if stop requested needed and stop, returning from
+4. Stop check: ask if stop requested needed and stop, returning from
 the function called "run_main_loop". A subsequent call to
 run_main_loop will pick up cleanly from stop point.
 '''
@@ -97,7 +90,7 @@ run_main_loop will pick up cleanly from stop point.
 '''
 Process start: run_main_loop
 
-Runs until either the algorithm has converged, a maximum number of
+Runs until either the algoriothm has converged, a maximum number of
 iterations has been reached, a stop has been requested, or the
 algorithm is waiting for too many augmentation edges.
 
@@ -189,20 +182,19 @@ Invariants:
    generally only used for LCAs where all "inconsistent" edges have
    been tested too many times and therefore any more tests should be
    considered "futile".
-
 '''
+
 logger = logging.getLogger()
 
 
+'''
+# going to eliminate this...
 def default_params():
-    min_delta = -10  # must be negative
-    min_delta_ratio = 8  # must be greater than one. not an important constant
     p = {
         'prob_human_correct': 0.97,
-        'max_edge_weight': 999,
-        'min_delta_score_converge': min_delta,
-        'min_delta_stability_ratio': min_delta_ratio,
-        'min_delta_score_stability': min_delta / min_delta_ratio,
+        'min_delta_prob_converge': 0.95,
+        'max_weight': 99,
+        'min_delta_stability_ratio': 8,
         'num_per_augmentation': 2,
         'tries_before_edge_done': 4,
         'log_level': logging.INFO,
@@ -210,6 +202,7 @@ def default_params():
         'drawing_prefix': 'default_prefix',
     }
     return p
+'''
 
 
 class graph_algorithm(object):
@@ -220,20 +213,12 @@ class graph_algorithm(object):
         aug_names,
         params,
         aug_request_cb,
-        aug_result_cb,
-        log_full_path,
+        aug_result_cb
     ):
         self.params = params
-        log_format = '%(levelname)-6s [%(filename)18s:%(lineno)3d] %(message)s'
-        logging.basicConfig(
-            filename=log_full_path, level=params['log_level'], format=log_format
-        )
         logger.info('======================================')
         logger.info('Construction of graph_algorithm object')
         logger.info(dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-        logger.info('Parameters dictionary')
-        for k, v in self.params.items():
-            logger.info('%a: %a' % (k, v))
         self.weight_mgr = wm.weight_manager(
             aug_names, params['tries_before_edge_done'], aug_request_cb, aug_result_cb
         )
@@ -263,7 +248,9 @@ class graph_algorithm(object):
         self.num_human_results = 0
         self.removed_nodes = set()
 
-        self.draw_obj = draw_lca.draw_lca(self.params['drawing_prefix'])
+        self.draw_obj = None
+        if self.params['draw_iterations']:
+            self.draw_obj = draw_lca.draw_lca(self.params['drawing_prefix'])
 
         '''  Need to set these callbacks to request and receive
         information from the verfication algorithm and to do the same
@@ -475,8 +462,8 @@ class graph_algorithm(object):
             # Step 2e: at this point the only remaining active LCAs are
             # waiting for edges, so need to pause.
             elif (
-                a is not None
-                and self.params['min_delta_score_converge'] >= a.delta_score()
+                (a is None or 
+                 self.params['min_delta_score_converge'] >= a.delta_score())
                 and self.queues.num_on_W() > 0
             ):
                 should_pause = True
@@ -494,7 +481,7 @@ class graph_algorithm(object):
                 )
                 converged = True
 
-            #  Check 
+            #  Check
             if not converged and not should_pause:
                 should_pause = self.check_wait_for_edges() or self.stop_request_check()
 
@@ -629,7 +616,7 @@ class graph_algorithm(object):
             return
 
         num_removed = 0
-        for old_node in self.remove_nodes_cb():
+        for old_node in self.remove_nodes_cb(self.weight_mgr.node_set):
             if old_node not in self.G.nodes:
                 continue
 
@@ -680,15 +667,19 @@ class graph_algorithm(object):
     def status_check(self):
         if self.status_request_cb is None or self.status_return_cb is None:
             return
+        # Not implemented yet
 
     def provide_results(self):
         if self.results_request_cb is None or self.results_return_cb is None:
             return
+        # Not implemented yet
 
+    '''
     def generate_log_string(self):
         if self.log_request_cb is None or self.log_return_cb is None:
             return
-
+    '''
+        
     def check_wait_for_edges(self):
         return False
 

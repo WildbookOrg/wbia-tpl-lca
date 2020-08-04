@@ -57,6 +57,7 @@ class weight_manager(object):
         self.augment_count = collections.defaultdict(empty_gen(self.num_names))
         self.waiting_for = set()
         self.counts = [0] * self.num_names
+        self.node_set = set()
 
     def _name_to_index(self, name):
         """
@@ -82,13 +83,14 @@ class weight_manager(object):
         first weight is used.
         """
         ret_edges = collections.defaultdict(float)
-        for e in labeled_edges:
-            if e[0] < e[1]:
-                pr = (e[0], e[1])
+        for n0, n1, w, aug in labeled_edges:
+            self.node_set.add(n0)
+            self.node_set.add(n1)
+            if n0 < n1:
+                pr = (n0, n1)
             else:
-                pr = (e[1], e[0])
-            w = e[2]
-            i = self._name_to_index(e[3])
+                pr = (n1, n0)
+            i = self._name_to_index(aug)
             ac = self.augment_count[pr]
             if (ac[i] == 0) or (i == self.num_names - 1):
                 ac[i] += 1
@@ -111,6 +113,8 @@ class weight_manager(object):
         req_list = []
         for pr in node_pairs:
             assert pr[0] < pr[1]
+            self.node_set.add(pr[0])
+            self.node_set.add(pr[1])
             try:
                 i = self.augment_count[pr].index(0)
             except ValueError:
@@ -133,7 +137,7 @@ class weight_manager(object):
         Note, this should be able to handle edges that it has not
         requested and handle nodes that do not yet exist.
         """
-        new_results = self.result_cb()
+        new_results = self.result_cb(self.node_set)
         for (n0, n1, new_wgt, a_name) in new_results:
             if n0 > n1:
                 n0, n1 = n1, n0
@@ -185,7 +189,7 @@ class test_callbacks(object):
     def request_cb(self, new_req_edges):
         self.edges_requested += new_req_edges
 
-    def result_cb(self):
+    def result_cb(self, node_set):  # ignores node_set
         self.ntr_index = (self.ntr_index + 1) % len(self.num_to_return)
         k = min(self.num_to_return[self.ntr_index], len(self.edges_requested))
         ret_edges = []

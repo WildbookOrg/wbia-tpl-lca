@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 import networkx as nx
 import os
 
@@ -9,6 +10,25 @@ def check_line(name, corr, actual):
     print(
         '%s: expected %a, actual %a, correct? %a' % (name, corr, actual, corr == actual)
     )
+
+
+def default_params():
+    p = {
+        'prob_human_correct': 0.97,
+        'min_delta_prob_converge': 0.95,
+        'max_weight': 99,
+        'min_delta_stability_ratio': 8,
+        'num_per_augmentation': 2,
+        'tries_before_edge_done': 4,
+        'log_level': logging.INFO,
+        'draw_iterations': False,
+        'drawing_prefix': 'default_prefix',
+    }
+    p['min_delta_score_converge'] = -10  # ove
+    p['min_delta_score_stability'] = p['min_delta_score_converge'] / \
+        p['min_delta_stability_ratio']
+
+    return p
 
 
 def check_against_expected(d, gai):
@@ -42,8 +62,8 @@ def check_against_expected(d, gai):
             check_line('top of Q, delta_score:', delta, a.delta_score())
 
 
-def test_lca_in_graph_algorithm(log_fname):
-    params = ga.default_params()
+def test_lca_in_graph_algorithm():
+    params = default_params()
     aug_names = ['vamp', 'human']
     print('==============================')
     print('Testing for graph construction and then LCA operations')
@@ -64,7 +84,6 @@ def test_lca_in_graph_algorithm(log_fname):
         params,
         aug_request_cb,
         aug_result_cb,
-        log_fname,
     )
     print('Checking initial construction')
     d = {
@@ -660,7 +679,8 @@ class test_generator(object):
     def aug_request_cb(self, edge_triples):
         self.aug_requested += edge_triples
 
-    def aug_result_cb(self):
+    def aug_result_cb(self, node_set=None):
+        # ignore the node_set for this
         if self.no_calls_yet:
             self.no_calls_yet = False
             if self.first_edges_to_add is not None:
@@ -695,8 +715,8 @@ class test_generator(object):
         return to_return
 
 
-def test_add_and_remove(log_fname):
-    params = ga.default_params()
+def test_add_and_remove():
+    params = default_params()
 
     graph_tests = range(10)  # was 10
 
@@ -712,7 +732,6 @@ def test_add_and_remove(log_fname):
             params,
             tg.aug_request_cb,
             tg.aug_result_cb,
-            log_fname,
         )
 
         gai.set_remove_nodes_cb(tg.remove_nodes_cb)
@@ -733,8 +752,8 @@ def test_add_and_remove(log_fname):
         check_against_expected(tg.corr_dict, gai)
 
 
-def test_iterations_and_phase_changes(log_fname, which_graph):
-    params = ga.default_params()
+def test_iterations_and_phase_changes(which_graph):
+    params = default_params()
 
     print('===========================================')
     tg = test_generator(which_graph=which_graph)
@@ -747,7 +766,6 @@ def test_iterations_and_phase_changes(log_fname, which_graph):
         params,
         tg.aug_request_cb,
         tg.aug_result_cb,
-        log_fname,
     )
     gai.set_remove_nodes_cb(tg.remove_nodes_cb)
 
@@ -775,8 +793,8 @@ def test_iterations_and_phase_changes(log_fname, which_graph):
         print('Done with step-by-step iterations')
 
 
-def run_until_convergence(log_fname, which_graph, print_graph=False):
-    params = ga.default_params()
+def run_until_convergence(which_graph, print_graph=False):
+    params = default_params()
     if print_graph:
         params['draw_iterations'] = True
         params['drawing_prefix'] = 'test_graph_%d' % which_graph
@@ -792,7 +810,6 @@ def run_until_convergence(log_fname, which_graph, print_graph=False):
         params,
         tg.aug_request_cb,
         tg.aug_result_cb,
-        log_fname,
     )
     gai.set_remove_nodes_cb(tg.remove_nodes_cb)
     should_pause, iter_num, converged = gai.run_main_loop(iter_num=0, max_iterations=100)
@@ -813,17 +830,25 @@ def run_until_convergence(log_fname, which_graph, print_graph=False):
 
 
 if __name__ == '__main__':
-    log_fname = './test.log'
+    log_fname = './test_graph_algorithm.log'
     try:
         os.remove(log_fname)
     except Exception:
         pass
 
-    test_lca_in_graph_algorithm(log_fname)
-    test_add_and_remove(log_fname)  # which_grap in range 0..10
-    test_iterations_and_phase_changes(log_fname, which_graph=10)
-    test_iterations_and_phase_changes(log_fname, which_graph=11)
-    run_until_convergence(log_fname, which_graph=12)
-    run_until_convergence(log_fname, which_graph=13)
-    run_until_convergence(log_fname, which_graph=14, print_graph=True)
-    run_until_convergence(log_fname, which_graph=15)
+    log_level = logging.INFO
+    log_format = '%(levelname)-6s [%(filename)18s:%(lineno)3d] %(message)s'
+    logging.basicConfig(
+        filename=log_fname, level=log_level, format=log_format
+    )
+    logging.info('=================================')
+    logging.info('Start of test_graph_algorithm')
+
+    test_lca_in_graph_algorithm()
+    test_add_and_remove()  # which_grap in range 0..10
+    test_iterations_and_phase_changes(which_graph=10)
+    test_iterations_and_phase_changes(which_graph=11)
+    run_until_convergence(which_graph=12)
+    run_until_convergence(which_graph=13)
+    run_until_convergence(which_graph=14, print_graph=True)
+    run_until_convergence(which_graph=15)

@@ -1,5 +1,7 @@
 # LCA Algorithm Repository
 
+## Summary status as of 2020-06-18
+
 ## Summary status as of 2019-09-14:
 
 Tested on Python 3.7
@@ -24,3 +26,4 @@ Other than significant clean-up, here are major to dos:
 3. Use initial clustering with a name anchor so that the name stays
 with the node with the lowest id.
 4. Provide intermediate clustering results on demand.
+
