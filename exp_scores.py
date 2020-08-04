@@ -40,10 +40,11 @@ class exp_scores(object):
 
         # Debugging output
         trunc_exp_pos = truncated_exponential(pos_lambda)
-        print('ERROR FRAC %1.3f' % error_frac)
-        print('POS ERROR RATE %1.3f' % (1 - trunc_exp_pos.cdf(0.5)))
+        logging.log('creating exp_scores from error fractions')
+        logging.log('error fraction %1.3f' % error_frac)
+        logging.log('positive error rate %1.3f' % (1 - trunc_exp_pos.cdf(0.5)))
         trunc_exp_neg = truncated_exponential(neg_lambda)
-        print('NEG ERROR RATE %1.3f' % (np_ratio * (1 - trunc_exp_neg.cdf(0.5))))
+        logging.log('negative error rate %1.3f' % (np_ratio * (1 - trunc_exp_neg.cdf(0.5))))
 
         return cls(np_ratio, pos_lambda, neg_lambda)
 
@@ -56,6 +57,7 @@ class exp_scores(object):
         the distribution of samples fed into the verification
         algorithm.
         '''
+        logging.info('creating exp_scores from ground truth sample distributions')
         np_ratio = len(neg_samples) / len(pos_samples)
         pos_lambda = find_lambda_from_samples(pos_samples, is_positive=True)
         neg_lambda = find_lambda_from_samples(neg_samples, is_positive=False)

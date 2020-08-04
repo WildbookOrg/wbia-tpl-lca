@@ -174,7 +174,7 @@ class LCA(object):
                     check_score,
                     self.to_score,
                 )
-        out_str += '; delta %1.1f' % self.delta_score()
+        out_str += '; delta %d' % self.delta_score()
         logger.info(out_str)
 
     def pprint(self, stop_after_from=False):

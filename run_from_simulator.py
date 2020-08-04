@@ -119,7 +119,6 @@ if __name__ == '__main__':
             ga_params,
             sim_i.augmentation_request,
             sim_i.augmentation_result,
-            log_file,
         )
 
         gai.set_trace_compare_to_gt_cb(

@@ -5,6 +5,7 @@ import random
 
 import exp_scores as es
 
+#  Need to add weight according to verifier names!!!
 
 class weighter(object):
     '''  Object whose primary function is to generate a signed edge
@@ -16,14 +17,14 @@ class weighter(object):
     nothing can be outside the range -max_weight to max_weight
     '''
 
-    def __init__(self, scorer, human_prob=0.98, max_weight=999):
+    def __init__(self, scorer, human_prob=0.98):
         self.scorer = scorer
         self.human_prob = human_prob
-        self.max_weight = int(max_weight)  # just to be sure
+        self.max_weight = 100  # should not change
         self.max_raw_weight = self.raw_wgt_(human_prob)
         logging.info(
-            'built weighter with human_prob %1.2f and max_weight %1.2f'
-            % (self.human_prob, max_weight)
+            'Built weighter with human_prob %1.2f and max_weight %d'
+            % (self.human_prob, self.max_weight)
         )
 
     def wgt(self, score):
@@ -85,8 +86,7 @@ if __name__ == '__main__':
     scorer = es.exp_scores.create_from_error_frac(error_frac, neg_pos_ratio)
 
     human_prob = 0.98
-    max_weight = 999
-    s2w = weighter(scorer, human_prob, max_weight)
+    s2w = weighter(scorer, human_prob)
 
     print('\nSampling of weights:')
     n = 100
