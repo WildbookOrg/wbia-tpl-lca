@@ -44,7 +44,9 @@ class exp_scores(object):
         logging.log('error fraction %1.3f' % error_frac)
         logging.log('positive error rate %1.3f' % (1 - trunc_exp_pos.cdf(0.5)))
         trunc_exp_neg = truncated_exponential(neg_lambda)
-        logging.log('negative error rate %1.3f' % (np_ratio * (1 - trunc_exp_neg.cdf(0.5))))
+        logging.log(
+            'negative error rate %1.3f' % (np_ratio * (1 - trunc_exp_neg.cdf(0.5)))
+        )
 
         return cls(np_ratio, pos_lambda, neg_lambda)
 

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import exp_scores as es
 import weighter
 
@@ -7,7 +8,7 @@ class edge_generator(object):
         self.db = db
         self.wgtr = wgtr
         self.edge_requests = []  # triples (n0, n1, aug_name)
-        self.edge_results = []   # quads (n0, n1, w, aug_name)
+        self.edge_results = []  # quads (n0, n1, w, aug_name)
 
     '''
     @classmethod
@@ -25,8 +26,9 @@ class edge_generator(object):
         return edge_quads
 
     def new_edges_from_human(self, human_triples):
-        edge_quads = [(n0, n1, self.wgtr.human_wgt(b), 'human')
-                      for n0, n1, b in human_triples]
+        edge_quads = [
+            (n0, n1, self.wgtr.human_wgt(b), 'human') for n0, n1, b in human_triples
+        ]
         self.db.add_edges(edge_quads)
         return edge_quads
 

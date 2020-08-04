@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import argparse
 import configparser
 import json
@@ -24,7 +25,7 @@ Three key files are needed here:
 2. The json file of recent verifier ground truth positive and negative
 probability results. Note as a reminder that both the values of the
 probabilities AND the relative fraction of positive and negative
-ground truth samples are important here. 
+ground truth samples are important here.
 
 3. The request json file, which includes the simulated database, the
 simulated edge generator and the actual request.  See
@@ -85,7 +86,7 @@ def form_database(request):
     if 'quads' in req_db:
         edge_quads = req_db['quads']
     if 'clustering' in req_db:
-        clustering_dict = {int(cid): c for cid, c in req_db["clustering"].items()}
+        clustering_dict = {int(cid): c for cid, c in req_db['clustering'].items()}
 
     db = db_interface_sim.db_interface_sim(edge_quads, clustering_dict)
     return db
@@ -105,7 +106,7 @@ def form_edge_generator(request, db, wgtr):
     # Get hand-specified results from the verifier that aren't in the
     # database yet. These are prob_quads of the form (n0, n1, prob,
     # aug_name).  The weighter will be used to turn the prob into a
-    # weight. 
+    # weight.
     prob_quads = []
     if 'verifier' in gen_dict:
         prob_quads = gen_dict['verifier']
@@ -134,8 +135,9 @@ def form_edge_generator(request, db, wgtr):
     if 'delay_steps' in gen_dict:
         delay_steps = gen_dict['delay_steps']
 
-    edge_gen = edge_generator_sim.edge_generator_sim(db, wgtr, prob_quads, human_triples,
-                                                     gt_clusters, nodes_to_remove, delay_steps)
+    edge_gen = edge_generator_sim.edge_generator_sim(
+        db, wgtr, prob_quads, human_triples, gt_clusters, nodes_to_remove, delay_steps
+    )
     return edge_gen
 
 
@@ -170,16 +172,26 @@ def extract_requests(request, db):
     return verifier_results, human_decisions, cluster_ids_to_check
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser("overall_driver.py")
-    parser.add_argument("--ga_config", type=str, required=True,
-                        help="graph algorithm config INI file")
-    parser.add_argument("--verifier_gt", type=str, required=True,
-                        help="json file containing verification algorithm ground truth")
-    parser.add_argument("--request", type=str, required=True,
-                        help="json file continain graph algorithm request info")
-    parser.add_argument("--db_result", type=str,
-                        help="file to write resulting json database")
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser('overall_driver.py')
+    parser.add_argument(
+        '--ga_config', type=str, required=True, help='graph algorithm config INI file'
+    )
+    parser.add_argument(
+        '--verifier_gt',
+        type=str,
+        required=True,
+        help='json file containing verification algorithm ground truth',
+    )
+    parser.add_argument(
+        '--request',
+        type=str,
+        required=True,
+        help='json file continain graph algorithm request info',
+    )
+    parser.add_argument(
+        '--db_result', type=str, help='file to write resulting json database'
+    )
 
     # 1. Configuration
     args = parser.parse_args()
@@ -211,8 +223,9 @@ if __name__ == "__main__":
     verifier_req, human_req, cluster_req = extract_requests(request, db)
 
     # 5. Form the graph algorithm driver
-    driver = ga_driver.ga_driver(verifier_req, human_req, cluster_req, db,
-                                 edge_gen, ga_params)
+    driver = ga_driver.ga_driver(
+        verifier_req, human_req, cluster_req, db, edge_gen, ga_params
+    )
 
     # 6. Run it. Changes are logged.
     changes_to_review = driver.run_all_ccPICs()
@@ -220,4 +233,3 @@ if __name__ == "__main__":
     # 7. Commit changes. Record them in the database and the log
     # file.
     # TBD
-    

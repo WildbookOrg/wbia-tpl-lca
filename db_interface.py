@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''
 The interface to the database asks for properties like nodes, edges,
 clusters and cluster ids. These are deliberately abstracted from the

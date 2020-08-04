@@ -7,6 +7,7 @@ import exp_scores as es
 
 #  Need to add weight according to verifier names!!!
 
+
 class weighter(object):
     '''  Object whose primary function is to generate a signed edge
     weight from a verification score. This verification score is

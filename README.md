@@ -26,4 +26,3 @@ Other than significant clean-up, here are major to dos:
 3. Use initial clustering with a name anchor so that the name stays
 with the node with the lowest id.
 4. Provide intermediate clustering results on demand.
-

@@ -25,8 +25,9 @@ def default_params():
         'drawing_prefix': 'default_prefix',
     }
     p['min_delta_score_converge'] = -10  # ove
-    p['min_delta_score_stability'] = p['min_delta_score_converge'] / \
-        p['min_delta_stability_ratio']
+    p['min_delta_score_stability'] = (
+        p['min_delta_score_converge'] / p['min_delta_stability_ratio']
+    )
 
     return p
 
@@ -838,9 +839,7 @@ if __name__ == '__main__':
 
     log_level = logging.INFO
     log_format = '%(levelname)-6s [%(filename)18s:%(lineno)3d] %(message)s'
-    logging.basicConfig(
-        filename=log_fname, level=log_level, format=log_format
-    )
+    logging.basicConfig(filename=log_fname, level=log_level, format=log_format)
     logging.info('=================================')
     logging.info('Start of test_graph_algorithm')
 
