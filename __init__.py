@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
-from ibeis_lca.version import version as __version__  # NOQA
+try:
+    from ibeis_lca._version import __version__
+except ImportError:
+    __version__ = '0.0.0'
+
+# from ibeis_lca.version import version as __version__  # NOQA
 from ibeis_lca import _plugin  # NOQA
 
 from ibeis_lca import baseline  # NOQA

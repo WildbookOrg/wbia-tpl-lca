@@ -112,7 +112,6 @@ class clustering_change(object):
         if len(self.removed_nodes) > 0:
             logging.info('Removed nodes %a' % self.query_nodes)
         logging.info('Change type %a' % self.change_type)
-          
 
     def print_it(self):
         print('old_clustering', self.old_clustering)
@@ -122,9 +121,7 @@ class clustering_change(object):
         print('change_type', self.change_type)
 
 
-def bipartite_cc(
-    from_visited, from_nbrs, to_visited, to_nbrs, from_nodes
-):
+def bipartite_cc(from_visited, from_nbrs, to_visited, to_nbrs, from_nodes):
     '''
     Recursive BFS labeling of the reachable nodes of a bipartite
     graph starting from the from_nodes set.
@@ -175,8 +172,9 @@ def find_changes(old_clustering, old_n2c, new_clustering, new_n2c):
     for o, v in old_visited.items():
         if v:
             continue
-        old_set, new_set = bipartite_cc(old_visited, old_nbrs, new_visited,
-                                        new_nbrs, set([o]))
+        old_set, new_set = bipartite_cc(
+            old_visited, old_nbrs, new_visited, new_nbrs, set([o])
+        )
         old_sub_clustering = {oc: old_clustering[oc] for oc in old_set}
         new_sub_clustering = {nc: new_clustering[nc] for nc in new_set}
         cc = clustering_change(old_sub_clustering, new_sub_clustering)
@@ -209,12 +207,33 @@ def test_bipartite_cc():
     while new_nbrs has the outgoing edges for the new partition. One could
     easily be generated from the other, of course.
     '''
-    old_visited = {'a': False, 'b': False, 'c': False, 'd': False, 'e': False, 'f': False, 'g': False}
-    old_nbrs = {'a': set([0]), 'b': set([0]), 'c': set([2, 3]), 'd': set([3]),
-                'e': set([3, 4]), 'f': set([5]), 'g': set()}
+    old_visited = {
+        'a': False,
+        'b': False,
+        'c': False,
+        'd': False,
+        'e': False,
+        'f': False,
+        'g': False,
+    }
+    old_nbrs = {
+        'a': set([0]),
+        'b': set([0]),
+        'c': set([2, 3]),
+        'd': set([3]),
+        'e': set([3, 4]),
+        'f': set([5]),
+        'g': set(),
+    }
     new_visited = {0: False, 1: False, 2: False, 3: False, 4: False, 5: False}
-    new_nbrs = {0: set(['a', 'b']), 1: set(), 2: set(['c']), 3: set(['c', 'd', 'e']),
-                4: set(['e']), 5: set(['f'])}
+    new_nbrs = {
+        0: set(['a', 'b']),
+        1: set(),
+        2: set(['c']),
+        3: set(['c', 'd', 'e']),
+        4: set(['e']),
+        5: set(['f']),
+    }
 
     assert old_visited.keys() == old_nbrs.keys()
     assert new_visited.keys() == new_nbrs.keys()
@@ -225,7 +244,9 @@ def test_bipartite_cc():
     print('\ntest_bipartite_cc:')
     for o, v in old_visited.items():
         if not v:
-            old_set, new_set = bipartite_cc(old_visited, old_nbrs, new_visited, new_nbrs, set([o]))
+            old_set, new_set = bipartite_cc(
+                old_visited, old_nbrs, new_visited, new_nbrs, set([o])
+            )
             old_sets.append(old_set)
             new_sets.append(new_set)
 
@@ -233,39 +254,54 @@ def test_bipartite_cc():
     exp_new_sets = [set([0]), set([2, 3, 4]), set([5]), set([])]
 
     for i in range(len(old_sets)):
-        print(".........")
-        print("Component", i)
-        print("%d:old %a, expected old %a, correct %a"
-              % (i, old_sets[i], exp_old_sets[i], old_sets[i] == exp_old_sets[i]))
-        print("%d:new %a, expected new %a, correct %a"
-              % (i, new_sets[i], exp_new_sets[i], new_sets[i] == exp_new_sets[i]))
+        print('.........')
+        print('Component', i)
+        print(
+            '%d:old %a, expected old %a, correct %a'
+            % (i, old_sets[i], exp_old_sets[i], old_sets[i] == exp_old_sets[i])
+        )
+        print(
+            '%d:new %a, expected new %a, correct %a'
+            % (i, new_sets[i], exp_new_sets[i], new_sets[i] == exp_new_sets[i])
+        )
 
 
 def test_find_changes():
     print('\ntest_find_changes:')
-    old_clustering = {0: set(['e']),
-                      1: set(['f', 'g']),
-                      2: set(['h', 'i']),
-                      3: set(['j', 'k']),
-                      4: set(['l']),
-                      5: set(['m', 'n', 'o', 'p']),
-                      6: set(['q']),
-                      7: set(['r', 's']),
-                      8: set(['t', 'u'])}
+    old_clustering = {
+        0: set(['e']),
+        1: set(['f', 'g']),
+        2: set(['h', 'i']),
+        3: set(['j', 'k']),
+        4: set(['l']),
+        5: set(['m', 'n', 'o', 'p']),
+        6: set(['q']),
+        7: set(['r', 's']),
+        8: set(['t', 'u']),
+    }
     old_n2c = ct.build_node_to_cluster_mapping(old_clustering)
-    new_clustering = {100: set(['a', 'b']),
-                      101: set(['f', 'g']),
-                      102: set(['h', 'c']),
-                      103: set(['j', 'k', 'l', 'd']),
-                      104: set(['m']),
-                      105: set(['n']),
-                      106: set(['o', 'p']),
-                      107: set(['q', 'r']),
-                      108: set(['s', 't', 'u', 'x', 'y'])}
+    new_clustering = {
+        100: set(['a', 'b']),
+        101: set(['f', 'g']),
+        102: set(['h', 'c']),
+        103: set(['j', 'k', 'l', 'd']),
+        104: set(['m']),
+        105: set(['n']),
+        106: set(['o', 'p']),
+        107: set(['q', 'r']),
+        108: set(['s', 't', 'u', 'x', 'y']),
+    }
     new_n2c = ct.build_node_to_cluster_mapping(new_clustering)
 
-    correct_types = ['Removed', 'Unchanged', 'Extension', 'Merge', 'Split',
-                     'Merge/Split', 'New']
+    correct_types = [
+        'Removed',
+        'Unchanged',
+        'Extension',
+        'Merge',
+        'Split',
+        'Merge/Split',
+        'New',
+    ]
     changes = find_changes(old_clustering, old_n2c, new_clustering, new_n2c)
     for c, t in zip(changes, correct_types):
         print('..........')
@@ -273,6 +309,6 @@ def test_find_changes():
         print('Correct change type?', (t == c.change_type))
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     test_bipartite_cc()
     test_find_changes()

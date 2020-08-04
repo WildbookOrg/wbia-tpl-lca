@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import networkx as nx
 
 import cluster_tools as ct
@@ -77,11 +78,11 @@ class db_interface_sim(db_interface.db_interface):
             else:
                 quads.append((n0, n1, wgt, a))
         return quads
-        
+
     def edges_within_cluster(self, cid):
         '''
         Find the multigraph edges that are within a cluster.
-        Edges must be returned with n0<n1.   
+        Edges must be returned with n0<n1.
         '''
         quads = []
         cluster = sorted(self.clustering[cid])
@@ -123,7 +124,7 @@ class db_interface_sim(db_interface.db_interface):
         quads = []
         node_list = sorted(node_set)
         for i, ni in enumerate(node_list):
-            for j in range(i+1, len(node_list)):
+            for j in range(i + 1, len(node_list)):
                 nj = node_list[j]
                 if nj in self.edge_graph[ni]:
                     quads.extend(self.edges_from_attributes(ni, nj))
@@ -149,7 +150,7 @@ class db_interface_sim(db_interface.db_interface):
         self.clustering[cid].remove(n)
         if len(self.clustering[cid]) == 0:
             del self.clustering[cid]
-        
+
     def commit_cluster_change(self, cc):
         '''
         Commit the cluster changes to the database. This involves
@@ -157,11 +158,11 @@ class db_interface_sim(db_interface.db_interface):
         dictionary. One way to do this would be to have special
         operations for each type of change. Instead, this function
         works generically except for the single case of no changes at
-        all. 
+        all.
         '''
         if cc.change_type == 'Unchanged':
             return
-        
+
         # 1. Add new clusters
         self.clustering.update(cc.new_clustering)
 
@@ -177,45 +178,45 @@ class db_interface_sim(db_interface.db_interface):
         # 4. Removed nodes should have already been removed from the
         #    db through the call to self.remove_nodes.
         for n in cc.removed_nodes:
-            assert(n not in self.node_to_cid)
+            assert n not in self.node_to_cid
 
 
 def test_example():
-    quads = [('a', 'b', 4, 'vamp'),
-             ('a', 'b', 10, 'human'),
-             ('a', 'd', 11, 'embed'),
-             ('d', 'e', -5, 'vamp'),
-             ('a', 'e', 2, 'embed'),
-             ('b', 'c', -8, 'human'),
-             ('c', 'e', 1, 'vamp'),
-             ('c', 'e', -4, 'embed'),
-             ('a', 'b', 12, 'human'),
-             ('c', 'f', 2, 'vamp'),
-             ('d', 'e', -6, 'embed'),
-             ('d', 'g', -19, 'human'),
-             ('e', 'g', 12, 'human'),
-             ('e', 'h', 4, 'embed'),
-             ('c', 'f', 9, 'human'),
-             ('e', 'h', 5, 'vamp'),
-             ('c', 'f', 11, 'human'),
-             ('c', 'f', 6, 'vamp'),
-             ('f', 'c', 7, 'embed'),
-             ('a', 'd', 12, 'embed'),
-             ('g', 'h', 12, 'vamp'),
-             ('f', 'h', -6, 'embed')]
-    clustering = {1000: ['a', 'b', 'd'],
-                  1001: ['c', 'f'],
-                  1002: ['e', 'g', 'h']}
+    quads = [
+        ('a', 'b', 4, 'vamp'),
+        ('a', 'b', 10, 'human'),
+        ('a', 'd', 11, 'embed'),
+        ('d', 'e', -5, 'vamp'),
+        ('a', 'e', 2, 'embed'),
+        ('b', 'c', -8, 'human'),
+        ('c', 'e', 1, 'vamp'),
+        ('c', 'e', -4, 'embed'),
+        ('a', 'b', 12, 'human'),
+        ('c', 'f', 2, 'vamp'),
+        ('d', 'e', -6, 'embed'),
+        ('d', 'g', -19, 'human'),
+        ('e', 'g', 12, 'human'),
+        ('e', 'h', 4, 'embed'),
+        ('c', 'f', 9, 'human'),
+        ('e', 'h', 5, 'vamp'),
+        ('c', 'f', 11, 'human'),
+        ('c', 'f', 6, 'vamp'),
+        ('f', 'c', 7, 'embed'),
+        ('a', 'd', 12, 'embed'),
+        ('g', 'h', 12, 'vamp'),
+        ('f', 'h', -6, 'embed'),
+    ]
+    clustering = {1000: ['a', 'b', 'd'], 1001: ['c', 'f'], 1002: ['e', 'g', 'h']}
     return quads, clustering
 
 
 def print_edge(g, n0, n1):
-    print("(%s, %s):" % (n0, n1))
+    print('(%s, %s):' % (n0, n1))
     for k, v in g[n0][n1].items():
         print(k, v)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     quads, clustering = test_example()
 
     db = db_interface_sim(quads, clustering)
@@ -227,14 +228,16 @@ if __name__ == "__main__":
                 print()
                 print_edge(db.edge_graph, n0, n1)
 
-    print("\nTest get weight")
-    triples = [('a', 'b', 'human'),  # 22
-               ('d', 'e', 'vamp'),   # -5
-               ('d', 'e', 'embed'),  # -6
-               ('d', 'e', 'human'),  # None
-               ('a', 'c', 'human'),  # None
-               ('a', 'q', 'embed'),  # None
-               ('m', 'z', 'vamp')]   # None
+    print('\nTest get weight')
+    triples = [
+        ('a', 'b', 'human'),  # 22
+        ('d', 'e', 'vamp'),  # -5
+        ('d', 'e', 'embed'),  # -6
+        ('d', 'e', 'human'),  # None
+        ('a', 'c', 'human'),  # None
+        ('a', 'q', 'embed'),  # None
+        ('m', 'z', 'vamp'),
+    ]  # None
     answers = [22, -5, -6, None, None, None, None]
     num_err = 0
     for t, a in zip(triples, answers):
@@ -246,7 +249,7 @@ if __name__ == "__main__":
     if num_err == 0:
         print('no errors')
 
-    print("\nTest get_cid")
+    print('\nTest get_cid')
     nodes = ['a', 'e', 'z']
     answers = [1000, 1002, None]
     num_err = 0
@@ -259,7 +262,7 @@ if __name__ == "__main__":
     if num_err == 0:
         print('no errors')
 
-    print("\nTest get_nodes_in_cluster")
+    print('\nTest get_nodes_in_cluster')
     cids = [1000, 1003]
     answers = [['a', 'b', 'd'], None]
     num_err = 0
@@ -272,21 +275,21 @@ if __name__ == "__main__":
     if num_err == 0:
         print('no errors')
 
-    print("\nTest edges_within_cluster")
+    print('\nTest edges_within_cluster')
     print(db.edges_within_cluster(1000))
 
-    print("\nTest edges_leaving_cluster")
+    print('\nTest edges_leaving_cluster')
     print(db.edges_leaving_cluster(1002))
 
-    print("\nTest edges_between_clusters")
+    print('\nTest edges_between_clusters')
     print(db.edges_between_clusters(1002, 1000))
 
-    print("\nTest edges_between_nodes")
+    print('\nTest edges_between_nodes')
     print(db.edges_between_nodes(set(['a', 'b', 'e', 'g'])))
 
-    print("\nTest edges_from_node a (should have edges to b, d, e")
+    print('\nTest edges_from_node a (should have edges to b, d, e')
     print(db.edges_from_node('a'))
-    print("\nTest edges_from_node e (should have edges to a, c, d, g, h)")
+    print('\nTest edges_from_node e (should have edges to a, c, d, g, h)')
     print(db.edges_from_node('e'))
 
     print('\nTesting remove_nodes and commit_cluster_change')
@@ -295,7 +298,11 @@ if __name__ == "__main__":
     print(db.node_to_cid)
 
     old_clustering = {1001: set(['c', 'f']), 1002: set(['e', 'g', 'h'])}
-    new_clustering = {1002: set(['c', 'e', 'g']), 1003: set(['j']), 1004: set(['h', 'k',])}
+    new_clustering = {
+        1002: set(['c', 'e', 'g']),
+        1003: set(['j']),
+        1004: set(['h', 'k',]),
+    }
     cc = compare_clusterings.clustering_change(old_clustering, new_clustering)
     print('Here is the cluster change object')
     cc.print_it()
@@ -311,6 +318,3 @@ if __name__ == "__main__":
     print('After committing the change, here is the final state')
     print(db.clustering)
     print(db.node_to_cid)
-    
-    
-    

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import collections
 import datetime as dt
 import logging
@@ -20,7 +21,7 @@ database, and the configuration.  It contains functionality needed for
 all currently-planned ways of initiating a run of the graph
 algorithms.
 
-What's needed?  
+What's needed?
 
 There are two primary ways that a run of the graph algorithm is
 triggered:
@@ -132,9 +133,7 @@ def params_and_weighters(config_ini, verifier_gt):
     except Exception:
         pass
     log_format = '%(levelname)-6s [%(filename)21s:%(lineno)3d] %(message)s'
-    logging.basicConfig(
-        filename=log_file, level=log_level, format=log_format
-    )
+    logging.basicConfig(filename=log_file, level=log_level, format=log_format)
 
     ga_params['draw_iterations'] = config_ini['DRAWING'].getboolean('draw_iterations')
     ga_params['drawing_prefix'] = config_ini['DRAWING']['drawing_prefix']
@@ -142,9 +141,12 @@ def params_and_weighters(config_ini, verifier_gt):
     wgtrs = generate_weighters(ga_params, verifier_gt)
 
     wgtr = wgtrs[0]
-    ga_params['min_delta_score_converge'] = -2 * wgtr.wgt(ga_params['min_delta_prob_converge'])
-    ga_params['min_delta_score_stability'] = ga_params['min_delta_score_converge'] / \
-        ga_params['min_delta_stability_ratio']
+    ga_params['min_delta_score_converge'] = -2 * wgtr.wgt(
+        ga_params['min_delta_prob_converge']
+    )
+    ga_params['min_delta_score_stability'] = (
+        ga_params['min_delta_score_converge'] / ga_params['min_delta_stability_ratio']
+    )
 
     return ga_params, wgtrs
 
@@ -157,39 +159,49 @@ def generate_weighters(ga_params, verifier_gt):
         assert aug in verifier_gt
         probs = verifier_gt[aug]
         logger.info('Building scorer and weighter for verifier %s' % aug)
-        scorer = es.exp_scores.create_from_samples(probs['gt_positive_probs'],
-                                                   probs['gt_negative_probs'])
+        scorer = es.exp_scores.create_from_samples(
+            probs['gt_positive_probs'], probs['gt_negative_probs']
+        )
         wgtr = weighter.weighter(scorer, ga_params['prob_human_correct'])
         wgtrs.append(wgtr)
     return wgtrs
 
 
 class ga_driver(object):
-    def __init__(self, verifier_results, human_decisions, cluster_ids_to_check,
-                 db, edge_gen, ga_params):
+    def __init__(
+        self,
+        verifier_results,
+        human_decisions,
+        cluster_ids_to_check,
+        db,
+        edge_gen,
+        ga_params,
+    ):
         logger.info('=============================================')
         logger.info('Start of graph algorithm overall driver which')
         logger.info('creates one or more graph algorithm instances.')
         logger.info(dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         logger.info('Parameters, input and derived:')
         for k, v in ga_params.items():
-            logger.info("    %s: %a" % (k, v))
+            logger.info('    %s: %a' % (k, v))
 
         assert len(verifier_results) > 0 or len(human_decisions) > 0
         self.db = db
         self.edge_gen = edge_gen
         self.ga_params = ga_params
 
-        self.edge_quads = \
-            self.edge_gen.new_edges_from_verifier(verifier_results) + \
-            self.edge_gen.new_edges_from_human(human_decisions)
+        self.edge_quads = self.edge_gen.new_edges_from_verifier(
+            verifier_results
+        ) + self.edge_gen.new_edges_from_human(human_decisions)
         logger.info('Formed incoming graph edge quads to initiate LCA:')
         for q in self.edge_quads:
             logger.info('   (%a, %a, %d, %s)' % (q[0], q[1], q[2], q[3]))
         if len(cluster_ids_to_check) == 0:
             logger.info('No particular clusters to check using LCA (this is typical)')
         else:
-            logger.info('Checking the following clusters using LCA: %a' % cluster_ids_to_check)
+            logger.info(
+                'Checking the following clusters using LCA: %a' % cluster_ids_to_check
+            )
 
         self.temp_count = 0
         self.temp_cids = set()
@@ -273,18 +285,21 @@ class ga_driver(object):
             ccPIC = (edges, clustering)
             self.ccPICs.append(ccPIC)
 
-        logger.info("Formed %d ccPIC edge and clustering pairs, having" % len(self.ccPICs))
+        logger.info(
+            'Formed %d ccPIC edge and clustering pairs, having' % len(self.ccPICs)
+        )
         for e, c in self.ccPICs:
-            logger.info("    %d edges involving %d current clusters"
-                         % (len(e), len(c)))
+            logger.info('    %d edges involving %d current clusters' % (len(e), len(c)))
 
     def run_ga_on_ccPIC(self, ccPIC_edges, ccPIC_clustering):
-        gai = ga.graph_algorithm(ccPIC_edges,
-                                 ccPIC_clustering.values(),
-                                 self.ga_params['aug_names'],
-                                 self.ga_params,
-                                 self.edge_gen.edge_request_cb,
-                                 self.edge_gen.edge_result_cb)
+        gai = ga.graph_algorithm(
+            ccPIC_edges,
+            ccPIC_clustering.values(),
+            self.ga_params['aug_names'],
+            self.ga_params,
+            self.edge_gen.edge_request_cb,
+            self.edge_gen.edge_result_cb,
+        )
 
         """
         Add call backs for removing nodes, pausing, getting intermediate
@@ -320,15 +335,12 @@ class ga_driver(object):
         """
         ccPIC_n2c = ct.build_node_to_cluster_mapping(ccPIC_clustering)
         changes = compare_clusterings.find_changes(
-            ccPIC_clustering,
-            ccPIC_n2c,
-            gai.clustering,
-            gai.node2cid,
+            ccPIC_clustering, ccPIC_n2c, gai.clustering, gai.node2cid,
         )
 
         logger.info('After LCA convergence on ccPIC, here are the cluster changes:')
         for i, cc in enumerate(changes):
-            logger.info("Change %d" % i)
+            logger.info('Change %d' % i)
             cc.log_change()
 
         return changes
@@ -340,16 +352,18 @@ class ga_driver(object):
         return self.changes_to_review
 
 
-if __name__ == "__main__":
-    ga_params = {'aug_names': ['vamp', 'human'],
-                 'prob_human_correct': 0.97,
-                 'log_level': logging.DEBUG}
+if __name__ == '__main__':
+    ga_params = {
+        'aug_names': ['vamp', 'human'],
+        'prob_human_correct': 0.97,
+        'log_level': logging.DEBUG,
+    }
 
     log_file = 'test_ga_driver.log'
     try:
         os.remove(log_file)
     except Exception:
-        print("FAILED")
+        print('FAILED')
     log_format = '%(levelname)-6s [%(filename)18s:%(lineno)3d] %(message)s'
     logging.basicConfig(
         filename=log_file, level=ga_params['log_level'], format=log_format
@@ -357,88 +371,122 @@ if __name__ == "__main__":
     logging.info('=================================')
     logging.info('Start of example to test ga_driver')
 
-    db_quads = [('a', 'b', 45, 'vamp'),
-                ('a', 'd', 50, 'vamp'),
-                ('a', 'd', -100, 'human'),
-                ('b', 'd', -85, 'vamp'),
-                ('b', 'd', 100, 'human'),
-                ('d', 'f', 45, 'vamp'),
-                ('d', 'f', -100, 'human'),
-                ('f', 'h', 4, 'vamp'),
-                ('f', 'i', 6, 'vamp'),
-                ('f', 'i', -100, 'human'),
-                ('h', 'i', 85, 'vamp'),
-                ('h', 'j', 80, 'vamp'),
-                ('i', 'j', 75, 'vamp'),
-                ('j', 'k', -100, 'human'),
-                ('k', 'l', 80, 'vamp'),
-                ('l', 'm', -50, 'vamp'),
-                ('l', 'm', 100, 'human')]
-    db_clusters = {100: ('a', 'b'),
-                   101: ('d'),
-                   102: ('h', 'i', 'j'),
-                   103: ('k', 'l')}
+    db_quads = [
+        ('a', 'b', 45, 'vamp'),
+        ('a', 'd', 50, 'vamp'),
+        ('a', 'd', -100, 'human'),
+        ('b', 'd', -85, 'vamp'),
+        ('b', 'd', 100, 'human'),
+        ('d', 'f', 45, 'vamp'),
+        ('d', 'f', -100, 'human'),
+        ('f', 'h', 4, 'vamp'),
+        ('f', 'i', 6, 'vamp'),
+        ('f', 'i', -100, 'human'),
+        ('h', 'i', 85, 'vamp'),
+        ('h', 'j', 80, 'vamp'),
+        ('i', 'j', 75, 'vamp'),
+        ('j', 'k', -100, 'human'),
+        ('k', 'l', 80, 'vamp'),
+        ('l', 'm', -50, 'vamp'),
+        ('l', 'm', 100, 'human'),
+    ]
+    db_clusters = {100: ('a', 'b'), 101: ('d'), 102: ('h', 'i', 'j'), 103: ('k', 'l')}
     db = db_interface_sim.db_interface_sim(db_quads, db_clusters)
 
-    verifier_results = [('b', 'e', 0.9, 'vamp'),
-                        ('f', 'g', 0.15, 'vamp')]
+    verifier_results = [('b', 'e', 0.9, 'vamp'), ('f', 'g', 0.15, 'vamp')]
     human_decisions = [('a', 'c', True)]
-    cluster_ids_to_check = ([103])
+    cluster_ids_to_check = [103]
 
     gt_probs = {
-        'vamp':
-        {'gt_positive_probs': [0.90, 0.98, 0.60,
-                               0.80, 0.93, 0.97,
-                               0.45, 0.83, 0.92,
-                               0.85, 0.79, 0.66],
-         'gt_negative_probs': [0.01, 0.55, 0.24, 0.16, 0.05,
-                               0.02, 0.60, 0.04, 0.32, 0.25,
-                               0.43, 0.01, 0.02, 0.33, 0.23,
-                               0.04, 0.23]
+        'vamp': {
+            'gt_positive_probs': [
+                0.90,
+                0.98,
+                0.60,
+                0.80,
+                0.93,
+                0.97,
+                0.45,
+                0.83,
+                0.92,
+                0.85,
+                0.79,
+                0.66,
+            ],
+            'gt_negative_probs': [
+                0.01,
+                0.55,
+                0.24,
+                0.16,
+                0.05,
+                0.02,
+                0.60,
+                0.04,
+                0.32,
+                0.25,
+                0.43,
+                0.01,
+                0.02,
+                0.33,
+                0.23,
+                0.04,
+                0.23,
+            ],
         }
-        }
+    }
 
     weighters = generate_weighters(ga_params, gt_probs)
     print(weighters)
     edge_gen = edge_generator.edge_generator(db, weighters[0])
 
-    gad = ga_driver(verifier_results, human_decisions, cluster_ids_to_check,
-                    db, edge_gen, ga_params)
+    gad = ga_driver(
+        verifier_results, human_decisions, cluster_ids_to_check, db, edge_gen, ga_params
+    )
 
-    ccp0 = [[('a', 'b', 45, 'vamp'),
-             ('a', 'c', 100, 'human'),
-             ('a', 'd', 50, 'vamp'),
-             ('a', 'd', -100, 'human'),
-             ('b', 'd', -85, 'vamp'),
-             ('b', 'd', 100, 'human'),
-             ('b', 'e', 83, 'vamp')],
-            {100: {'b', 'a'}, 101: {'d'}}]
+    ccp0 = [
+        [
+            ('a', 'b', 45, 'vamp'),
+            ('a', 'c', 100, 'human'),
+            ('a', 'd', 50, 'vamp'),
+            ('a', 'd', -100, 'human'),
+            ('b', 'd', -85, 'vamp'),
+            ('b', 'd', 100, 'human'),
+            ('b', 'e', 83, 'vamp'),
+        ],
+        {100: {'b', 'a'}, 101: {'d'}},
+    ]
 
-    ccp1 = [[('f', 'g', -95, 'vamp'),
-             ('f', 'h', 4, 'vamp'),
-             ('f', 'i', 6, 'vamp'),
-             ('f', 'i', -100, 'human'),
-             ('h', 'i', 85, 'vamp'),
-             ('h', 'j', 80, 'vamp'),
-             ('i', 'j', 75, 'vamp')],
-            {102: {'j', 'h', 'i'}}]
+    ccp1 = [
+        [
+            ('f', 'g', -95, 'vamp'),
+            ('f', 'h', 4, 'vamp'),
+            ('f', 'i', 6, 'vamp'),
+            ('f', 'i', -100, 'human'),
+            ('h', 'i', 85, 'vamp'),
+            ('h', 'j', 80, 'vamp'),
+            ('i', 'j', 75, 'vamp'),
+        ],
+        {102: {'j', 'h', 'i'}},
+    ]
 
-    ccp2 = [[('k', 'l', 80, 'vamp'),
-             ('l', 'm', -50, 'vamp'),
-             ('l', 'm', 100, 'human')],
-            {103: {'k', 'l'}}]
+    ccp2 = [
+        [('k', 'l', 80, 'vamp'), ('l', 'm', -50, 'vamp'), ('l', 'm', 100, 'human')],
+        {103: {'k', 'l'}},
+    ]
 
     corr_ccPIC = [ccp0, ccp1, ccp2]
     if len(corr_ccPIC) == len(gad.ccPICs):
         print('Correct number of ccPICs found:', len(corr_ccPIC))
     else:
-        print('Incorrect length of ccPICs: found %d, expected %d'
-              % (len(gad.ccPICs), len(corr_ccPIC)))
+        print(
+            'Incorrect length of ccPICs: found %d, expected %d'
+            % (len(gad.ccPICs), len(corr_ccPIC))
+        )
 
     i = 0
     for est, exp in zip(corr_ccPIC, gad.ccPICs):
         print('----------------')
-        print("Testing ccPIC", i)
+        print('Testing ccPIC', i)
         if est[0] == exp[0]:
             print('Edge list is correct:')
             print(exp[0])
@@ -455,4 +503,3 @@ if __name__ == "__main__":
             print('Estimated', est[1])
             print('Expected', exp[1])
         i += 1
-        

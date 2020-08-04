@@ -206,15 +206,7 @@ def default_params():
 
 
 class graph_algorithm(object):
-    def __init__(
-        self,
-        edges,
-        clusters,
-        aug_names,
-        params,
-        aug_request_cb,
-        aug_result_cb
-    ):
+    def __init__(self, edges, clusters, aug_names, params, aug_request_cb, aug_result_cb):
         self.params = params
         logger.info('======================================')
         logger.info('Construction of graph_algorithm object')
@@ -462,10 +454,8 @@ class graph_algorithm(object):
             # Step 2e: at this point the only remaining active LCAs are
             # waiting for edges, so need to pause.
             elif (
-                (a is None or
-                 self.params['min_delta_score_converge'] >= a.delta_score())
-                and self.queues.num_on_W() > 0
-            ):
+                a is None or self.params['min_delta_score_converge'] >= a.delta_score()
+            ) and self.queues.num_on_W() > 0:
                 should_pause = True
                 logger.info(
                     'Decision: top LCA delta is too low, but non-empty'
@@ -489,9 +479,7 @@ class graph_algorithm(object):
                 if len(self.weight_mgr.waiting_for) == 0:
                     logger.debug('Waiting for edges: <none>')
                 else:
-                    logger.debug(
-                        'Waiting for edges: %a' % self.weight_mgr.waiting_for
-                    )
+                    logger.debug('Waiting for edges: %a' % self.weight_mgr.waiting_for)
 
             if self.params['draw_iterations']:
                 self.draw_obj.draw_iteration(

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import logging
 
 import cluster_tools as ct
@@ -7,11 +8,23 @@ logger = logging.getLogger()
 
 
 class edge_generator_sim(edge_generator.edge_generator):
-    def __init__(self, db, wgtr, prob_quads=[], human_triples=[],
-                 gt_clusters=[], nodes_to_remove=[], delay_steps=0):
+    def __init__(
+        self,
+        db,
+        wgtr,
+        prob_quads=[],
+        human_triples=[],
+        gt_clusters=[],
+        nodes_to_remove=[],
+        delay_steps=0,
+    ):
         super().__init__(db, wgtr)
-        self.edge_dict = {(n0, n1, aug): wgtr.wgt(prob) for n0, n1, prob, aug in prob_quads}
-        self.edge_dict.update({(n0, n1, 'human'): wgtr.human_wgt(b) for n0, n1, b in human_triples})
+        self.edge_dict = {
+            (n0, n1, aug): wgtr.wgt(prob) for n0, n1, prob, aug in prob_quads
+        }
+        self.edge_dict.update(
+            {(n0, n1, 'human'): wgtr.human_wgt(b) for n0, n1, b in human_triples}
+        )
         self.gt_clustering = {cid: c for cid, c in enumerate(gt_clusters)}
         self.node_to_gt_cid = ct.build_node_to_cluster_mapping(self.gt_clustering)
         self.nodes_to_remove = nodes_to_remove
@@ -36,15 +49,21 @@ class edge_generator_sim(edge_generator.edge_generator):
         for tr in self.edge_requests:
             n0, n1, aug = tr
             if node_set is not None and (n0 not in node_set or n1 not in node_set):
-                logging.warning('At least of node pair (%a,%a) is not in node set' % (n0, n1))
+                logging.warning(
+                    'At least of node pair (%a,%a) is not in node set' % (n0, n1)
+                )
                 continue
             if tr in self.edge_dict:
                 w = self.edge_dict[tr]
-                logger.info('Adding hand-specified edge (%a, %a, %a, %a)' % (n0, n1, w, aug))
+                logger.info(
+                    'Adding hand-specified edge (%a, %a, %a, %a)' % (n0, n1, w, aug)
+                )
                 edge_quads.append((n0, n1, w, aug))
             elif n0 not in self.node_to_gt_cid or n1 not in self.node_to_gt_cid:
-                logger.warning('Edge triple (%a, %a, %a) contains unknown node(s); returning wgt 0'
-                                % (n0, n1, aug))
+                logger.warning(
+                    'Edge triple (%a, %a, %a) contains unknown node(s); returning wgt 0'
+                    % (n0, n1, aug)
+                )
                 edge_quads.append((n0, n1, 0, aug))
             else:
                 same_clustering = self.node_to_gt_cid[n0] == self.node_to_gt_cid[n1]
@@ -52,7 +71,9 @@ class edge_generator_sim(edge_generator.edge_generator):
                     w = self.wgtr.human_random_wgt(same_clustering)
                 else:
                     w = self.wgtr.random_wgt(same_clustering)
-                logger.info('Adding auto-generated edge (%a, %a, %a, %a)' % (n0, n1, w, aug))
+                logger.info(
+                    'Adding auto-generated edge (%a, %a, %a, %a)' % (n0, n1, w, aug)
+                )
                 edge_quads.append((n0, n1, w, aug))
 
         self.edge_requests.clear()
