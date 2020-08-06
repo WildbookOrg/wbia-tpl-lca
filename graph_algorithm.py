@@ -315,7 +315,7 @@ class graph_algorithm(object):
             # and then add clusters from graph nodes that may not be
             # in any clusters.
             new_cids = self.generate_new_cids(len(clusters))
-            self.clustering = ct.build_clustering_from_lists(new_cids, clusters)
+            self.clustering = ct.build_clustering_from_clusters(new_cids, clusters)
             num_previous = len(new_cids)
 
             graph_nodes = set(self.G.nodes())
