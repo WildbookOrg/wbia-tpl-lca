@@ -40,11 +40,11 @@ class exp_scores(object):
 
         # Debugging output
         trunc_exp_pos = truncated_exponential(pos_lambda)
-        logging.log('creating exp_scores from error fractions')
-        logging.log('error fraction %1.3f' % error_frac)
-        logging.log('positive error rate %1.3f' % (1 - trunc_exp_pos.cdf(0.5)))
+        logging.info('creating exp_scores from error fractions')
+        logging.info('error fraction %1.3f' % error_frac)
+        logging.info('positive error rate %1.3f' % (1 - trunc_exp_pos.cdf(0.5)))
         trunc_exp_neg = truncated_exponential(neg_lambda)
-        logging.log(
+        logging.info(
             'negative error rate %1.3f' % (np_ratio * (1 - trunc_exp_neg.cdf(0.5)))
         )
 
