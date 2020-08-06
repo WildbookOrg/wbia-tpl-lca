@@ -13,16 +13,17 @@ def build_clustering(node2cluster):
     return clustering
 
 
-def build_clustering_from_lists(cids, cluster_list):
+def build_clustering_from_clusters(cids, clusters):
     """
-    From a list of lists of nodes, build a dictionary that maps from
-    cluster ids to sets of nodes. Each node must appear in at most one
-    list and only once in that list. An assert failure occurs if
-    either of these conditions is violated.
+    From an iterator through the clusters, each of which can be a list
+    or a set of nodes, build a clusterin.  This maps from cluster ids
+    to sets of nodes. Each node must appear in at most one list and
+    only once in that list. An assert failure occurs if either of
+    these conditions is violated.
     """
-    assert len(cids) == len(cluster_list)
-    num_nodes = sum([len(c) for c in cluster_list])
-    as_sets = [set(c) for c in cluster_list]
+    assert len(cids) == len(clusters)
+    num_nodes = sum([len(c) for c in clusters])
+    as_sets = [set(c) for c in clusters]
     num_unique = len(set.union(*as_sets))
     assert num_nodes == num_unique
     clustering = {id: c for id, c in zip(cids, as_sets)}

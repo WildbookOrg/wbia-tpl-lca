@@ -114,12 +114,12 @@ def test_build_clustering_and_mapping():
     )
 
 
-def test_build_clustering_from_lists():
+def test_build_clustering_from_clusters():
     print('================================')
-    print('test_build_clustering_from_lists')
+    print('test_build_clustering_from_clusters')
     clist = [['h', 'i', 'j'], ['k', 'm'], ['p']]
     n = len(clist)
-    clustering = ct.build_clustering_from_lists(range(n), clist)
+    clustering = ct.build_clustering_from_clusters(range(n), clist)
     print('Returned clustering:')
     print(clustering)
     correct = len(clustering) == 3
@@ -135,7 +135,7 @@ def test_build_clustering_from_lists():
     clist = [['h', 'i', 'j'], ['k', 'm'], ['p', 'p']]
     n = len(clist)
     try:
-        clustering = ct.build_clustering_from_lists(range(n), clist)
+        clustering = ct.build_clustering_from_clusters(range(n), clist)
     except AssertionError:
         print('Caught error from having repeated entry in one cluster')
 
@@ -143,7 +143,7 @@ def test_build_clustering_from_lists():
     clist = [['h', 'i', 'k'], ['k', 'm'], ['p', 'q']]
     n = len(clist)
     try:
-        clustering = ct.build_clustering_from_lists(range(n), clist)
+        clustering = ct.build_clustering_from_clusters(range(n), clist)
     except AssertionError:
         print('Caught error from having intersecting lists')
 
@@ -529,7 +529,7 @@ def test_count_equal():
 
 if __name__ == '__main__':
     test_build_clustering_and_mapping()
-    test_build_clustering_from_lists()
+    test_build_clustering_from_clusters()
     test_cluster_scoring_and_weights()
     test_has_edges_between()
     test_merge()

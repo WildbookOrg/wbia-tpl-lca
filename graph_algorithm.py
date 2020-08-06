@@ -296,8 +296,12 @@ class graph_algorithm(object):
         self._next_cid = upper = lower + k
         return range(lower, upper)
 
-    def build_clustering(self, cluster_list):
-        if cluster_list is None or cluster_list == []:
+    def build_clustering(self, clusters):
+        '''
+        From an iterator through the clusters - each of which could be
+        a set or a list, 
+        '''
+        if clusters is None or len(clusters) == 0:
             # Form an initial clustering where every node starts in its own
             # singleton cluster.
             new_cids = self.generate_new_cids(len(self.G))
@@ -310,8 +314,8 @@ class graph_algorithm(object):
             # Form the initial clustering from a previous clustering,
             # and then add clusters from graph nodes that may not be
             # in any clusters.
-            new_cids = self.generate_new_cids(len(cluster_list))
-            self.clustering = ct.build_clustering_from_lists(new_cids, cluster_list)
+            new_cids = self.generate_new_cids(len(clusters))
+            self.clustering = ct.build_clustering_from_lists(new_cids, clusters)
             num_previous = len(new_cids)
 
             graph_nodes = set(self.G.nodes())
