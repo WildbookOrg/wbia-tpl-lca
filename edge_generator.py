@@ -20,8 +20,15 @@ class edge_generator(object):
         return cls(db, wgtr)
     '''
 
+    def wgt_from_verifier(self, p, vn):
+        if vn == 'zero':
+            return 0
+        else:
+            return self.wgtr.wgt(p)
+
     def new_edges_from_verifier(self, verifier_quads):
-        edge_quads = [(n0, n1, self.wgtr.wgt(p), vn) for n0, n1, p, vn in verifier_quads]
+        edge_quads = [(n0, n1, self.wgt_from_verifier(p, vn), vn)
+                      for n0, n1, p, vn in verifier_quads]
         self.db.add_edges(edge_quads)
         return edge_quads
 
@@ -35,6 +42,7 @@ class edge_generator(object):
     def edge_request_cb(self, req_list):
         self.edge_requests += req_list
         '''
+        Non-blocking
         Some MAGIC NOW HAPPENS to turn these into results, with calls to
         the appropriate verification algorithms or human decision manager.
         '''

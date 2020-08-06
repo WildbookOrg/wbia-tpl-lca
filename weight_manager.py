@@ -90,11 +90,14 @@ class weight_manager(object):
                 pr = (n0, n1)
             else:
                 pr = (n1, n0)
-            i = self._name_to_index(aug)
-            ac = self.augment_count[pr]
-            if (ac[i] == 0) or (i == self.num_names - 1):
-                ac[i] += 1
-                ret_edges[pr] += w
+            if aug == 'zero':
+                ret_edges[pr] += 0
+            else:
+                i = self._name_to_index(aug)
+                ac = self.augment_count[pr]
+                if (ac[i] == 0) or (i == self.num_names - 1):
+                    ac[i] += 1
+                    ret_edges[pr] += w
 
         # Return results through a generator
         for pr, w in ret_edges.items():
