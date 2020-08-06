@@ -164,6 +164,17 @@ def generate_weighters(ga_params, verifier_gt):
         )
         wgtr = weighter.weighter(scorer, ga_params['prob_human_correct'])
         wgtrs.append(wgtr)
+
+    if len(wgtrs) == 0:
+        default_np_ratio = 1.0
+        default_error_frac = 0.1
+        logger.info('No augmentation methods provided so using only human decisions')
+        logger.info('Using default error fraction of %.2f and np_ratio of %.2f' \
+                    % (default_error_frac, default_np_ratio))
+        logger.info('to build an exponential scorer and then a weighter')
+        scorer = es.exp_scores.create_from_error_frac(default_error_frac, default_np_ratio)
+        wgtr = weighter.weighter(scorer, ga_params['prob_human_correct'])
+        wgtrs.append(wgtr)
     return wgtrs
 
 
