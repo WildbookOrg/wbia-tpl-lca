@@ -25,10 +25,10 @@ if __name__ == '__main__':
     '''
     sim_params = dict()
     sim_params['pos_error_frac'] = 0.15
-    sim_params['num_clusters'] = 10  # 256
+    sim_params['num_clusters'] = 32  # 256
     sim_params['num_from_ranker'] = 4  # 10
     sim_params['p_ranker_correct'] = 0.85
-    sim_params['p_human_correct'] = 0.98
+    sim_params['p_human_correct'] = 0.97
 
     # The following are parameters of the gamma distribution.
     # Recall the following properties:
@@ -56,15 +56,23 @@ if __name__ == '__main__':
         sim_params['num_from_ranker'],
         sim_params['p_ranker_correct'],
     )
-    print('np_ratio = %1.3f' % np_ratio)
+
+    ga_params = {}
+    ga_params['prob_human_correct'] = sim_params['p_human_correct']
+    ga_params['min_delta_stability_ratio'] = 8
+    ga_params['augmentation_names'] = ['vamp', 'human']
+    ga_params['num_per_augmentation'] = 2
+    ga_params['tries_before_edge_done'] = 4
+    ga_params['ga_iterations_before_return'] = 100000  # convergence
+    ga_params['log_level'] = logging.INFO
+    ga_params['draw_iterations'] = False
+    ga_params['drawing_prefix'] = 'drawing_lca'
 
     num_sim = 1  # 10
     for i in range(num_sim):
         """ Get the graph algorithm parameters """
-        ga_params = ga.default_params()
-
-        print('===================================')
-        print('Starting simulation', i)
+        logger.info('===================================')
+        logger.info('Starting simulation', i)
         file_prefix = gen_prefix + ('_%02d' % i)
         log_file = file_prefix + '.log'
 
@@ -104,13 +112,11 @@ if __name__ == '__main__':
         '''
         Specify parameters for the graph algorithm
         '''
-        print(wgtr_i.human_wgt(True), wgtr_i.human_wgt(False))
         min_converge = -0.9 * (wgtr_i.human_wgt(True) - wgtr_i.human_wgt(False))
         ga_params['min_delta_score_converge'] = min_converge
         ga_params['min_delta_score_stability'] = (
             min_converge / ga_params['min_delta_stability_ratio']
         )
-        ga_params['compare_to_ground_truth'] = True
 
         gai = ga.graph_algorithm(
             init_edges,
@@ -129,24 +135,25 @@ if __name__ == '__main__':
         should_pause = converged = False
         iter_num = 0
         while iter_num < max_iterations and not converged:
-            should_pause, iter_num, converged = gai.run_main_loop()
+            should_pause, iter_num, converged = gai.run_main_loop(iter_num)
 
-        print('SUMMARY')
-        print('\nCompare to ground truth')
-        print('By GT cluster length:')
+        logger.info('')
+        logger.info('Compare to ground truth')
+        logger.info('By GT cluster length:')
         ct.compare_by_lengths(gai.clustering, gai.node2cid, sim_i.gt_clustering)
         pct, pr, rec = ct.percent_and_PR(
             gai.clustering, gai.node2cid, sim_i.gt_clustering, sim_i.gt_node2cid
         )
-        print('Pct equal %.3f, Precision %.3f, Recall %.3f' % (pct, pr, rec))
+        logger.info('Pct equal %.3f, Precision %.3f, Recall %.3f' % (pct, pr, rec))
 
-        print('\nCompare to reachable ground truth')
-        print('By reachable cluster length:')
+        logger.info('')
+        logger.info('Compare to reachable ground truth')
+        logger.info('By reachable cluster length:')
         ct.compare_by_lengths(gai.clustering, gai.node2cid, sim_i.r_clustering)
         pct, pr, rec = ct.percent_and_PR(
             gai.clustering, gai.node2cid, sim_i.r_clustering, sim_i.r_node2cid
         )
-        print('Pct equal %.3f, Precision %.3f, Recall %.3f' % (pct, pr, rec))
+        logger.info('Pct equal %.3f, Precision %.3f, Recall %.3f' % (pct, pr, rec))
 
         sim_i.csv_output(file_prefix + '_gt.csv', sim_i.gt_results)
         sim_i.csv_output(file_prefix + '_r.csv', sim_i.r_results)
