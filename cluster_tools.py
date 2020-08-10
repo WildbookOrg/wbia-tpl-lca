@@ -1,4 +1,11 @@
 # -*- coding: utf-8 -*-
+
+import logging
+
+
+logger = logging.getLogger()
+
+
 def build_clustering(node2cluster):
     '''
     node2cluster: mapping from node id to cluster id
@@ -301,8 +308,8 @@ def compare_by_lengths(est, est_n2c, gt):
         else:
             gt_iou_dict[gt_lng] = [best_iou]
 
-    print(
-        'cluster length, number of clusters, number of exact matches, '
+    logger.info(
+        'cluster length, number of clusters, number of exact matches, ' +
         'fraction exact, average IOU'
     )
     for gt_lng in sorted(gt_iou_dict.keys()):
@@ -310,7 +317,7 @@ def compare_by_lengths(est, est_n2c, gt):
         num_exact = val.count(1)  # how many have exact overlap
         frac_exact = num_exact / len(val)
         avg_iou = sum(val) / len(val)
-        print(
+        logger.info(
             '%d, %d, %d, %1.2f, %1.3f'
             % (gt_lng, len(val), num_exact, frac_exact, avg_iou)
         )
