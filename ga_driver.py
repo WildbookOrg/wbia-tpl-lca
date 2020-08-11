@@ -141,7 +141,7 @@ def params_and_weighters(config_ini, verifier_gt):
 
     wgtr = wgtrs[0]
     ga_params['min_delta_score_converge'] = -ga_params['min_delta_converge_multiplier'] * \
-        wgtr.human_wgt(is_marked_correct=True) - wgtr.human_wgt(is_marked_correct=False)
+        (wgtr.human_wgt(is_marked_correct=True) - wgtr.human_wgt(is_marked_correct=False))
 
     ga_params['min_delta_score_stability'] = (
         ga_params['min_delta_score_converge'] / ga_params['min_delta_stability_ratio']
