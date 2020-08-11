@@ -15,8 +15,7 @@ def check_line(name, corr, actual):
 def default_params():
     p = {
         'prob_human_correct': 0.97,
-        'min_delta_prob_converge': 0.95,
-        'max_weight': 99,
+        'min_delta_converge_multiplier': 0.95,
         'min_delta_stability_ratio': 8,
         'num_per_augmentation': 2,
         'tries_before_edge_done': 4,

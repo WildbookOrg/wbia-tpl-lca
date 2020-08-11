@@ -59,6 +59,7 @@ if __name__ == '__main__':
 
     ga_params = {}
     ga_params['prob_human_correct'] = sim_params['p_human_correct']
+    ga_params['min_delta_converge_multiplier'] = 0.9
     ga_params['min_delta_stability_ratio'] = 8
     ga_params['augmentation_names'] = ['vamp', 'human']
     ga_params['num_per_augmentation'] = 2
@@ -112,7 +113,8 @@ if __name__ == '__main__':
         '''
         Specify parameters for the graph algorithm
         '''
-        min_converge = -0.9 * (wgtr_i.human_wgt(True) - wgtr_i.human_wgt(False))
+        min_converge = -ga_params['min_delta_converge_multiplier'] * \
+            (wgtr_i.human_wgt(True) - wgtr_i.human_wgt(False))
         ga_params['min_delta_score_converge'] = min_converge
         ga_params['min_delta_score_stability'] = (
             min_converge / ga_params['min_delta_stability_ratio']

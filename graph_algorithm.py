@@ -187,24 +187,6 @@ Invariants:
 logger = logging.getLogger()
 
 
-'''
-# going to eliminate this...
-def default_params():
-    p = {
-        'prob_human_correct': 0.97,
-        'min_delta_prob_converge': 0.95,
-        'max_weight': 99,
-        'min_delta_stability_ratio': 8,
-        'num_per_augmentation': 2,
-        'tries_before_edge_done': 4,
-        'log_level': logging.INFO,
-        'draw_iterations': False,
-        'drawing_prefix': 'default_prefix',
-    }
-    return p
-'''
-
-
 class graph_algorithm(object):
     def __init__(self, edges, clusters, aug_names, params, aug_request_cb, aug_result_cb):
         self.params = params

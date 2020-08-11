@@ -104,9 +104,8 @@ def params_and_weighters(config_ini, verifier_gt):
     s = config_ini['EDGE_WEIGHTS']['augmentation_names']
     ga_params['aug_names'] = s.strip().split()
 
-    p = float(config_ini['ITERATIONS']['min_delta_prob_converge'])
-    assert 0 < p <= 1
-    ga_params['min_delta_prob_converge'] = p
+    mult = float(config_ini['ITERATIONS']['min_delta_converge_multiplier'])
+    ga_params['min_delta_converge_multiplier'] = mult
 
     s = float(config_ini['ITERATIONS']['min_delta_stability_ratio'])
     assert s > 1
@@ -141,9 +140,9 @@ def params_and_weighters(config_ini, verifier_gt):
     wgtrs = generate_weighters(ga_params, verifier_gt)
 
     wgtr = wgtrs[0]
-    ga_params['min_delta_score_converge'] = -2 * wgtr.wgt(
-        ga_params['min_delta_prob_converge']
-    )
+    ga_params['min_delta_score_converge'] = -ga_params['min_delta_converge_multiplier'] * \
+        wgtr.human_wgt(is_marked_correct=True) - wgtr.human_wgt(is_marked_correct=False)
+
     ga_params['min_delta_score_stability'] = (
         ga_params['min_delta_score_converge'] / ga_params['min_delta_stability_ratio']
     )
