@@ -17,7 +17,7 @@
 	"nodes_to_remove": []
     },
 
-    "request": {
+    "query": {
 	"verifier": [["a", "b", 0.0, "zero"],
 		     ["b", "c", 0.0, "zero"],
 		     ["c", "d", 0.0, "zero"],
