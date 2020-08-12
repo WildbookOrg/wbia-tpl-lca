@@ -28,12 +28,13 @@ probabilities AND the relative fraction of positive and negative
 ground truth samples are important here.
 
 3. The request json file, which includes the simulated database, the
-simulated edge generator and the actual request.  See
+simulated edge generator and the actual query request.  See
 request_example.json
 
 Note that the first two will always be needed even if this is running
-"for real", as will the actual request.  So in an non-simulation, only
-the database and edge generator object need to be replaced.
+"for real", as will the actual query (with the request json).  So in
+an non-simulation, only the database and edge generator object need to
+be replaced.
 '''
 
 
@@ -143,9 +144,9 @@ def form_edge_generator(request, db, wgtr):
 
 def extract_requests(request, db):
     try:
-        req_dict = request['request']
+        req_dict = request['query']
     except KeyError:
-        print('Information about the GA request itself must be in the request JSON.')
+        print('Information about the GA query itself must be in the request JSON.')
         sys.exit(1)
 
     # 1. Get the verifier result quads (n0, n1, prob, aug_name).

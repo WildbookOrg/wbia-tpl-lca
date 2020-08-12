@@ -348,11 +348,14 @@ class ga_driver(object):
             ccPIC_clustering, ccPIC_n2c, gai.clustering, gai.node2cid,
         )
 
+        logger.info('')
+        logger.info('*********************************')
         logger.info('After LCA convergence on ccPIC, here are the cluster changes:')
         for i, cc in enumerate(changes):
             logger.info('Change %d' % i)
             cc.log_change()
 
+        logger.info('')
         return changes
 
     def run_all_ccPICs(self):
