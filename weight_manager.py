@@ -166,8 +166,8 @@ class weight_manager(object):
     def num_human_decisions(self):
         return self.counts[-1]
 
-    def awaiting_requests(self):
-        return self.waiting_for
+    def num_waiting(self):
+        return len(self.waiting_for)
 
     def reset_waiting(self):
         self.waiting_for.clear()
