@@ -19,6 +19,8 @@ def default_params():
         'min_delta_stability_ratio': 8,
         'num_per_augmentation': 2,
         'tries_before_edge_done': 4,
+        'ga_iterations_before_return': 10,
+        'ga_max_num_waiting': 30,
         'log_level': logging.INFO,
         'draw_iterations': False,
         'drawing_prefix': 'default_prefix',
@@ -709,7 +711,7 @@ class test_generator(object):
         self.aug_requested.clear()
         return quads
 
-    def remove_nodes_cb(self):
+    def remove_nodes_cb(self, ignored_node_set):
         to_return = self.first_nodes_to_remove
         self.first_nodes_to_remove = []
         return to_return

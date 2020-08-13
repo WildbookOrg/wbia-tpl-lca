@@ -65,6 +65,7 @@ if __name__ == '__main__':
     ga_params['num_per_augmentation'] = 2
     ga_params['tries_before_edge_done'] = 4
     ga_params['ga_iterations_before_return'] = 100000  # convergence
+    ga_params['ga_max_num_waiting'] = 50
     ga_params['log_level'] = logging.INFO
     ga_params['draw_iterations'] = False
     ga_params['drawing_prefix'] = 'drawing_lca'

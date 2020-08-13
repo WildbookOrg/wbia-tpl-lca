@@ -37,40 +37,6 @@ an non-simulation, only the database and edge generator object need to
 be replaced.
 '''
 
-
-'''
-1. Rerun tests on graph algorithm.  Check.
-07-29:  Done. Needed to adjust and set some parameters by hand.
-Needed to handle node_set or a lack of them in the edge result
-callbacks.
-
-2. Review flow from overall_driver to ga_driver to graph_algorithm and
-modifying logging. Focus on where the work flow will naturally start.
-07-31: Done
-
-3. Test compare clustering.  Add documentation
-07-31: Done
-
-4. Test ga_driver. Add docoumentation
-07-31: Done with tests, but don't test call to graph algorithm; need
-simuluation.
-Start here with documentation on Monday and coordinate with
-graph_algorithm.py
-08-03: done
-
-5. Test overall_driver. Add documentation
-08/04: done
-
-6. Generate additional examples, including verification only and
-revision following review.
-
-7. Write and test commit_cluster_change in db_interface_sim.py
-08/04: done
-
-8. Push...
- '''
-
-
 def form_database(request):
     '''
     From the request json object extract the database if it is there.

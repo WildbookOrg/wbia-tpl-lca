@@ -123,6 +123,10 @@ def params_and_weighters(config_ini, verifier_gt):
     assert i >= 1
     ga_params['ga_iterations_before_return'] = i
 
+    mw = int(config_ini['ITERATIONS']['ga_max_num_waiting'])
+    assert mw >= 1
+    ga_params['ga_max_num_waiting'] = mw
+
     log_level = config_ini['LOGGING']['log_level']
     ga_params['log_level'] = log_level
     log_file = config_ini['LOGGING']['log_file']

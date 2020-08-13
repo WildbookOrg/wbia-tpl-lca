@@ -55,6 +55,8 @@ augmentation method that produced the result
 '''
 Non-required Callbacks:
 
+Originally there were a lot of these, but now there are only a few:
+
 1. LCA asks for and receives back nodes to remove from the
 graph. These nodes and their associated edges are removed from the
 graph.
@@ -66,24 +68,13 @@ second human reviewer likes the annotation as part of the graph. This
 will occur in the next callback. I've currently decided that the node
 should stay deleted and therefore that the new edge should not be added
 
-2. Status check: ask if a status check has been requested, and a
-second to return status. Details of the status information to be
-provided are still TBD. Two callbacks: the first to see if the request
-is needed and the second to send the results.
-
-3. Result check: ask if result update is needed, and provide results
-update (two callbacks). The result update request can be for none,
-partial or total. The partial update will be the clusters that have
-changed still the last update request, while the total update will be
-the changes since the start of run_main_loop. In each case, two lists
-of lists are returned, the first giving the clusters that have been
-removed and the second giving the clusters that have been added. If a
-cluster has been both removed and added (back) it will not be
-returned.
-
-4. Stop check: ask if stop requested needed and stop, returning from
+2. Stop check: ask if stop requested needed and stop, returning from
 the function called "run_main_loop". A subsequent call to
 run_main_loop will pick up cleanly from stop point.
+
+Once the algorithm is stopped, intermediate results and statuses can
+be checked and logged. These are implemented as direct emthod calls,
+as outlined below.
 '''
 
 
@@ -246,14 +237,6 @@ class graph_algorithm(object):
         Callback to indicate nodes to remove from the graph
         '''
         self.remove_nodes_cb = cb
-
-    def set_status_check_cbs(self, request_cb, result_cb):
-        '''
-        Callbacks to request status check and to provide status check
-        results.
-        '''
-        self.status_request_cb = request_cb
-        self.status_return_cb = result_cb
 
     def set_result_cbs(self, request_cb, return_cb):
         '''
@@ -639,23 +622,42 @@ class graph_algorithm(object):
             self.new_lcas(new_cids, use_pairs, use_singles)
 
     def status_check(self):
-        if self.status_request_cb is None or self.status_return_cb is None:
-            return
-        # Not implemented yet
+        active_scores = []
+        for cid, lcas in self.cid2lca.items():
+            scores = [a.delta_score() for a in lcas if a.to_clusters is not None]
+            if len(scores) > 0:
+                s = max(scores)
+                if s > self.params.min_delta_score_converge:
+                    active_scores.append(s)
+        status_dict = {}
+        a = len(active_scores)
+        mx = max(active_scores)
+        n = len(self.cid2lca)
+        status_dict['max_score'] = mx
+        status_dict['num_active'] = a
+        status_dict['num_overall'] = n
+        logger.info('Status: %d clusters out of %d are active' % (a, n))
+        logger.info('Status: max LCA score is %d' % mx)
+        return status_dict
 
     def provide_results(self):
-        if self.results_request_cb is None or self.results_return_cb is None:
-            return
-        # Not implemented yet
-
-    '''
-    def generate_log_string(self):
-        if self.log_request_cb is None or self.log_return_cb is None:
-            return
-    '''
+        '''
+        Send back the current clusters
+        '''
+        return self.clustering.values()
 
     def check_wait_for_edges(self):
-        return False
+        '''
+        Wait if there are enough edges waiting or if the waiting LCAs
+        is high enough.
+        '''
+        nw = self.queues.num_on_W()
+        nl = self.queues.num_lcas()
+        wait = nw > self.params['ga_max_num_waiting']
+        if wait:
+            logger.info('Decide to await for new edges: num waiting LCAs is %d out of %d'
+                        % (nw, nl))
+        return wait
 
     def stop_request_check(self):
         return self.should_stop_cb is not None and self.should_stop_cb()
