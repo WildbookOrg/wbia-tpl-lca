@@ -53,7 +53,7 @@ def form_database(request):
     if 'quads' in req_db:
         edge_quads = req_db['quads']
     if 'clustering' in req_db:
-        clustering_dict = {int(cid): c for cid, c in req_db['clustering'].items()}
+        clustering_dict = {str(cid): c for cid, c in req_db['clustering'].items()}
 
     db = db_interface_sim.db_interface_sim(edge_quads, clustering_dict)
     return db
@@ -132,8 +132,10 @@ def extract_requests(request, db):
         cluster_ids_to_check = req_dict['cluster_ids']
 
     for cid in cluster_ids_to_check:
+        print(cid)
+        print(cluster_ids_to_check)
         if not db.cluster_exists(cid):
-            print('GA request cluster id %d does not exist' % cid)
+            print('GA request cluster id %s does not exist' % cid)
             raise ValueError('Cluster id does not exist')
 
     return verifier_results, human_decisions, cluster_ids_to_check

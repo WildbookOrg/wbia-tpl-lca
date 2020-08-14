@@ -1,9 +1,16 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import math as m
 
 
 logger = logging.getLogger()
+
+
+def cids_from_range(n, prefix='c'):
+    k = m.ceil(m.log10(n))
+    cids = [prefix + str(i).zfill(k) for i in range(n)]
+    return cids
 
 
 def build_clustering(node2cluster):
@@ -28,7 +35,6 @@ def build_clustering_from_clusters(cids, clusters):
     only once in that list. An assert failure occurs if either of
     these conditions is violated.
     """
-    assert len(cids) == len(clusters)
     num_nodes = sum([len(c) for c in clusters])
     as_sets = [set(c) for c in clusters]
     num_unique = len(set.union(*as_sets))

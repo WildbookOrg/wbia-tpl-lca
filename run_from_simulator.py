@@ -25,7 +25,7 @@ if __name__ == '__main__':
     '''
     sim_params = dict()
     sim_params['pos_error_frac'] = 0.15
-    sim_params['num_clusters'] = 32  # 256
+    sim_params['num_clusters'] = 128  # 256
     sim_params['num_from_ranker'] = 4  # 10
     sim_params['p_ranker_correct'] = 0.85
     sim_params['p_human_correct'] = 0.97

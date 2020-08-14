@@ -73,10 +73,11 @@ class simulator(object):
         assuming an imperfect ranking algorithm, this does not ensure
         that each cluster is connected.
         '''
-        for cid in range(len(samples)):
+        cids = ct.cids_from_range(len(samples), prefix='ct')
+        for i, cid in enumerate(cids):
             self.gt_clustering[cid] = list()
 
-            n = samples[cid]
+            n = samples[i]
 
             # Create the nodes in the cluster
             for i in range(n):

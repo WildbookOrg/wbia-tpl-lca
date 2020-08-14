@@ -150,12 +150,12 @@ class LCA(object):
     def pprint_short(self, initial_str='', stop_after_from=False):
         out_str = initial_str + 'From cids:'
         for cid in sorted(self.from_clusters.keys()):
-            out_str += ' %d: %a' % (cid, sorted(self.from_clusters[cid]))
+            out_str += ' %s: %a' % (cid, sorted(self.from_clusters[cid]))
 
         if logger.getEffectiveLevel() <= logging.DEBUG:
             check_score = ct.clustering_score(self.subgraph, self.from_n2c)
             if abs(check_score - self.from_score) > 1e-7:
-                out_str += 'from score error: should be %a, but is %a' % (
+                out_str += 'from score error: should be %d, but is %d' % (
                     check_score,
                     self.from_score,
                 )
@@ -170,7 +170,7 @@ class LCA(object):
         if logger.getEffectiveLevel() <= logging.DEBUG:
             check_score = ct.clustering_score(self.subgraph, self.to_n2c)
             if check_score != self.to_score:
-                out_str += '\nto score error: should be %a, but is %a\n' % (
+                out_str += '\nto score error: should be %d, but is %d\n' % (
                     check_score,
                     self.to_score,
                 )
@@ -185,7 +185,7 @@ class LCA(object):
         if self.from_score != check_score:
             print('lca: SCORING ERROR in from')
         for cid in sorted(self.from_clusters.keys()):
-            print('    %d: %a' % (cid, self.from_clusters[cid]))
+            print('    %s: %a' % (cid, self.from_clusters[cid]))
         if stop_after_from:
             return
 

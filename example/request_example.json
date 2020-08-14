@@ -43,6 +43,6 @@
 	"verifier": [["b", "e", 0.9, "vamp"],
                      ["f", "g", 0.15, "vamp"]],
 	"human": [["a", "c", true]],
-	"cluster_ids": [103]
+	"cluster_ids": ["103"]
     }
 }

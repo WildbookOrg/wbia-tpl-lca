@@ -218,6 +218,8 @@ class ga_driver(object):
             )
 
         self.temp_count = 0
+        self.temp_prefix = 'tmpc'
+        self.temp_padding = 3
         self.temp_cids = set()
         self.temp_node_to_cid = dict()
         self.temp_cid_to_node = dict()
@@ -236,7 +238,8 @@ class ga_driver(object):
                 cid = self.temp_node_to_cid[n]
             else:
                 self.temp_count += 1
-                cid = -self.temp_count
+                i = -self.temp_count
+                cid = self.temp_prefix + str(i).zfill(self.temp_padding)
                 self.temp_node_to_cid[n] = cid
                 self.temp_cid_to_node[cid] = n
         return cid
@@ -275,7 +278,7 @@ class ga_driver(object):
                     self.add_cid_pair(cid0, cid1)
 
     def is_temp(self, cid):
-        return -self.temp_count <= cid < 0
+        return cid.startswith(self.temp_prefix)
 
     def form_ccPICs(self):
         self.ccPICs = []

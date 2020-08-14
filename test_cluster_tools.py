@@ -79,24 +79,24 @@ def test_build_clustering_and_mapping():
 
     # G = ex_graph_fig1()
     n2c_optimal = {
-        'a': 0,
-        'b': 0,
-        'd': 0,
-        'e': 0,
-        'c': 1,
-        'h': 2,
-        'i': 2,
-        'f': 3,
-        'g': 3,
-        'j': 3,
-        'k': 3,
+        'a': '0',
+        'b': '0',
+        'd': '0',
+        'e': '0',
+        'c': '1',
+        'h': '2',
+        'i': '2',
+        'f': '3',
+        'g': '3',
+        'j': '3',
+        'k': '3',
     }
 
     clustering = ct.build_clustering(n2c_optimal)
-    print("Cluster 0 should be ['a', 'b', 'd', 'e']. It is", sorted(clustering[0]))
-    print("Cluster 1 should be ['c']. It is", sorted(clustering[1]))
-    print("Cluster 2 should be ['h', 'i']. It is", sorted(clustering[2]))
-    print("Cluster 3 should be ['f', 'g', 'j', 'k']. It is", sorted(clustering[3]))
+    print("Cluster 0 should be ['a', 'b', 'd', 'e']. It is", sorted(clustering['0']))
+    print("Cluster 1 should be ['c']. It is", sorted(clustering['1']))
+    print("Cluster 2 should be ['h', 'i']. It is", sorted(clustering['2']))
+    print("Cluster 3 should be ['f', 'g', 'j', 'k']. It is", sorted(clustering['3']))
 
     print('==================')
     print('Testing build_node_to_cluster_mapping')
@@ -114,20 +114,23 @@ def test_build_clustering_and_mapping():
     )
 
 
+
+
 def test_build_clustering_from_clusters():
     print('================================')
     print('test_build_clustering_from_clusters')
     clist = [['h', 'i', 'j'], ['k', 'm'], ['p']]
     n = len(clist)
-    clustering = ct.build_clustering_from_clusters(range(n), clist)
+    cids = list(ct.cids_from_range(n))
+    clustering = ct.build_clustering_from_clusters(cids, clist)
     print('Returned clustering:')
     print(clustering)
     correct = len(clustering) == 3
     print('Correct number of clusters', correct)
     correct = (
-        set(clist[0]) == clustering[0]
-        and set(clist[1]) == clustering[1]
-        and set(clist[2]) == clustering[2]
+        set(clist[0]) == clustering[cids[0]]
+        and set(clist[1]) == clustering[cids[1]]
+        and set(clist[2]) == clustering[cids[2]]
     )
     print('Clusters are correct:', correct)
 
@@ -135,7 +138,7 @@ def test_build_clustering_from_clusters():
     clist = [['h', 'i', 'j'], ['k', 'm'], ['p', 'p']]
     n = len(clist)
     try:
-        clustering = ct.build_clustering_from_clusters(range(n), clist)
+        clustering = ct.build_clustering_from_clusters(ct.cids_from_range(n), clist)
     except AssertionError:
         print('Caught error from having repeated entry in one cluster')
 
@@ -143,7 +146,7 @@ def test_build_clustering_from_clusters():
     clist = [['h', 'i', 'k'], ['k', 'm'], ['p', 'q']]
     n = len(clist)
     try:
-        clustering = ct.build_clustering_from_clusters(range(n), clist)
+        clustering = ct.build_clustering_from_clusters(ct.cids_from_range(n), clist)
     except AssertionError:
         print('Caught error from having intersecting lists')
 
@@ -153,52 +156,54 @@ def test_cluster_scoring_and_weights():
 
     print('=====================')
     print('Testing cid_list_score')
+    cids = list(ct.cids_from_range(4))
     n2c_random = {
-        'a': 0,
-        'b': 0,
-        'f': 0,
-        'c': 1,
-        'g': 1,
-        'd': 2,
-        'e': 2,
-        'i': 2,
-        'h': 3,
-        'j': 3,
-        'k': 3,
+        'a': cids[0],
+        'b': cids[0],
+        'f': cids[0],
+        'c': cids[1],
+        'g': cids[1],
+        'd': cids[2],
+        'e': cids[2],
+        'i': cids[2],
+        'h': cids[3],
+        'j': cids[3],
+        'k': cids[3],
     }
     clustering_random = ct.build_clustering(n2c_random)
-    score = ct.cid_list_score(G, clustering_random, n2c_random, [0, 2, 3])
-    print('Score between clusters [0, 2, 3] should be -5 and is', score)
+    score = ct.cid_list_score(G, clustering_random, n2c_random, [cids[0], cids[2], cids[3]])
+    print('Score between clusters [c0, c2, c3] should be -5 and is', score)
 
     print('=====================')
     print('Testing clustering_score')
     ''' First clustering:  all together '''
-    n2c_single_cluster = {n: 0 for n in G.nodes}
+    n2c_single_cluster = {n: 'c0' for n in G.nodes}
     print(
         'Score with all together should be 21.  Score =',
         ct.clustering_score(G, n2c_single_cluster),
     )
 
     ''' Second clustering:  all separate '''
-    n2c_all_separate = {n: i for i, n in enumerate(G.nodes)}
+    n2c_all_separate = {n: 'c'+str(i) for i, n in enumerate(G.nodes)}
     print(
         'Score with all together should be -21.  Score =',
         ct.clustering_score(G, n2c_all_separate),
     )
 
     ''' Third clustering: optimal, by hand '''
+    cids = list(ct.cids_from_range(4))
     n2c_optimal = {
-        'a': 0,
-        'b': 0,
-        'd': 0,
-        'e': 0,
-        'c': 1,
-        'h': 2,
-        'i': 2,
-        'f': 3,
-        'g': 3,
-        'j': 3,
-        'k': 3,
+        'a': cids[0],
+        'b': cids[0],
+        'd': cids[0],
+        'e': cids[0],
+        'c': cids[1],
+        'h': cids[2],
+        'i': cids[2],
+        'f': cids[3],
+        'g': cids[3],
+        'j': cids[3],
+        'k': cids[3],
     }
     print('Optimal score should be 49. Score =', ct.clustering_score(G, n2c_optimal))
 
@@ -230,103 +235,106 @@ def test_merge():
     print('===========================')
     print('test_merge')
     G = ex_graph_fig1()
+    cids = list(ct.cids_from_range(4))
+    print(cids)
     n2c_optimal = {
-        'a': 0,
-        'b': 0,
-        'd': 0,
-        'e': 0,
-        'c': 1,
-        'h': 2,
-        'i': 2,
-        'f': 3,
-        'g': 3,
-        'j': 3,
-        'k': 3,
+        'a': cids[0],
+        'b': cids[0],
+        'd': cids[0],
+        'e': cids[0],
+        'c': cids[1],
+        'h': cids[2],
+        'i': cids[2],
+        'f': cids[3],
+        'g': cids[3],
+        'j': cids[3],
+        'k': cids[3],
     }
     clustering = ct.build_clustering(n2c_optimal)
 
     print('-------------')
     print('score_delta_after_merge')
-    delta = ct.score_delta_after_merge(2, 3, G, clustering)
+    delta = ct.score_delta_after_merge(cids[2], cids[3], G, clustering)
     print('possible merge of 2, 3; delta should be -4, and is', delta)
 
     print('-------------')
     print('merge_clusters')
     score_before = ct.clustering_score(G, n2c_optimal)
-    delta = ct.merge_clusters(0, 2, G, clustering, n2c_optimal)
+    delta = ct.merge_clusters(cids[0], cids[2], G, clustering, n2c_optimal)
     score_after = ct.clustering_score(G, n2c_optimal)
     print('delta =', delta, 'should be', score_after - score_before)
     print('---')
     for c in clustering:
-        print('%a: %a' % (c, clustering[c]))
+        print('%s: %s' % (c, clustering[c]))
     print('---')
     for n in G.nodes:
-        print('%a: %a' % (n, n2c_optimal[n]))
+        print('%s: %s' % (n, n2c_optimal[n]))
 
     print('--------')
     print('Retesting merge with order of clusters reversed')
     n2c_optimal = {
-        'a': 0,
-        'b': 0,
-        'd': 0,
-        'e': 0,
-        'c': 1,
-        'h': 2,
-        'i': 2,
-        'f': 3,
-        'g': 3,
-        'j': 3,
-        'k': 3,
+        'a': cids[0],
+        'b': cids[0],
+        'd': cids[0],
+        'e': cids[0],
+        'c': cids[1],
+        'h': cids[2],
+        'i': cids[2],
+        'f': cids[3],
+        'g': cids[3],
+        'j': cids[3],
+        'k': cids[3],
     }
     clustering = ct.build_clustering(n2c_optimal)
 
     print('-------------')
     print('score_delta_after_merge')
-    delta = ct.score_delta_after_merge(3, 2, G, clustering)
+    delta = ct.score_delta_after_merge(cids[3], cids[2], G, clustering)
     print('possible merge of 3, 2; delta should be -4, and is', delta)
 
     print('-------------')
     print('merge_clusters')
     score_before = ct.clustering_score(G, n2c_optimal)
-    delta = ct.merge_clusters(2, 0, G, clustering, n2c_optimal)
+    delta = ct.merge_clusters(cids[2], cids[0], G, clustering, n2c_optimal)
     score_after = ct.clustering_score(G, n2c_optimal)
     print('delta =', delta, 'should be', score_after - score_before)
     print('---')
     for c in clustering:
-        print('%a: %a' % (c, clustering[c]))
+        print('%s: %s' % (c, clustering[c]))
     print('---')
     for n in G.nodes:
-        print('%a: %a' % (n, n2c_optimal[n]))
+        print('%s: %s' % (n, n2c_optimal[n]))
 
 
 def test_shift_between_clusters():
     print('===========================')
     print('test_shift_between_clusters')
+    cids = list(ct.cids_from_range(4))
     n2c_optimal = {
-        'a': 0,
-        'b': 0,
-        'd': 0,
-        'e': 0,
-        'c': 1,
-        'h': 2,
-        'i': 2,
-        'f': 3,
-        'g': 3,
-        'j': 3,
-        'k': 3,
+        'a': cids[0],
+        'b': cids[0],
+        'd': cids[0],
+        'e': cids[0],
+        'c': cids[1],
+        'h': cids[2],
+        'i': cids[2],
+        'f': cids[3],
+        'g': cids[3],
+        'j': cids[3],
+        'k': cids[3],
     }
     clustering = ct.build_clustering(n2c_optimal)
 
-    n0_cid, n1_cid = 3, 2
+    n0_cid, n1_cid = cids[3], cids[2]
     n0_nodes_to_move = {'f', 'j'}
-    print('Shifting from cluster %d to %d:' % (n0_cid, n1_cid))
+    print('Shifting from cluster %s to %s:' % (n0_cid, n1_cid))
     print('Nodes to move:', sorted(n0_nodes_to_move))
-    print('Cluster %d: %a' % (n0_cid, sorted(clustering[n0_cid])))
-    print('Cluster %d: %a' % (n1_cid, sorted(clustering[n1_cid])))
+    print('Cluster %s: %s' % (n0_cid, sorted(clustering[n0_cid])))
+    print('Cluster %s: %s' % (n1_cid, sorted(clustering[n1_cid])))
 
     ct.shift_between_clusters(n0_cid, n0_nodes_to_move, n1_cid, clustering, n2c_optimal)
-    print('After shift, cluster %d: %a' % (n0_cid, sorted(clustering[n0_cid])))
-    print('After shift, cluster %d: %a' % (n1_cid, sorted(clustering[n1_cid])))
+    print('After shift, cluster %s: %s' % (n0_cid, sorted(clustering[n0_cid])))
+    print('After shift, cluster %s: %s' % (n1_cid, sorted(clustering[n1_cid])))
     print("n2c['f'] =", n2c_optimal['f'])
     print("n2c['j'] =", n2c_optimal['j'])
     print("n2c['h'] =", n2c_optimal['h'])
@@ -338,83 +346,90 @@ def test_shift_between_clusters():
 def test_replace_clusters():
     print('===========================')
     print('test replace_clusters')
+    cids = list(ct.cids_from_range(8))
     n2c = {
-        'a': 0,
-        'b': 0,
-        'd': 0,
-        'e': 0,
-        'c': 1,
-        'h': 2,
-        'i': 2,
-        'f': 3,
-        'g': 3,
-        'j': 4,
-        'k': 4,
+        'a': cids[0],
+        'b': cids[0],
+        'd': cids[0],
+        'e': cids[0],
+        'c': cids[1],
+        'h': cids[2],
+        'i': cids[2],
+        'f': cids[3],
+        'g': cids[3],
+        'j': cids[4],
+        'k': cids[4],
     }
     clustering = ct.build_clustering(n2c)
-    old_cids = [2, 4]
-    added_clusters = {5: set(['j']), 7: set(['h', 'i', 'k'])}
+    old_cids = [cids[2], cids[4]]
+    added_clusters = {cids[5]: set(['j']), cids[7]: set(['h', 'i', 'k'])}
     ct.replace_clusters(old_cids, added_clusters, clustering, n2c)
-    print('Cluster ids, should be 0, 1, 3, 5, 7.  Are:', clustering.keys())
-    print("clustering[5] should be {'j'}!! and is", clustering[5])
-    print("clustering[7] should be {'h', 'i', 'k'} and is", clustering[7])
-    print("n2c['h'] should be 7 and is", n2c['h'])
-    print("n2c['j'] should be 5 and is", n2c['j'])
+    print('Cluster ids, should be c0, c1, c3, c5, c7.  Are:', list(clustering.keys()))
+    print("clustering[c5] should be {'j'}!! and is", clustering[cids[5]])
+    print("clustering[c7] should be {'h', 'i', 'k'} and is", clustering[cids[7]])
+    print("n2c['h'] should be c7 and is", n2c['h'])
+    print("n2c['j'] should be c5 and is", n2c['j'])
 
 
 def test_form_connected_cluster_pairs():
     print('=================================')
     print('test form_connected_cluster_pairs')
     G = ex_graph_fig1()
+    cids = list(ct.cids_from_range(5))
     n2c = {
-        'a': 0,
-        'b': 0,
-        'd': 0,
-        'e': 0,
-        'c': 1,
-        'h': 2,
-        'i': 2,
-        'f': 3,
-        'g': 3,
-        'j': 4,
-        'k': 4,
+        'a': cids[0],
+        'b': cids[0],
+        'd': cids[0],
+        'e': cids[0],
+        'c': cids[1],
+        'h': cids[2],
+        'i': cids[2],
+        'f': cids[3],
+        'g': cids[3],
+        'j': cids[4],
+        'k': cids[4],
     }
     clustering = ct.build_clustering(n2c)
 
     cid_pairs = ct.form_connected_cluster_pairs(G, clustering, n2c)
     print('form_connected_cluster_pairs(G, clustering, n2c)')
     print('result: ', cid_pairs)
-    print('expecting: ', [(0, 1), (0, 2), (0, 3), (1, 3), (2, 3), (2, 4), (3, 4)])
+    print('expecting: ', [(cids[0], cids[1]), (cids[0], cids[2]), (cids[0], cids[3]),
+                          (cids[1], cids[3]), (cids[2], cids[3]), (cids[2], cids[4]),
+                          (cids[3], cids[4])])
 
-    new_cids = [1, 4]
+    new_cids = [cids[1], cids[4]]
     cid_pairs = ct.form_connected_cluster_pairs(G, clustering, n2c, new_cids)
     print('form_connected_cluster_pairs(G, clustering, n2c, new_cids)')
     print('result: ', cid_pairs)
-    print('expecting: ', [(0, 1), (1, 3), (2, 4), (3, 4)])
+    print('expecting: ', [(cids[0], cids[1]), (cids[1], cids[3]),
+                          (cids[2], cids[4]), (cids[3], cids[4])])
 
 
 def test_same_clustering():
     '''
     '''
+    cids = list(ct.cids_from_range(99))
+
     clustering0 = {
-        0: {'a', 'b'},
-        3: {'c'},
-        4: {'d', 'e'},
-        6: {'f', 'g', 'h'},
-        8: {'i', 'j', 'k', 'l', 'm'},
+        cids[0]: {'a', 'b'},
+        cids[3]: {'c'},
+        cids[4]: {'d', 'e'},
+        cids[6]: {'f', 'g', 'h'},
+        cids[8]: {'i', 'j', 'k', 'l', 'm'},
     }
     clustering1 = {
-        6: {'d', 'e'},
-        8: {'c'},
-        16: {'f', 'g', 'h'},
-        19: {'i', 'k', 'l', 'm', 'j'},
-        20: {'b', 'a'},
+        cids[6]: {'d', 'e'},
+        cids[8]: {'c'},
+        cids[16]: {'f', 'g', 'h'},
+        cids[19]: {'i', 'k', 'l', 'm', 'j'},
+        cids[20]: {'b', 'a'},
     }
     clustering2 = {
-        6: {'d', 'c', 'e'},
-        16: {'f', 'g', 'h'},
-        22: {'i', 'j', 'k', 'l', 'm'},
-        25: {'b', 'a'},
+        cids[6]: {'d', 'c', 'e'},
+        cids[16]: {'f', 'g', 'h'},
+        cids[22]: {'i', 'j', 'k', 'l', 'm'},
+        cids[25]: {'b', 'a'},
     }
 
     print('====================')
@@ -435,31 +450,32 @@ def test_same_clustering():
 def test_comparisons():
     '''
     '''
+    cids = list(ct.cids_from_range(99))
     gt = {
-        0: {'a', 'b'},
-        3: {'c'},
-        4: {'d', 'e'},
-        6: {'f', 'g', 'h'},
-        8: {'i', 'j', 'k', 'l', 'm'},
-        10: {'o'},
-        13: {'p', 'q'},
-        15: {'r', 's', 't'},
-        16: {'u', 'v', 'w'},
-        19: {'y', 'z', 'aa'},
+        cids[0]: {'a', 'b'},
+        cids[3]: {'c'},
+        cids[4]: {'d', 'e'},
+        cids[6]: {'f', 'g', 'h'},
+        cids[8]: {'i', 'j', 'k', 'l', 'm'},
+        cids[10]: {'o'},
+        cids[13]: {'p', 'q'},
+        cids[15]: {'r', 's', 't'},
+        cids[16]: {'u', 'v', 'w'},
+        cids[19]: {'y', 'z', 'aa'},
     }
     gt_n2c = ct.build_node_to_cluster_mapping(gt)
 
     est = {
-        25: {'y', 'z', 'aa'},
-        29: {'u', 'v'},
-        31: {'w', 'r', 's', 't'},
-        37: {'p'},
-        41: {'q', 'o', 'm'},
-        43: {'i', 'j', 'k', 'l'},
-        47: {'a', 'b'},
-        53: {'c'},
-        59: {'d', 'e'},
-        61: {'f', 'g', 'h'},
+        cids[25]: {'y', 'z', 'aa'},
+        cids[29]: {'u', 'v'},
+        cids[31]: {'w', 'r', 's', 't'},
+        cids[37]: {'p'},
+        cids[41]: {'q', 'o', 'm'},
+        cids[43]: {'i', 'j', 'k', 'l'},
+        cids[47]: {'a', 'b'},
+        cids[53]: {'c'},
+        cids[59]: {'d', 'e'},
+        cids[61]: {'f', 'g', 'h'},
     }
     est_n2c = ct.build_node_to_cluster_mapping(est)
 
@@ -496,30 +512,31 @@ def test_comparisons():
 def test_count_equal():
     '''
     '''
+    cids = list(ct.cids_from_range(99))
     gt = {
-        0: {'a', 'b'},
-        3: {'c'},
-        4: {'d', 'e'},
-        6: {'f', 'g', 'h'},
-        8: {'i', 'j', 'k', 'l', 'm'},
-        10: {'o'},
-        13: {'p', 'q'},
-        15: {'r', 's', 't'},
-        16: {'u', 'v', 'w'},
-        19: {'y', 'z', 'aa'},
+        cids[0]: {'a', 'b'},
+        cids[3]: {'c'},
+        cids[4]: {'d', 'e'},
+        cids[6]: {'f', 'g', 'h'},
+        cids[8]: {'i', 'j', 'k', 'l', 'm'},
+        cids[10]: {'o'},
+        cids[13]: {'p', 'q'},
+        cids[15]: {'r', 's', 't'},
+        cids[16]: {'u', 'v', 'w'},
+        cids[19]: {'y', 'z', 'aa'},
     }
 
     est = {
-        25: {'y', 'z', 'aa'},
-        29: {'u', 'v'},
-        31: {'w', 'r', 's', 't'},
-        37: {'p'},
-        41: {'q', 'o', 'm'},
-        43: {'i', 'j', 'k', 'l'},
-        47: {'a', 'b'},
-        53: {'c'},
-        59: {'d', 'e'},
-        61: {'f', 'g', 'h'},
+        cids[25]: {'y', 'z', 'aa'},
+        cids[29]: {'u', 'v'},
+        cids[31]: {'w', 'r', 's', 't'},
+        cids[37]: {'p'},
+        cids[41]: {'q', 'o', 'm'},
+        cids[43]: {'i', 'j', 'k', 'l'},
+        cids[47]: {'a', 'b'},
+        cids[53]: {'c'},
+        cids[59]: {'d', 'e'},
+        cids[61]: {'f', 'g', 'h'},
     }
 
     est_n2c = ct.build_node_to_cluster_mapping(est)
