@@ -259,7 +259,10 @@ class graph_algorithm(object):
     def generate_new_cids(self, k):
         lower = self._next_cid
         self._next_cid = upper = lower + k
-        return range(lower, upper)
+        padding = 3
+        prefix = 'tc'
+        cids = [prefix + str(i).zfill(padding) for i in range(lower, upper)]
+        return cids
 
     def build_clustering(self, clusters):
         '''
@@ -281,7 +284,7 @@ class graph_algorithm(object):
             # in any clusters.
             new_cids = self.generate_new_cids(len(clusters))
             self.clustering = ct.build_clustering_from_clusters(new_cids, clusters)
-            num_previous = len(new_cids)
+            num_previous = len(clusters)
 
             graph_nodes = set(self.G.nodes())
             cluster_nodes = set.union(*self.clustering.values())
@@ -295,7 +298,7 @@ class graph_algorithm(object):
             self.G.add_nodes_from(missing_nodes)
             logger.info(
                 'Initial clusters include %d from previous clusters, '
-                'plus %d new clusters from singletons' % (num_previous, len(new_cids))
+                'plus %d new clusters from singletons' % (num_previous, len(new_clusters))
             )
             logger.info('Added %d missing nodes to the graph' % len(missing_nodes))
 
