@@ -654,7 +654,7 @@ class test_generator(object):
 
         elif which_graph == 15:
             self.msg = 'Small example to check termination futility'
-            self.initial_edges = [('a', 'b', 4, 'vamp'), ('a', 'c', 1, 'vamp')]
+            self.initial_edges = [('a', 'b', 5, 'vamp'), ('a', 'c', 1, 'vamp')]
             self.aug_available = {
                 ('a', 'b', 'human'): 5,
                 ('a', 'c', 'human'): [-3, 3, -3, 3],
@@ -669,7 +669,7 @@ class test_generator(object):
                 'edges': 3,
                 'clusters': 1,
                 'lcas': 1,
-                'score': 5.3,
+                'score': 6.3,
                 'Q': 0,
                 'S': 0,
                 'W': 0,
