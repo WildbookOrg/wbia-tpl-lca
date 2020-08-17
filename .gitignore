@@ -2,3 +2,6 @@ version.py
 
 .DS_Store
 __pycache__/
+
+example/lca.log
+
