@@ -40,31 +40,37 @@ class edge_generator(object):
         return edge_quads
 
     def edge_request_cb(self, req_list):
-        self.edge_requests += req_list
         '''
         Non-blocking
         Some MAGIC NOW HAPPENS to turn these into results, with calls to
         the appropriate verification algorithms or human decision manager.
+
+        Example:
+        >>> self.edge_requests += req_list
         '''
+        raise NotImplementedError()
 
     def edge_result_cb(self, node_set=None):
         '''
         Extract the edges (quads) from the results that are part of the weight list.
+
+        Example:
+        >>> quads_remaining = []
+        >>> quads_to_return = []
+        >>> for quad in self.edge_results:
+        >>>     n0, n1 = quad[0], quad[1]
+        >>>     if node_set is None or (n0 in node_set and n1 in node_set):
+        >>>         quads_to_return.append(quad)
+        >>>     else:
+        >>>         quads_remaining.append(quad)
+        >>> self.edge_results = quads_remaining
+        >>> return quads_to_return
         '''
-        quads_remaining = []
-        quads_to_return = []
-        for quad in self.edge_results:
-            n0, n1 = quad[0], quad[1]
-            if node_set is None or (n0 in node_set and n1 in node_set):
-                quads_to_return.append(quad)
-            else:
-                quads_remaining.append(quad)
-        self.edge_results = quads_remaining
-        return quads_to_return
+        raise NotImplementedError()
 
     def remove_nodes_cb(self, node_set):
         '''
         For each node to be removed from the node_set, add it to list of nodes to be
         removed. Return this list.
         '''
-        pass
+        raise NotImplementedError()

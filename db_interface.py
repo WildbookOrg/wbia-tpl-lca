@@ -3,14 +3,14 @@
 The interface to the database asks for properties like nodes, edges,
 clusters and cluster ids. These are deliberately abstracted from the
 design of Wildbook. Their current Wildbook analogs are annotations,
-edges, marked individuals and their uuids. Since this could change in
+edges, marked individuals and their UUIDs. Since this could change in
 the future and we also hope that the algorithm could be used for other
 applications, we keep the terms of interface abstract.
 
 All edges are communicated as "quads" where each quad is of the form
   (n0, n1, w, aug_name)
 Here, n0 and n1 are the nodes, w is the (signed!) weight and aug_name
-is the augmentation method --- a verfication algorithm or a human
+is the augmentation method --- a verification algorithm or a human
 annotator -- that produced the edge.  Importantly, n0 < n1.
 
 As currently written, nodes are not added to the database through this
@@ -26,16 +26,37 @@ interface is handled through another.
 class db_interface(object):
     def __init__(self):
         pass
+        self.edge_graph = nx.Graph()
+        self.add_edges(edges)
+        self.clustering = clustering
+        self.node_to_cid = ct.build_node_to_cluster_mapping(self.clustering)
+
 
     def add_edges(self, quads):
         '''
         Add edges of the form (n0, n1, w, aug_name). This can be a
-        single quad or a list of quads. For each, if the combinatin of
+        single quad or a list of quads. For each, if the combination of
         n0, n1 and aug_name already exists and aug_name is not 'human'
         then the new edge replaces the existing edge. Otherwise, this
-        edge quad is added as though the graph is a multigraph.
+        edge quad is added as though the graph is a multi-graph.
         '''
+
+        # NOT LOCKED
+        # TODO - need to make a new "weights" database to mirror reviews
+        # aid 1, aid 2, weight, ID
+        # add to staging
         pass
+
+        for n0, n1, w, aug_name in quads:
+            attrib = self.edge_graph[n0][n1]
+            if aug_name == 'human':
+                if 'human' in attrib:
+                    attrib['human'].append(w)
+                else:
+                    attrib['human'] = [w]
+            else:
+                attrib[aug_name] = w
+
 
     def get_weight(self, triple):
         '''
@@ -43,12 +64,18 @@ class db_interface(object):
         If the aug_name is 'human' the summed weight is
         returned. Returns None if triple is unknown.
         '''
+
+        # TODO - weight table lookup
         pass
 
     def cluster_exists(self, cid):
         '''
         Return True iff the cluster id exists in the clustering
         '''
+
+        # cluster ID - a name ID
+        # Node - an annotation ID
+        # Existence check
         pass
 
     def get_cid(self, node):
@@ -103,4 +130,6 @@ class db_interface(object):
         Commit the changes according to the type of change.  See
         compare_clusterings.py
         '''
+
+        # NOT LOCKED
         pass
