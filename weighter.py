@@ -3,7 +3,7 @@ import logging
 import math as m
 import random
 
-import exp_scores as es
+from wbia_lca import exp_scores as es
 
 #  Need to add weight according to verifier names!!!
 

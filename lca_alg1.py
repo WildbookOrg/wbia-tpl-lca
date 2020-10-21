@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import networkx as nx
 
-import cluster_tools as ct
-import test_cluster_tools as tct
+from wbia_lca import cluster_tools as ct
+from wbia_lca import test_cluster_tools as tct
 
 
 def best_shift(n0, n1, G, clustering, node2cid, trace_on=False):

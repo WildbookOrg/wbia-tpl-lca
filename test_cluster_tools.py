@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import networkx as nx
-import cluster_tools as ct
+from wbia_lca import cluster_tools as ct
 
 
 def ex_graph_fig1():

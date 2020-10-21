@@ -2,8 +2,8 @@
 import logging
 import networkx as nx
 
-import cluster_tools as ct
-import test_cluster_tools as tct
+from wbia_lca import cluster_tools as ct
+from wbia_lca import test_cluster_tools as tct
 
 
 """

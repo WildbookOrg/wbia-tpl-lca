@@ -3,13 +3,13 @@ import logging
 import os
 import sys
 
-import baseline
-import cluster_tools as ct
+from wbia_lca import baseline
+from wbia_lca import cluster_tools as ct
 
-import exp_scores as es
-import graph_algorithm as ga
-import simulator as sim
-import weighter as wgtr
+from wbia_lca import exp_scores as es
+from wbia_lca import graph_algorithm as ga
+from wbia_lca import simulator as sim
+from wbia_lca import weighter as wgtr
 
 
 logger = logging.getLogger()

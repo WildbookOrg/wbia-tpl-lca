@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import logging
 
-import cluster_tools as ct
-import edge_generator
+from wbia_lca import cluster_tools as ct
+from wbia_lca import edge_generator
 
 logger = logging.getLogger()
 

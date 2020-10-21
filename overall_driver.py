@@ -4,9 +4,9 @@ import configparser
 import json
 import sys
 
-import ga_driver
-import db_interface_sim
-import edge_generator_sim
+from wbia_lca import ga_driver
+from wbia_lca import db_interface_sim
+from wbia_lca import edge_generator_sim
 
 
 """

@@ -3,7 +3,7 @@ import logging
 import networkx as nx
 import os
 
-import graph_algorithm as ga
+from wbia_lca import graph_algorithm as ga
 
 
 def check_line(name, corr, actual):

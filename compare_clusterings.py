@@ -2,7 +2,7 @@
 
 import logging
 
-import cluster_tools as ct
+from wbia_lca import cluster_tools as ct
 
 """
 Generates the comparison of the clusterings before and after the run of

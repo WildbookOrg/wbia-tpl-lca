@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import networkx as nx
 
-import lca_alg1 as a1
-import cluster_tools as ct
-import test_cluster_tools as tct
+from wbia_lca import lca_alg1 as a1
+from wbia_lca import cluster_tools as ct
+from wbia_lca import test_cluster_tools as tct
 
 
 def build_initial_from_constraints(G, in_same):

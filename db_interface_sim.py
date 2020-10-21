@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import networkx as nx
 
-import cluster_tools as ct
-import compare_clusterings
-import db_interface
+from wbia_lca import cluster_tools as ct
+from wbia_lca import compare_clusterings
+from wbia_lca import db_interface
 
 """
 Init edges

@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import logging  # NOQA
+
 try:
     from wbia_lca._version import __version__
 except ImportError:
@@ -17,9 +19,6 @@ from wbia_lca import db_interface_sim  # NOQA
 from wbia_lca import draw_lca  # NOQA
 from wbia_lca import edge_generator  # NOQA
 from wbia_lca import edge_generator_sim  # NOQA
-from wbia_lca import exam  # NOQA
-from wbia_lca import example_me  # NOQA
-from wbia_lca import example_z  # NOQA
 from wbia_lca import exp_scores  # NOQA
 from wbia_lca import ga_driver  # NOQA
 from wbia_lca import graph_algorithm  # NOQA

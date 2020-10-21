@@ -19,7 +19,8 @@ start of each outer loop of the LCA algoritihm.
 """
 
 import logging
-import lca_heap as lh
+
+from wbia_lca import lca_heap as lh
 
 
 class lca_queues(object):

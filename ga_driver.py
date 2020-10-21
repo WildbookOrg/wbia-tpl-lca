@@ -5,13 +5,13 @@ import logging
 import networkx as nx
 import os
 
-import cluster_tools as ct
-import compare_clusterings
-import db_interface_sim
-import edge_generator
-import exp_scores as es
-import graph_algorithm as ga
-import weighter
+from wbia_lca import cluster_tools as ct
+from wbia_lca import compare_clusterings
+from wbia_lca import db_interface_sim
+from wbia_lca import edge_generator
+from wbia_lca import exp_scores as es
+from wbia_lca import graph_algorithm as ga
+from wbia_lca import weighter
 
 """
 
