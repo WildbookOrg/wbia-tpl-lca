@@ -35,9 +35,9 @@ class edge_generator_sim(edge_generator.edge_generator):
         self.edge_requests += req_list
 
     def edge_result_cb(self, node_set=None):
-        '''
+        """
         Extract the edges (quads) from the results that are part of the weight list.
-        '''
+        """
         if self.steps_remain > 0:
             # logger.info("skipping")
             self.steps_remain -= 1
@@ -81,10 +81,10 @@ class edge_generator_sim(edge_generator.edge_generator):
         return edge_quads
 
     def remove_nodes_cb(self, node_set):
-        '''
+        """
         For each node to be removed from the node_set, add it to list of nodes to be
         removed. Return this list.
-        '''
+        """
         to_remove = []
         if self.steps_remain == 0:
             for n in self.nodes_to_remove:

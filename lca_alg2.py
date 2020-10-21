@@ -139,8 +139,8 @@ def lca_alg1_constrained(curr_G, in_same=[], in_different=[], trace_on=False):
 
 
 def inconsistent_edges(G, clustering, node2cid):
-    ''' Return each negatively-weighted edge that is inside a cluster, or
-        positively-weighted edge that is between clusters. '''
+    """Return each negatively-weighted edge that is inside a cluster, or
+    positively-weighted edge that is between clusters."""
     inconsistent = []
     for m, n in G.edges():
         if m > n:
@@ -154,9 +154,9 @@ def inconsistent_edges(G, clustering, node2cid):
 
 
 def best_alternative_len2(G, clustering, node2cid):
-    ''' Return the best alternative to the current clustering when G has
-        exactly two nodes.
-    '''
+    """Return the best alternative to the current clustering when G has
+    exactly two nodes.
+    """
     if len(clustering) == 2:
         alt_clustering = {0: set(G.nodes())}
     else:
@@ -167,7 +167,7 @@ def best_alternative_len2(G, clustering, node2cid):
 
 
 def lca_alg2(G, clustering, node2cid, trace_on=False):
-    """  If it is a single cluster, then stop the original algorithm when
+    """If it is a single cluster, then stop the original algorithm when
     there are two clusters.  Perhaps can run alternative multiple times
 
     If there are multiple clusterings, then one option is a merge, but

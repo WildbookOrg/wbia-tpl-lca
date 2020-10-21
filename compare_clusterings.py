@@ -4,7 +4,7 @@ import logging
 
 import cluster_tools as ct
 
-'''
+"""
 Generates the comparison of the clusterings before and after the run of
 the graph algorithm, producing the main interpretation of the graph
 algorithm result.
@@ -63,7 +63,7 @@ exactly one old cluster, plus, perhaps, new nodes:
 Merge/split: A new cluster is formed from a combation of nodes from at
 least two old clusters, where at least one of them contains a proper
 subset of nodes from a previous cluster. New nodes may be added.
-'''
+"""
 
 
 class clustering_change(object):
@@ -122,10 +122,10 @@ class clustering_change(object):
 
 
 def bipartite_cc(from_visited, from_nbrs, to_visited, to_nbrs, from_nodes):
-    '''
+    """
     Recursive BFS labeling of the reachable nodes of a bipartite
     graph starting from the from_nodes set.
-    '''
+    """
     to_nodes = set()
     for v in from_nodes:
         for t in from_nbrs[v]:
@@ -142,16 +142,16 @@ def bipartite_cc(from_visited, from_nbrs, to_visited, to_nbrs, from_nodes):
 
 
 def find_changes(old_clustering, old_n2c, new_clustering, new_n2c):
-    '''
+    """
     Main function to find changes between an old and new clustering as
     described above.
-    '''
+    """
 
-    '''
+    """
     1. Form a bipartite graph between the ids in the old clustering and
     the ids in the new clustering. Edges are generated between old
     and new clusters that intersect.
-    '''
+    """
     old_nbrs = dict()
     for oc, nodes in old_clustering.items():
         # print(oc, nodes)
@@ -162,10 +162,10 @@ def find_changes(old_clustering, old_n2c, new_clustering, new_n2c):
         new_nbrs[nc] = {old_n2c[n] for n in nodes if n in old_n2c}
     # print(new_nbrs)
 
-    '''
+    """
     2. Perform bipartite connected components labeling, preserving old
     and new in separate sets. Generate a change from each component.
-    '''
+    """
     clustering_changes = []
     old_visited = {oc: False for oc in old_clustering}
     new_visited = {nc: False for nc in new_clustering}
@@ -180,11 +180,11 @@ def find_changes(old_clustering, old_n2c, new_clustering, new_n2c):
         cc = clustering_change(old_sub_clustering, new_sub_clustering)
         clustering_changes.append(cc)
 
-    '''
+    """
     3. Handle the special case of a new cluster, which is detected
     when there is no old cluster corresponding to a particular new
     one.
-    '''
+    """
     for n, v in new_visited.items():
         if not v:
             old_sub_clustering = dict()
@@ -200,13 +200,13 @@ def find_changes(old_clustering, old_n2c, new_clustering, new_n2c):
 
 
 def test_bipartite_cc():
-    '''
+    """
     Test the bipartite CC algorithm above. Nodes labeled with a letter are
     considered on the side called 'old' while nodes labeled with a digit
     are considered 'new'.  old_nbrs has the outgoing edges from the old partition,
     while new_nbrs has the outgoing edges for the new partition. One could
     easily be generated from the other, of course.
-    '''
+    """
     old_visited = {
         'a': False,
         'b': False,

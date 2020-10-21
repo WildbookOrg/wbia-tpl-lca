@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 lca_queues.py
 
 Manage the position of the candidate LCAs on three different queues
@@ -16,7 +16,7 @@ and one set:
 
 All current LCAs must be in exactly one of the queues / sets at the
 start of each outer loop of the LCA algoritihm.
-'''
+"""
 
 import logging
 import lca_heap as lh
@@ -24,10 +24,10 @@ import lca_heap as lh
 
 class lca_queues(object):
     def __init__(self, lcas=None):
-        '''
+        """
         The initializer, putting all LCAs on the scoring queue and
         making S, W and done all empty.
-        '''
+        """
         self.Q = lh.lca_heap()
         if lcas is None:
             self.S = set()
@@ -40,73 +40,73 @@ class lca_queues(object):
         return len(self.Q) + len(self.S) + len(self.W) + len(self.done)
 
     def top_Q(self):
-        '''
+        """
         Access the top LCA on the main priority queue, Q, without
         removing it. If it is empty, return None
-        '''
+        """
         if len(self.Q) > 0:
             return self.Q.top_Q()
         else:
             return None
 
     def pop_Q(self):
-        '''
+        """
         Remove the top LCA from the main priority queue, Q.
-        '''
+        """
         self.Q.pop_Q()
 
     def add_to_Q(self, lcas):
-        '''
+        """
         Add the given LCAs to the main priority queue, Q.
-        '''
+        """
         if type(lcas) != list and type(lcas) != set:
             lcas = [lcas]
         for a in lcas:
             self.Q.insert(a)
 
     def get_S(self):
-        '''
+        """
         Access the scoring queue set S
-        '''
+        """
         return self.S
 
     def clear_S(self):
-        '''
+        """
         Clear the scoring queue set S.
-        '''
+        """
         self.S.clear()
 
     def add_to_S(self, a):
-        '''
+        """
         Add LCA a to the scoring set. This assumes without checking
         that a is not already on any of the queues.
-        '''
+        """
         self.S.add(a)
 
     def add_to_W(self, a):
-        '''
+        """
         Add LCA a to the weight  set. This assumes without checking
         that a is not already on any of the queues.
-        '''
+        """
         self.W.add(a)
 
     def num_on_W(self):
-        '''
+        """
         Return the number of LCAs on the waiting (for edge
         augmentation) queue.
-        '''
+        """
         return len(self.W)
 
     def add_to_done(self, a):
-        '''
+        """
         Mark an LCA as done -- sufficiently stable.
-        '''
+        """
         self.done.add(a)
 
     def remove(self, lcas):
-        '''
+        """
         Remove the given LCAs from the queues.
-        '''
+        """
         if type(lcas) != list and type(lcas) != set:
             lcas = [lcas]
         for a in lcas:
@@ -140,13 +140,13 @@ class lca_queues(object):
         pass
 
     def score_change(self, a, from_delta, to_delta):
-        '''
+        """
         Move the position of LCA a based on the change to the score
         for its current local clustering, as recorded in from_delta,
         and its best alternative, as recorded in to_delta.  The key is
         the to_delta value because only when this is negative does the
         alternative clustering need to be recomputed.
-        '''
+        """
         if a in self.S:
             pass  # leave it for an update
         elif to_delta < 0:
@@ -157,12 +157,12 @@ class lca_queues(object):
             self.Q.insert(a)
 
     def which_queue(self, a):
-        '''
+        """
         Return a single character string indicating the queue that LCA
         a is on.  Choices are 'S' (scoring), 'W' (waiting - for
         augmentation), 'Q' (main queue) or 'D' (done).  If the LCA is
         not on any of the queues, None is returned.
-        '''
+        """
         if a in self.S:
             return 'S'
         elif a in self.W:
@@ -175,11 +175,11 @@ class lca_queues(object):
             return None
 
     def is_consistent(self):
-        '''
+        """
         Check the consistencu of the queues: the main Q is itself
         consistent, and all queues are pairwise disjoint from each
         other.
-        '''
+        """
         all_ok = self.Q.is_consistent()
         q_set = set(self.Q.lca2index.keys())
 

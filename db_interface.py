@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 The interface to the database asks for properties like nodes, edges,
 clusters and cluster ids. These are deliberately abstracted from the
 design of Wildbook. Their current Wildbook analogs are annotations,
@@ -20,7 +20,7 @@ interface that runs before the graph algorithm.
 I suspect we can implement this as a class hierarchy where examples and
 simulation are handled through one subclass and the true database
 interface is handled through another.
-'''
+"""
 
 
 class db_interface(object):
@@ -28,79 +28,79 @@ class db_interface(object):
         pass
 
     def add_edges(self, quads):
-        '''
+        """
         Add edges of the form (n0, n1, w, aug_name). This can be a
         single quad or a list of quads. For each, if the combinatin of
         n0, n1 and aug_name already exists and aug_name is not 'human'
         then the new edge replaces the existing edge. Otherwise, this
         edge quad is added as though the graph is a multigraph.
-        '''
+        """
         pass
 
     def get_weight(self, triple):
-        '''
+        """
         Return the weight if the combination of n0, n1 and aug_name.
         If the aug_name is 'human' the summed weight is
         returned. Returns None if triple is unknown.
-        '''
+        """
         pass
 
     def cluster_exists(self, cid):
-        '''
+        """
         Return True iff the cluster id exists in the clustering
-        '''
+        """
         pass
 
     def get_cid(self, node):
-        '''
+        """
         Get the cluster id associated with a node. Returns None if
         cluster does not exist
-        '''
+        """
         pass
 
     def get_nodes_in_cluster(self, cid):
-        '''
+        """
         Find all the nodes the cluster referenced by cid.  Returns
         None if cluster does not exist.
-        '''
+        """
         pass
 
     def edges_within_cluster(self, cid):
-        '''
+        """
         Find the multigraph edges that are within a cluster.
         Edges must be returned with n0<n1
-        '''
+        """
         pass
 
     def edges_leaving_cluster(self, cid):
-        '''
+        """
         Find the multigraph edges that connect between cluster cid and
         a different cluster.
-        '''
+        """
         pass
 
     def edges_between_clusters(self, cid0, cid1):
-        '''
+        """
         Find the multigraph edges that connect between cluster cid0
         and cluster cid1
-        '''
+        """
         pass
 
     def edges_node_to_cluster(self, n, cid):
-        '''
+        """
         Find all edges between a node and a cluster.
-        '''
+        """
         pass
 
     def edges_between_nodes(self, node_set):
-        '''
+        """
         Find all edges between any pair of nodes in the node set.
-        '''
+        """
         pass
 
     def commit_cluster_change(cluster_change):
-        '''
+        """
         Commit the changes according to the type of change.  See
         compare_clusterings.py
-        '''
+        """
         pass

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Implements a max heap of LCA's.  Priority is based on the delta_score value.
 LCA's may be removed from the middle. In fact this is intended to be a common
 operation since most LCA's are relatively short-lived and never reach the
@@ -8,7 +8,7 @@ top of the heap.  The LCA object is assumed to have a hash value.
 This is implemented using an auxiliary dictionary that associates a heap index
 with each LCA. These indices are updated as the LCA is moved through the heap
 during percolate up and percolate down.
-'''
+"""
 
 
 class lca_heap(object):
@@ -17,22 +17,22 @@ class lca_heap(object):
         self.lca2index = dict()
 
     def top_Q(self):
-        '''
+        """
         Access the top LCA (max delta score) of the priority queue without
         deleting it.
-        '''
+        """
         return self.heap[0]
 
     def __len__(self):
-        '''
+        """
         Return the number of LCAs on the priority queue.
-        '''
+        """
         return len(self.heap)
 
     def pop_Q(self):
-        '''
+        """
         Remove the top LCA from the priority queue.  Does not return it.
-        '''
+        """
         if len(self.heap) == 1:
             self.clear()
         else:
@@ -44,15 +44,15 @@ class lca_heap(object):
             self.percolate_down(0)
 
     def remove(self, a):
-        '''
+        """
         Remove a particular LCA from the priority queue, no matter where it is
         Assert fails if the LCA is not there.
-        '''
-        '''
+        """
+        """
         a.pprint()
         print("len of index", len(self.lca2index))
         print("len of heap", len(self.heap))
-        '''
+        """
         assert a in self.lca2index
 
         # Using the dictionary, find the location of LCA a in the
@@ -76,33 +76,33 @@ class lca_heap(object):
             self.percolate_down(loc)
 
     def insert(self, a):
-        '''
+        """
         Insert an LCA into the priority queue. Assumes without checking that
         the LCA is not already in the queue.
-        '''
+        """
         self.heap.append(a)
         last_index = len(self.heap) - 1
         self.lca2index[a] = last_index
         self.percolate_up(last_index)
 
     def clear(self):
-        '''
+        """
         Completely clear the priority queue of all LCAs
-        '''
+        """
         self.heap.clear()
         self.lca2index.clear()
 
     def get_all(self):
-        '''
+        """
         Return a shallow copy of the LCA heap.
-        '''
+        """
         return self.heap
 
     def percolate_down(self, i):
-        '''
+        """
         Run the standard percolate down operation from the particular
         index i, update the mapping from LCAs to indices at each step.
-        '''
+        """
         i_lca = self.heap[i]
         i_delta = i_lca.delta_score()
         last_interior = len(self.heap) // 2 - 1
@@ -128,10 +128,10 @@ class lca_heap(object):
         self.heap[i] = i_lca
 
     def percolate_up(self, i):
-        '''
+        """
         Run the standard percolate up operation from the particular
         index i, update the mapping from LCAs to indices at each step.
-        '''
+        """
         i_lca = self.heap[i]
         i_delta = i_lca.delta_score()
         while i > 0:
@@ -148,9 +148,9 @@ class lca_heap(object):
         self.lca2index[i_lca] = i
 
     def print_structure(self):
-        '''
+        """
         Print the LCA heap vector and dictionary.
-        '''
+        """
         print('Here is the heap vector')
         for i, lca in enumerate(self.heap):
             print('    %d: %s' % (i, str(lca)))
@@ -159,9 +159,9 @@ class lca_heap(object):
             print('    %s: %d' % (str(k), v))
 
     def is_consistent(self):
-        '''
+        """
         Check the consistency of the LCA heap
-        '''
+        """
         is_ok = True
         if len(self.heap) != len(self.lca2index):
             is_ok = False
@@ -231,10 +231,10 @@ class lca_heap(object):
 
 
 class lca_lite(object):
-    '''
+    """
     A version of the LCA object used for testing. It only has a hash value and a
     delta score.
-    '''
+    """
 
     def __init__(self, hash_value, delta_s):
         self.__hash = hash_value

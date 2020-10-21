@@ -10,7 +10,7 @@ import json
 import sys
 
 from wbia_lca import ga_driver
-from wbia_lca.overall_driver import (form_database, form_edge_generator, extract_requests)
+from wbia_lca.overall_driver import form_database, form_edge_generator, extract_requests
 
 (print, rrr, profile) = ut.inject2(__name__)
 
@@ -130,11 +130,11 @@ def wbia_plugin_lca_init(ibs):
 
     # 6. Run it. Changes are logged.
     changes_to_review = driver.run_all_ccPICs()
+    print(changes_to_review)
 
     # 7. Commit changes. Record them in the database and the log
     # file.
     # TBD
-
 
     graph = graph_algorithm.graph_algorithm()  # NOQA
 

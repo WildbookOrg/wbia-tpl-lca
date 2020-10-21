@@ -23,10 +23,10 @@ import random
 
 
 def random_hex_rgb():
-    '''
+    """
     Generate a string of three random hex values in the range 0..255
     (00 to FF).
-    '''
+    """
     s = '#'
     for _ in range(3):
         s += '{:0>2}'.format(hex(random.randint(0, 255))[2:])
@@ -34,10 +34,10 @@ def random_hex_rgb():
 
 
 def add_random_offset(pos, delta):
-    '''
+    """
     Add a random uniform offset in the range [-delta, delta] to the x
     and y values of each position.
-    '''
+    """
     for e in pos:
         dx = random.uniform(-delta, delta)
         dy = random.uniform(-delta, delta)

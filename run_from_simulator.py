@@ -20,9 +20,9 @@ if __name__ == '__main__':
         sys.exit()
     gen_prefix = sys.argv[1]
 
-    '''
+    """
     Specify the parameters for the simulator
-    '''
+    """
     sim_params = dict()
     sim_params['pos_error_frac'] = 0.15
     sim_params['num_clusters'] = 128  # 256
@@ -47,9 +47,9 @@ if __name__ == '__main__':
     sim_params['gamma_scale'] = 2  # 1.5 # 2
     num_per_cluster = sim_params['gamma_scale'] * sim_params['gamma_shape'] + 1
 
-    '''
+    """
     Build the exponential weight generator
-    '''
+    """
     np_ratio = sim.find_np_ratio(
         sim_params['gamma_shape'],
         sim_params['gamma_scale'],
@@ -103,19 +103,20 @@ if __name__ == '__main__':
         )
         wgtr_i = wgtr.weighter(scorer, human_prob=sim_params['p_human_correct'])
 
-        '''
+        """
         Build the simulator
-        '''
+        """
         # seed = 9314
         sim_i = sim.simulator(sim_params, wgtr_i)  # , seed=seed)
         init_edges, aug_names = sim_i.generate()
         init_clusters = []
 
-        '''
+        """
         Specify parameters for the graph algorithm
-        '''
-        min_converge = -ga_params['min_delta_converge_multiplier'] * \
-            (wgtr_i.human_wgt(True) - wgtr_i.human_wgt(False))
+        """
+        min_converge = -ga_params['min_delta_converge_multiplier'] * (
+            wgtr_i.human_wgt(True) - wgtr_i.human_wgt(False)
+        )
         ga_params['min_delta_score_converge'] = min_converge
         ga_params['min_delta_score_stability'] = (
             min_converge / ga_params['min_delta_stability_ratio']

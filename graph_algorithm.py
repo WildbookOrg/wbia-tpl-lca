@@ -12,7 +12,7 @@ import lca_queues
 import logging
 import weight_manager as wm
 
-'''
+"""
 Construction:
 
 1. List of weighted edges, each of which is a 4-tuple with
@@ -49,10 +49,10 @@ method.
 results of augmentation in the form of a list of 4-tuples. Each
 4-tuple contains the two node ids, the wgt and the name of the
 augmentation method that produced the result
-'''
+"""
 
 
-'''
+"""
 Non-required Callbacks:
 
 Originally there were a lot of these, but now there are only a few:
@@ -75,10 +75,10 @@ run_main_loop will pick up cleanly from stop point.
 Once the algorithm is stopped, intermediate results and statuses can
 be checked and logged. These are implemented as direct emthod calls,
 as outlined below.
-'''
+"""
 
 
-'''
+"""
 Process start: run_main_loop
 
 Runs until either the algoriothm has converged, a maximum number of
@@ -93,10 +93,10 @@ Returns: a 3-tuple containing the following
             next call to run_main_loop
 . converged: boolean that will be true if the algorithm converged
 
-'''
+"""
 
 
-'''
+"""
 Notes:
 
 1. The algorithm knows nothing about names (animal ids). It only
@@ -130,10 +130,10 @@ the hypothesized connection between A and B even though the review
 decision for A and B, triggered through C, will be in the
 database. Various levels of caching can accelerate this both the
 indexing part and the review part.
-'''
+"""
 
 
-'''
+"""
 Data structures:
 
 1. G, the graph itself: a weighted, undirected graph
@@ -152,9 +152,9 @@ methods.
 6. cid2lca: manage information about association between one or
 cids and the LCAs that might include them.  This is much more
 than a mapping from a pair of cids to the LCA that combines them.
-'''
+"""
 
-'''
+"""
 Invariants:
 1. Each node is in exactly one cluster
 
@@ -173,7 +173,7 @@ Invariants:
    generally only used for LCAs where all "inconsistent" edges have
    been tested too many times and therefore any more tests should be
    considered "futile".
-'''
+"""
 
 logger = logging.getLogger()
 
@@ -217,9 +217,9 @@ class graph_algorithm(object):
         if self.params['draw_iterations']:
             self.draw_obj = draw_lca.draw_lca(self.params['drawing_prefix'])
 
-        '''  Need to set these callbacks to request and receive
+        """  Need to set these callbacks to request and receive
         information from the verfication algorithm and to do the same
-        from human reviewers. '''
+        from human reviewers. """
         self.remove_nodes_cb = None
         self.status_request_cb = None
         self.status_return_cb = None
@@ -233,15 +233,15 @@ class graph_algorithm(object):
         logger.info('Completed graph algorithm initialization')
 
     def set_remove_nodes_cb(self, cb):
-        '''
+        """
         Callback to indicate nodes to remove from the graph
-        '''
+        """
         self.remove_nodes_cb = cb
 
     def set_result_cbs(self, request_cb, return_cb):
-        '''
+        """
         Callbacks to return the clustering results.
-        '''
+        """
         self.results_request_cb = request_cb
         self.results_return_cb = return_cb
 
@@ -265,10 +265,10 @@ class graph_algorithm(object):
         return cids
 
     def build_clustering(self, clusters):
-        '''
+        """
         From an iterator through the clusters - each of which could be
-        a set or a list, 
-        '''
+        a set or a list,
+        """
         if clusters is None or len(clusters) == 0:
             # Form an initial clustering where every node starts in its own
             # singleton cluster.
@@ -467,12 +467,12 @@ class graph_algorithm(object):
         return (should_pause, iter_num, converged)
 
     def apply_lca(self, a):
-        '''
+        """
         Apply the LCA.  This involves (1) removing all other LCAs
         whose "from" set of clusters intersects a's "from" clusters,
         (2) forming new clusters, (3) generating new cluster
         singletons and/or pairs, and (4) forming new LCAs from them.
-        '''
+        """
         # Step 1: Get the cids of the clusters to be removed and get
         # the lcas to be removed
         old_cids = a.from_cids()
@@ -644,22 +644,24 @@ class graph_algorithm(object):
         return status_dict
 
     def provide_results(self):
-        '''
+        """
         Send back the current clusters
-        '''
+        """
         return self.clustering.values()
 
     def check_wait_for_edges(self):
-        '''
+        """
         Wait if there are enough edges waiting or if the waiting LCAs
         is high enough.
-        '''
+        """
         nw = self.queues.num_on_W()
         nl = self.queues.num_lcas()
         wait = nw > self.params['ga_max_num_waiting']
         if wait:
-            logger.info('Decide to await for new edges: num waiting LCAs is %d out of %d'
-                        % (nw, nl))
+            logger.info(
+                'Decide to await for new edges: num waiting LCAs is %d out of %d'
+                % (nw, nl)
+            )
         return wait
 
     def stop_request_check(self):
@@ -722,7 +724,6 @@ class graph_algorithm(object):
             )
 
     def is_consistent(self):
-        ''' Each edge between two different clusters should be
-        '''
+        """Each edge between two different clusters should be"""
         all_ok = self.queues.is_consistent()
         return all_ok  # Need to add a lot more here.....

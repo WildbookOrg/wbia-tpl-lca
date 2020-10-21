@@ -29,7 +29,7 @@ edges using the ground truth (gt) clusters. The probabilities needed
 to control this simulation come from verifier_probs.json
 
 The delay_steps just introduce a waiting period between when a
-verification quad is requested and when it is returned. 
+verification quad is requested and when it is returned.
 
 ## verifier_probs.json
 

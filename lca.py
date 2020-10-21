@@ -6,7 +6,7 @@ import cluster_tools as ct
 import test_cluster_tools as tct
 
 
-'''
+"""
 Additional testing and other notes:
 
 1. Make sure that it handles single clusters in the cid list; fails if this
@@ -22,7 +22,7 @@ internal consistency.
 5. Add code to remember what list a candidate is on.
 
 clustering is a mapping from a cluster id to a set of node ids.
-'''
+"""
 
 g_cluster_counter = 0
 logger = logging.getLogger()
@@ -110,11 +110,11 @@ class LCA(object):
             return -delta_w
 
     def add_edge(self, e):
-        '''
+        """
         Do not change weight here because the graph aliases the overall
         graph.  Assume the calling function makes this change.
         Also assume that e[0] < e[1]
-        '''
+        """
         n0, n1, wgt = e
 
         #  Update from score

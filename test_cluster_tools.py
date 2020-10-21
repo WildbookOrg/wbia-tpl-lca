@@ -55,7 +55,7 @@ def ex_graph_fig4():
     return G
 
 
-'''
+"""
 def ex_graph_fig5():
     G = nx.Graph()
     G.add_weighted_edges_from([('a', 'b', 9), ('a', 'e', -2),
@@ -64,7 +64,7 @@ def ex_graph_fig5():
                                ('d', 'e', 2), ('d', 'f', -1),
                                ('e', 'f', 6)])
     return G
-'''
+"""
 
 
 def test_build_clustering_and_mapping():
@@ -112,8 +112,6 @@ def test_build_clustering_and_mapping():
         'After rebuilding the node2cid mapping should be the same.  Is it?',
         n2c_optimal == n2c_rebuilt,
     )
-
-
 
 
 def test_build_clustering_from_clusters():
@@ -171,26 +169,28 @@ def test_cluster_scoring_and_weights():
         'k': cids[3],
     }
     clustering_random = ct.build_clustering(n2c_random)
-    score = ct.cid_list_score(G, clustering_random, n2c_random, [cids[0], cids[2], cids[3]])
+    score = ct.cid_list_score(
+        G, clustering_random, n2c_random, [cids[0], cids[2], cids[3]]
+    )
     print('Score between clusters [c0, c2, c3] should be -5 and is', score)
 
     print('=====================')
     print('Testing clustering_score')
-    ''' First clustering:  all together '''
+    """ First clustering:  all together """
     n2c_single_cluster = {n: 'c0' for n in G.nodes}
     print(
         'Score with all together should be 21.  Score =',
         ct.clustering_score(G, n2c_single_cluster),
     )
 
-    ''' Second clustering:  all separate '''
-    n2c_all_separate = {n: 'c'+str(i) for i, n in enumerate(G.nodes)}
+    """ Second clustering:  all separate """
+    n2c_all_separate = {n: 'c' + str(i) for i, n in enumerate(G.nodes)}
     print(
         'Score with all together should be -21.  Score =',
         ct.clustering_score(G, n2c_all_separate),
     )
 
-    ''' Third clustering: optimal, by hand '''
+    """ Third clustering: optimal, by hand """
     cids = list(ct.cids_from_range(4))
     n2c_optimal = {
         'a': cids[0],
@@ -394,21 +394,31 @@ def test_form_connected_cluster_pairs():
     cid_pairs = ct.form_connected_cluster_pairs(G, clustering, n2c)
     print('form_connected_cluster_pairs(G, clustering, n2c)')
     print('result: ', cid_pairs)
-    print('expecting: ', [(cids[0], cids[1]), (cids[0], cids[2]), (cids[0], cids[3]),
-                          (cids[1], cids[3]), (cids[2], cids[3]), (cids[2], cids[4]),
-                          (cids[3], cids[4])])
+    print(
+        'expecting: ',
+        [
+            (cids[0], cids[1]),
+            (cids[0], cids[2]),
+            (cids[0], cids[3]),
+            (cids[1], cids[3]),
+            (cids[2], cids[3]),
+            (cids[2], cids[4]),
+            (cids[3], cids[4]),
+        ],
+    )
 
     new_cids = [cids[1], cids[4]]
     cid_pairs = ct.form_connected_cluster_pairs(G, clustering, n2c, new_cids)
     print('form_connected_cluster_pairs(G, clustering, n2c, new_cids)')
     print('result: ', cid_pairs)
-    print('expecting: ', [(cids[0], cids[1]), (cids[1], cids[3]),
-                          (cids[2], cids[4]), (cids[3], cids[4])])
+    print(
+        'expecting: ',
+        [(cids[0], cids[1]), (cids[1], cids[3]), (cids[2], cids[4]), (cids[3], cids[4])],
+    )
 
 
 def test_same_clustering():
-    '''
-    '''
+    """"""
     cids = list(ct.cids_from_range(99))
 
     clustering0 = {
@@ -448,8 +458,7 @@ def test_same_clustering():
 
 
 def test_comparisons():
-    '''
-    '''
+    """"""
     cids = list(ct.cids_from_range(99))
     gt = {
         cids[0]: {'a', 'b'},
@@ -510,8 +519,7 @@ def test_comparisons():
 
 
 def test_count_equal():
-    '''
-    '''
+    """"""
     cids = list(ct.cids_from_range(99))
     gt = {
         cids[0]: {'a', 'b'},

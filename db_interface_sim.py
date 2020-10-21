@@ -5,12 +5,12 @@ import cluster_tools as ct
 import compare_clusterings
 import db_interface
 
-'''
+"""
 Init edges
 Init clusters
 Correct clusters
 Query edges
-'''
+"""
 
 
 class db_interface_sim(db_interface.db_interface):
@@ -22,9 +22,9 @@ class db_interface_sim(db_interface.db_interface):
         self.node_to_cid = ct.build_node_to_cluster_mapping(self.clustering)
 
     def add_edges(self, quads):
-        '''
+        """
         See base class for requirements
-        '''
+        """
         self.edge_graph.add_edges_from([(n0, n1) for n0, n1, _, _ in quads])
         for n0, n1, w, aug_name in quads:
             attrib = self.edge_graph[n0][n1]
@@ -51,22 +51,22 @@ class db_interface_sim(db_interface.db_interface):
         return cid in self.clustering
 
     def get_cid(self, node):
-        '''
+        """
         Get the cluster id associated with a node. Returns None if the
         node is not part of a current cluster.
-        '''
+        """
         try:
             return self.node_to_cid[node]
         except KeyError:
             return None
 
     def get_nodes_in_cluster(self, cid):
-        '''
+        """
         Find all the nodes the cluster referenced by cid.
-        '''
+        """
         try:
             return self.clustering[cid]
-        except:
+        except Exception:
             return None
 
     def edges_from_attributes(self, n0, n1):
@@ -80,10 +80,10 @@ class db_interface_sim(db_interface.db_interface):
         return quads
 
     def edges_within_cluster(self, cid):
-        '''
+        """
         Find the multigraph edges that are within a cluster.
         Edges must be returned with n0<n1.
-        '''
+        """
         quads = []
         cluster = sorted(self.clustering[cid])
         for i, ni in enumerate(cluster):
@@ -103,10 +103,10 @@ class db_interface_sim(db_interface.db_interface):
         return quads
 
     def edges_between_clusters(self, cid0, cid1):
-        '''
+        """
         Find the multigraph edges that connect between cluster cid0
         and cluster cid1
-        '''
+        """
         assert cid0 != cid1
         quads = []
         cluster1 = self.clustering[cid1]
@@ -118,9 +118,9 @@ class db_interface_sim(db_interface.db_interface):
         return quads
 
     def edges_between_nodes(self, node_set):
-        '''
+        """
         Find all edges between any pair of nodes in the node set.
-        '''
+        """
         quads = []
         node_list = sorted(node_set)
         for i, ni in enumerate(node_list):
@@ -152,14 +152,14 @@ class db_interface_sim(db_interface.db_interface):
             del self.clustering[cid]
 
     def commit_cluster_change(self, cc):
-        '''
+        """
         Commit the cluster changes to the database. This involves
         updating the node to cluster id dictionary and the clustering
         dictionary. One way to do this would be to have special
         operations for each type of change. Instead, this function
         works generically except for the single case of no changes at
         all.
-        '''
+        """
         if cc.change_type == 'Unchanged':
             return
 
@@ -301,7 +301,12 @@ if __name__ == '__main__':
     new_clustering = {
         1002: set(['c', 'e', 'g']),
         1003: set(['j']),
-        1004: set(['h', 'k',]),
+        1004: set(
+            [
+                'h',
+                'k',
+            ]
+        ),
     }
     cc = compare_clusterings.clustering_change(old_clustering, new_clustering)
     print('Here is the cluster change object')

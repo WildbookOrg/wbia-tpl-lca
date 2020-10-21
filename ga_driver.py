@@ -13,7 +13,7 @@ import exp_scores as es
 import graph_algorithm as ga
 import weighter
 
-'''
+"""
 
 This file contains functionality needed to prepare and run one or more
 instances of the LCA graph algorithm derived from the query request, the
@@ -89,7 +89,7 @@ reviewing. For example, working with species like zebras and rally
 events, no final reviews at all may be needed. On the other hand, it
 may be that only merge and split type operations require review and
 additions to existing clusters or formation of new clusters do not.
-'''
+"""
 
 
 logger = logging.getLogger()
@@ -144,8 +144,9 @@ def params_and_weighters(config_ini, verifier_gt):
     wgtrs = generate_weighters(ga_params, verifier_gt)
 
     wgtr = wgtrs[0]
-    ga_params['min_delta_score_converge'] = -ga_params['min_delta_converge_multiplier'] * \
-        (wgtr.human_wgt(is_marked_correct=True) - wgtr.human_wgt(is_marked_correct=False))
+    ga_params['min_delta_score_converge'] = -ga_params[
+        'min_delta_converge_multiplier'
+    ] * (wgtr.human_wgt(is_marked_correct=True) - wgtr.human_wgt(is_marked_correct=False))
 
     ga_params['min_delta_score_stability'] = (
         ga_params['min_delta_score_converge'] / ga_params['min_delta_stability_ratio']
@@ -172,10 +173,14 @@ def generate_weighters(ga_params, verifier_gt):
         default_np_ratio = 1.0
         default_error_frac = 0.1
         logger.info('No augmentation methods provided so using only human decisions')
-        logger.info('Using default error fraction of %.2f and np_ratio of %.2f' \
-                    % (default_error_frac, default_np_ratio))
+        logger.info(
+            'Using default error fraction of %.2f and np_ratio of %.2f'
+            % (default_error_frac, default_np_ratio)
+        )
         logger.info('to build an exponential scorer and then a weighter')
-        scorer = es.exp_scores.create_from_error_frac(default_error_frac, default_np_ratio)
+        scorer = es.exp_scores.create_from_error_frac(
+            default_error_frac, default_np_ratio
+        )
         wgtr = weighter.weighter(scorer, ga_params['prob_human_correct'])
         wgtrs.append(wgtr)
     return wgtrs
@@ -352,7 +357,10 @@ class ga_driver(object):
         """
         ccPIC_n2c = ct.build_node_to_cluster_mapping(ccPIC_clustering)
         changes = compare_clusterings.find_changes(
-            ccPIC_clustering, ccPIC_n2c, gai.clustering, gai.node2cid,
+            ccPIC_clustering,
+            ccPIC_n2c,
+            gai.clustering,
+            gai.node2cid,
         )
 
         logger.info('')

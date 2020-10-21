@@ -12,9 +12,9 @@ class CID2LCA(object):
         self.cid2lcas = collections.defaultdict(set)
 
     def add(self, a):
-        ''' Add an LCA to the dictionary, making sure that each CID is there
-            and includes the LCA
-        '''
+        """Add an LCA to the dictionary, making sure that each CID is there
+        and includes the LCA
+        """
         for c in a.from_cids():
             self.cid2lcas[c].add(a)
 
@@ -22,7 +22,7 @@ class CID2LCA(object):
         self.cid2lcas.clear()
 
     def containing_all_cids(self, cids):
-        '''
+        """
         Find all LCAs containing all the cids in the list.  If there is
         only one cid in the cids list, there will likely be multiple
         LCAs returned, but if there are multiple cids there will be at
@@ -32,7 +32,7 @@ class CID2LCA(object):
         LCAs, which can only happen if the cid is an isolated
         singleton (a rare event, but we need to cover it).
         When this is discovered we can immediately return the empty set.
-        '''
+        """
         lca_sets = list()
         for c in cids:
             if c in self.cid2lcas:
@@ -45,14 +45,14 @@ class CID2LCA(object):
             return set.intersection(*lca_sets)
 
     def remove_with_cids(self, cids):
-        '''
+        """
         Find and remove any LCA containing at least one of the cids.
         Return the set of all removed LCAs.
 
         Note that if the "from" cid set of an LCA (call it "a")
         contains two CIDs then a will need to be removed from the LCA
         set of the other cid.
-        '''
+        """
         all_lcas = set()
         for c in cids:
             if c in self.cid2lcas:
@@ -67,12 +67,12 @@ class CID2LCA(object):
         return all_lcas
 
     def is_consistent(self):
-        '''
+        """
         Check the consistency of the dictionary. Each LCA associated
         with each cid (cluster id) must have the cid in its from_id
         set, and each other cid in from_cid for each LCA must be in
         the dictionary and must store the LCA.
-        '''
+        """
         all_ok = True
         for c in self.cid2lcas:
             for a in self.cid2lcas[c]:

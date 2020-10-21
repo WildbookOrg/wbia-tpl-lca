@@ -9,7 +9,7 @@ import db_interface_sim
 import edge_generator_sim
 
 
-'''
+"""
 This is a top-level driver for the LCA graph algorithm, written mostly
 to illustrate use of the graph algorithm through small examples and
 simulations. Of particular note there are two objects created here
@@ -35,14 +35,15 @@ Note that the first two will always be needed even if this is running
 "for real", as will the actual query (with the request json).  So in
 an non-simulation, only the database and edge generator object need to
 be replaced.
-'''
+"""
+
 
 def form_database(request):
-    '''
+    """
     From the request json object extract the database if it is there.
     If not, return an empty database. The json includes edge quads
     (n0, n1, w, aug_name) and a clustering dictionary.
-    '''
+    """
     edge_quads = []
     clustering_dict = dict()
 
@@ -60,10 +61,10 @@ def form_database(request):
 
 
 def form_edge_generator(request, db, wgtr):
-    '''
+    """
     Form the edge generator object. Unlike the database, the generator
     must be there for the small example / simulator to run.
-    '''
+    """
     try:
         gen_dict = request['generator']
     except KeyError:
