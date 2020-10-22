@@ -174,9 +174,8 @@ if __name__ == '__main__':
 
     # 2. Recent results from verification ground truth tests. Used to
     # establish the weighter.
-    fn = open(args.verifier_gt)
-    verifier_gt = json.loads(fn.read())
-    fn.close()
+    with open(args.verifier_gt, 'r') as fn:
+        verifier_gt = json.loads(fn.read())
 
     # 3. Form the parameters dictionary and weight objects (one per
     # verification algorithm).
@@ -189,9 +188,9 @@ if __name__ == '__main__':
     # 4. Get the request dictionary, which includes the database, the
     # actual request edges and clusters, and the edge generator edges
     # and ground truth (for simulation).
-    fn = open(args.request)
-    request = json.loads(fn.read())
-    fn.close()
+    with open(args.request, 'r') as fn:
+        request = json.loads(fn.read())
+
     db = form_database(request)
     edge_gen = form_edge_generator(request, db, wgtr)
     verifier_req, human_req, cluster_req = extract_requests(request, db)

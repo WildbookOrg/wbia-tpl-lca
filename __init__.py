@@ -12,6 +12,8 @@ except ImportError:
 # from wbia_lca.version import version as __version__  # NOQA
 from wbia_lca import __main__  # NOQA
 from wbia_lca import _plugin  # NOQA
+from wbia_lca import _plugin_db_interface  # NOQA
+from wbia_lca import _plugin_edge_generator  # NOQA
 
 from wbia_lca import baseline  # NOQA
 from wbia_lca import cid_to_lca  # NOQA

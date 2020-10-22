@@ -15,16 +15,6 @@ class edge_generator(object):  # NOQA
         self.edge_requests = []  # triples (n0, n1, aug_name)
         self.edge_results = []  # quads (n0, n1, w, aug_name)
 
-    """
-    @classmethod
-    def generate_from_samples(cls, db, gt_pos_probs, gt_neg_probs,
-                              prob_human_correct, max_weight):
-        assert max_weight > 0
-        scorer = es.exp_scores.create_from_samples(gt_pos_probs, gt_neg_probs)
-        wgtr = weighter.weighter(scorer, prob_human_correct, max_weight)
-        return cls(db, wgtr)
-    """
-
     def wgt_from_verifier(self, p, vn):
         if vn == 'zero':
             return 0

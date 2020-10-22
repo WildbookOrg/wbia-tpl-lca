@@ -374,24 +374,23 @@ class simulator(object):  # NOQA
 
     @staticmethod
     def csv_output(out_file, results):
-        f = open(out_file, 'w')
-        f.write(
-            'human decisions, num clusters, num true clusters, '
-            + 'frac eq true, precision, recall\n'
-        )
-        for res in results:
+        with open(out_file, 'w') as f:
             f.write(
-                '%d, %d, %d, %.4f, %.4f %.4f\n'
-                % (
-                    res['num human'],
-                    res['num clusters'],
-                    res['num true clusters'],
-                    res['frac correct'],
-                    res['precision'],
-                    res['recall'],
-                )
+                'human decisions, num clusters, num true clusters, '
+                + 'frac eq true, precision, recall\n'
             )
-        f.close()
+            for res in results:
+                f.write(
+                    '%d, %d, %d, %.4f, %.4f %.4f\n'
+                    % (
+                        res['num human'],
+                        res['num clusters'],
+                        res['num true clusters'],
+                        res['frac correct'],
+                        res['precision'],
+                        res['recall'],
+                    )
+                )
 
     @staticmethod
     def plot_convergence(results, filename=None):
