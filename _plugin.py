@@ -360,6 +360,7 @@ class LCAActor(GRAPH_ACTOR_CLASS):
         python -m wbia_lca._plugin LCAActor:1
 
     Doctest:
+        >>> # DISABLE_DOCTEST
         >>> from wbia.web.graph_server import *
         >>> actor = LCAActor()
         >>> payload = testdata_start_payload()
