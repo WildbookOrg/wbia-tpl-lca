@@ -3,3 +3,5 @@ networkx
 numpy
 scipy
 wbia-utool
+
+wildbook-ia
