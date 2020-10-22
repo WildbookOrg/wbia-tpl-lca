@@ -254,7 +254,6 @@ class ga_driver(object):  # NOQA
         return cid
 
     def add_cid_pair(self, cid0, cid1):
-        logger.info(cid0, cid1)
         if cid0 < cid1:
             self.cid_pairs.add((cid0, cid1))
         else:
@@ -423,12 +422,17 @@ def test_ga_driver():
         ('l', 'm', -50, 'vamp'),
         ('l', 'm', 100, 'human'),
     ]
-    db_clusters = {100: ('a', 'b'), 101: ('d'), 102: ('h', 'i', 'j'), 103: ('k', 'l')}
+    db_clusters = {
+        '100': ('a', 'b'),
+        '101': ('d'),
+        '102': ('h', 'i', 'j'),
+        '103': ('k', 'l'),
+    }
     db = db_interface_sim.db_interface_sim(db_quads, db_clusters)
 
     verifier_results = [('b', 'e', 0.9, 'vamp'), ('f', 'g', 0.15, 'vamp')]
     human_decisions = [('a', 'c', True)]
-    cluster_ids_to_check = [103]
+    cluster_ids_to_check = ['103']
 
     gt_probs = {
         'vamp': {
@@ -486,7 +490,7 @@ def test_ga_driver():
             ('b', 'd', 100, 'human'),
             ('b', 'e', 83, 'vamp'),
         ],
-        {100: {'b', 'a'}, 101: {'d'}},
+        {'100': {'b', 'a'}, '101': {'d'}},
     ]
 
     ccp1 = [
@@ -499,12 +503,12 @@ def test_ga_driver():
             ('h', 'j', 80, 'vamp'),
             ('i', 'j', 75, 'vamp'),
         ],
-        {102: {'j', 'h', 'i'}},
+        {'102': {'j', 'h', 'i'}},
     ]
 
     ccp2 = [
         [('k', 'l', 80, 'vamp'), ('l', 'm', -50, 'vamp'), ('l', 'm', 100, 'human')],
-        {103: {'k', 'l'}},
+        {'103': {'k', 'l'}},
     ]
 
     corr_ccPIC = [ccp0, ccp1, ccp2]
