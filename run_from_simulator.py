@@ -12,11 +12,12 @@ from wbia_lca import simulator as sim
 from wbia_lca import weighter as wgtr
 
 
-logger = logging.getLogger()
+logger = logging.getLogger('wbia_lca')
+
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
-        print('Usage: %s output_prefix')
+        logger.info('Usage: %s output_prefix')
         sys.exit()
     gen_prefix = sys.argv[1]
 
@@ -45,7 +46,7 @@ if __name__ == '__main__':
     #
     sim_params['gamma_shape'] = 1  # 2   # 1
     sim_params['gamma_scale'] = 2  # 1.5 # 2
-    num_per_cluster = sim_params['gamma_scale'] * sim_params['gamma_shape'] + 1
+    # num_per_cluster = sim_params['gamma_scale'] * sim_params['gamma_shape'] + 1
 
     """
     Build the exponential weight generator
@@ -74,7 +75,7 @@ if __name__ == '__main__':
     for i in range(num_sim):
         """ Get the graph algorithm parameters """
         logger.info('===================================')
-        logger.info('Starting simulation', i)
+        logger.info('Starting simulation %s' % (i,))
         file_prefix = gen_prefix + ('_%02d' % i)
         log_file = file_prefix + '.log'
 

@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 import networkx as nx
 from wbia_lca import cluster_tools as ct
+import logging
+
+
+logger = logging.getLogger('wbia_lca')
 
 
 def ex_graph_fig1():
@@ -68,13 +72,13 @@ def ex_graph_fig5():
 
 
 def test_build_clustering_and_mapping():
-    print('==================')
-    print('Testing build_clustering')
+    logger.info('==================')
+    logger.info('Testing build_clustering')
     empty_n2c = {}
     empty_clustering = ct.build_clustering(empty_n2c)
-    print(
-        'Empty node 2 cluster mapping should produce empty ' 'clustering {}.  Result is',
-        empty_clustering,
+    logger.info(
+        'Empty node 2 cluster mapping should produce empty clustering %s'
+        % (empty_clustering,)
     )
 
     # G = ex_graph_fig1()
@@ -93,44 +97,47 @@ def test_build_clustering_and_mapping():
     }
 
     clustering = ct.build_clustering(n2c_optimal)
-    print("Cluster 0 should be ['a', 'b', 'd', 'e']. It is", sorted(clustering['0']))
-    print("Cluster 1 should be ['c']. It is", sorted(clustering['1']))
-    print("Cluster 2 should be ['h', 'i']. It is", sorted(clustering['2']))
-    print("Cluster 3 should be ['f', 'g', 'j', 'k']. It is", sorted(clustering['3']))
+    logger.info(
+        "Cluster 0 should be ['a', 'b', 'd', 'e']. It is %s" % (sorted(clustering['0']),)
+    )
+    logger.info("Cluster 1 should be ['c']. It is %s" % (sorted(clustering['1']),))
+    logger.info("Cluster 2 should be ['h', 'i']. It is %s" % (sorted(clustering['2']),))
+    logger.info(
+        "Cluster 3 should be ['f', 'g', 'j', 'k']. It is %s" % (sorted(clustering['3']),)
+    ),
 
-    print('==================')
-    print('Testing build_node_to_cluster_mapping')
+    logger.info('==================')
+    logger.info('Testing build_node_to_cluster_mapping')
     empty_clustering = {}
     empty_n2c = ct.build_node_to_cluster_mapping(empty_clustering)
-    print(
-        'Empty clustering should produce empty node-to-cluster mapping {} ' 'Result is',
-        empty_n2c,
+    logger.info(
+        'Empty clustering should produce empty node-to-cluster mapping %s' % (empty_n2c,)
     )
 
     n2c_rebuilt = ct.build_node_to_cluster_mapping(clustering)
-    print(
-        'After rebuilding the node2cid mapping should be the same.  Is it?',
-        n2c_optimal == n2c_rebuilt,
+    logger.info(
+        'After rebuilding the node2cid mapping should be the same.  Is it? %s'
+        % (n2c_optimal == n2c_rebuilt,)
     )
 
 
 def test_build_clustering_from_clusters():
-    print('================================')
-    print('test_build_clustering_from_clusters')
+    logger.info('================================')
+    logger.info('test_build_clustering_from_clusters')
     clist = [['h', 'i', 'j'], ['k', 'm'], ['p']]
     n = len(clist)
     cids = list(ct.cids_from_range(n))
     clustering = ct.build_clustering_from_clusters(cids, clist)
-    print('Returned clustering:')
-    print(clustering)
+    logger.info('Returned clustering:')
+    logger.info(clustering)
     correct = len(clustering) == 3
-    print('Correct number of clusters', correct)
+    logger.info('Correct number of clusters %s' % (correct,))
     correct = (
         set(clist[0]) == clustering[cids[0]]
         and set(clist[1]) == clustering[cids[1]]
         and set(clist[2]) == clustering[cids[2]]
     )
-    print('Clusters are correct:', correct)
+    logger.info('Clusters are correct: %s' % (correct,))
 
     #  Catching error from repeated entry
     clist = [['h', 'i', 'j'], ['k', 'm'], ['p', 'p']]
@@ -138,7 +145,7 @@ def test_build_clustering_from_clusters():
     try:
         clustering = ct.build_clustering_from_clusters(ct.cids_from_range(n), clist)
     except AssertionError:
-        print('Caught error from having repeated entry in one cluster')
+        logger.info('Caught error from having repeated entry in one cluster')
 
     #  Catching error from intersecting lists
     clist = [['h', 'i', 'k'], ['k', 'm'], ['p', 'q']]
@@ -146,14 +153,14 @@ def test_build_clustering_from_clusters():
     try:
         clustering = ct.build_clustering_from_clusters(ct.cids_from_range(n), clist)
     except AssertionError:
-        print('Caught error from having intersecting lists')
+        logger.info('Caught error from having intersecting lists')
 
 
 def test_cluster_scoring_and_weights():
     G = ex_graph_fig1()
 
-    print('=====================')
-    print('Testing cid_list_score')
+    logger.info('=====================')
+    logger.info('Testing cid_list_score')
     cids = list(ct.cids_from_range(4))
     n2c_random = {
         'a': cids[0],
@@ -172,22 +179,22 @@ def test_cluster_scoring_and_weights():
     score = ct.cid_list_score(
         G, clustering_random, n2c_random, [cids[0], cids[2], cids[3]]
     )
-    print('Score between clusters [c0, c2, c3] should be -5 and is', score)
+    logger.info('Score between clusters [c0, c2, c3] should be -5 and is %s' % (score,))
 
-    print('=====================')
-    print('Testing clustering_score')
+    logger.info('=====================')
+    logger.info('Testing clustering_score')
     """ First clustering:  all together """
     n2c_single_cluster = {n: 'c0' for n in G.nodes}
-    print(
-        'Score with all together should be 21.  Score =',
-        ct.clustering_score(G, n2c_single_cluster),
+    logger.info(
+        'Score with all together should be 21.  Score = %s'
+        % (ct.clustering_score(G, n2c_single_cluster),)
     )
 
     """ Second clustering:  all separate """
     n2c_all_separate = {n: 'c' + str(i) for i, n in enumerate(G.nodes)}
-    print(
-        'Score with all together should be -21.  Score =',
-        ct.clustering_score(G, n2c_all_separate),
+    logger.info(
+        'Score with all together should be -21.  Score = %s'
+        % (ct.clustering_score(G, n2c_all_separate),)
     )
 
     """ Third clustering: optimal, by hand """
@@ -205,13 +212,15 @@ def test_cluster_scoring_and_weights():
         'j': cids[3],
         'k': cids[3],
     }
-    print('Optimal score should be 49. Score =', ct.clustering_score(G, n2c_optimal))
+    logger.info(
+        'Optimal score should be 49. Score = %s' % (ct.clustering_score(G, n2c_optimal),)
+    )
 
     negatives, positives = ct.get_weight_lists(G, sort_positive=True)
-    print('Length of negatives should be 10.  It is', len(negatives))
-    print('Length of positives should be 11.  It is', len(positives))
-    print('0th positive should be 8.  It is', positives[0])
-    print('Last positive should be 2.  It is', positives[-1])
+    logger.info('Length of negatives should be 10.  It is %s' % (len(negatives),))
+    logger.info('Length of positives should be 11.  It is %s' % (len(positives),))
+    logger.info('0th positive should be 8.  It is %s' % (positives[0],))
+    logger.info('Last positive should be 2.  It is %s' % (positives[-1],))
 
 
 def test_has_edges_between():
@@ -219,24 +228,24 @@ def test_has_edges_between():
     c0 = {'a', 'd'}
     c1 = {'c', 'f'}
     c2 = {'b', 'i', 'j'}
-    print('========================')
-    print('Testing has_edges_between_them')
+    logger.info('========================')
+    logger.info('Testing has_edges_between_them')
     res01 = ct.has_edges_between_them(G, c0, c1)
-    print('c0 to c1 should be False. is', res01)
+    logger.info('c0 to c1 should be False. is %s' % (res01,))
     res02 = ct.has_edges_between_them(G, c0, c2)
-    print('c0 to c2 should be True. is', res02)
+    logger.info('c0 to c2 should be True. is %s' % (res02,))
     res12 = ct.has_edges_between_them(G, c1, c2)
-    print('c1 to c2 should be True. is', res12)
+    logger.info('c1 to c2 should be True. is %s' % (res12,))
     res10 = ct.has_edges_between_them(G, c1, c0)
-    print('c1 to c0 should be False. is', res10)
+    logger.info('c1 to c0 should be False. is %s' % (res10,))
 
 
 def test_merge():
-    print('===========================')
-    print('test_merge')
+    logger.info('===========================')
+    logger.info('test_merge')
     G = ex_graph_fig1()
     cids = list(ct.cids_from_range(4))
-    print(cids)
+    logger.info(cids)
     n2c_optimal = {
         'a': cids[0],
         'b': cids[0],
@@ -252,26 +261,32 @@ def test_merge():
     }
     clustering = ct.build_clustering(n2c_optimal)
 
-    print('-------------')
-    print('score_delta_after_merge')
+    logger.info('-------------')
+    logger.info('score_delta_after_merge')
     delta = ct.score_delta_after_merge(cids[2], cids[3], G, clustering)
-    print('possible merge of 2, 3; delta should be -4, and is', delta)
+    logger.info('possible merge of 2, 3; delta should be -4, and is %s' % (delta,))
 
-    print('-------------')
-    print('merge_clusters')
+    logger.info('-------------')
+    logger.info('merge_clusters')
     score_before = ct.clustering_score(G, n2c_optimal)
     delta = ct.merge_clusters(cids[0], cids[2], G, clustering, n2c_optimal)
     score_after = ct.clustering_score(G, n2c_optimal)
-    print('delta =', delta, 'should be', score_after - score_before)
-    print('---')
+    logger.info(
+        'delta = %s should be %s'
+        % (
+            delta,
+            score_after - score_before,
+        )
+    )
+    logger.info('---')
     for c in clustering:
-        print('%s: %s' % (c, clustering[c]))
-    print('---')
+        logger.info('%s: %s' % (c, clustering[c]))
+    logger.info('---')
     for n in G.nodes:
-        print('%s: %s' % (n, n2c_optimal[n]))
+        logger.info('%s: %s' % (n, n2c_optimal[n]))
 
-    print('--------')
-    print('Retesting merge with order of clusters reversed')
+    logger.info('--------')
+    logger.info('Retesting merge with order of clusters reversed')
     n2c_optimal = {
         'a': cids[0],
         'b': cids[0],
@@ -287,28 +302,34 @@ def test_merge():
     }
     clustering = ct.build_clustering(n2c_optimal)
 
-    print('-------------')
-    print('score_delta_after_merge')
+    logger.info('-------------')
+    logger.info('score_delta_after_merge')
     delta = ct.score_delta_after_merge(cids[3], cids[2], G, clustering)
-    print('possible merge of 3, 2; delta should be -4, and is', delta)
+    logger.info('possible merge of 3, 2; delta should be -4, and is %s' % (delta,))
 
-    print('-------------')
-    print('merge_clusters')
+    logger.info('-------------')
+    logger.info('merge_clusters')
     score_before = ct.clustering_score(G, n2c_optimal)
     delta = ct.merge_clusters(cids[2], cids[0], G, clustering, n2c_optimal)
     score_after = ct.clustering_score(G, n2c_optimal)
-    print('delta =', delta, 'should be', score_after - score_before)
-    print('---')
+    logger.info(
+        'delta = %s should be %s'
+        % (
+            delta,
+            score_after - score_before,
+        )
+    )
+    logger.info('---')
     for c in clustering:
-        print('%s: %s' % (c, clustering[c]))
-    print('---')
+        logger.info('%s: %s' % (c, clustering[c]))
+    logger.info('---')
     for n in G.nodes:
-        print('%s: %s' % (n, n2c_optimal[n]))
+        logger.info('%s: %s' % (n, n2c_optimal[n]))
 
 
 def test_shift_between_clusters():
-    print('===========================')
-    print('test_shift_between_clusters')
+    logger.info('===========================')
+    logger.info('test_shift_between_clusters')
     cids = list(ct.cids_from_range(4))
     n2c_optimal = {
         'a': cids[0],
@@ -327,25 +348,25 @@ def test_shift_between_clusters():
 
     n0_cid, n1_cid = cids[3], cids[2]
     n0_nodes_to_move = {'f', 'j'}
-    print('Shifting from cluster %s to %s:' % (n0_cid, n1_cid))
-    print('Nodes to move:', sorted(n0_nodes_to_move))
-    print('Cluster %s: %s' % (n0_cid, sorted(clustering[n0_cid])))
-    print('Cluster %s: %s' % (n1_cid, sorted(clustering[n1_cid])))
+    logger.info('Shifting from cluster %s to %s:' % (n0_cid, n1_cid))
+    logger.info('Nodes to move: %s' % (sorted(n0_nodes_to_move),))
+    logger.info('Cluster %s: %s' % (n0_cid, sorted(clustering[n0_cid])))
+    logger.info('Cluster %s: %s' % (n1_cid, sorted(clustering[n1_cid])))
 
     ct.shift_between_clusters(n0_cid, n0_nodes_to_move, n1_cid, clustering, n2c_optimal)
-    print('After shift, cluster %s: %s' % (n0_cid, sorted(clustering[n0_cid])))
-    print('After shift, cluster %s: %s' % (n1_cid, sorted(clustering[n1_cid])))
-    print("n2c['f'] =", n2c_optimal['f'])
-    print("n2c['j'] =", n2c_optimal['j'])
-    print("n2c['h'] =", n2c_optimal['h'])
-    print("n2c['i'] =", n2c_optimal['i'])
-    print("n2c['g'] =", n2c_optimal['g'])
-    print("n2c['k'] =", n2c_optimal['k'])
+    logger.info('After shift, cluster %s: %s' % (n0_cid, sorted(clustering[n0_cid])))
+    logger.info('After shift, cluster %s: %s' % (n1_cid, sorted(clustering[n1_cid])))
+    logger.info("n2c['f'] = %s" % (n2c_optimal['f'],))
+    logger.info("n2c['j'] = %s" % (n2c_optimal['j'],))
+    logger.info("n2c['h'] = %s" % (n2c_optimal['h'],))
+    logger.info("n2c['i'] = %s" % (n2c_optimal['i'],))
+    logger.info("n2c['g'] = %s" % (n2c_optimal['g'],))
+    logger.info("n2c['k'] = %s" % (n2c_optimal['k'],))
 
 
 def test_replace_clusters():
-    print('===========================')
-    print('test replace_clusters')
+    logger.info('===========================')
+    logger.info('test replace_clusters')
     cids = list(ct.cids_from_range(8))
     n2c = {
         'a': cids[0],
@@ -364,16 +385,20 @@ def test_replace_clusters():
     old_cids = [cids[2], cids[4]]
     added_clusters = {cids[5]: set(['j']), cids[7]: set(['h', 'i', 'k'])}
     ct.replace_clusters(old_cids, added_clusters, clustering, n2c)
-    print('Cluster ids, should be c0, c1, c3, c5, c7.  Are:', list(clustering.keys()))
-    print("clustering[c5] should be {'j'}!! and is", clustering[cids[5]])
-    print("clustering[c7] should be {'h', 'i', 'k'} and is", clustering[cids[7]])
-    print("n2c['h'] should be c7 and is", n2c['h'])
-    print("n2c['j'] should be c5 and is", n2c['j'])
+    logger.info(
+        'Cluster ids, should be c0, c1, c3, c5, c7.  Are: %s' % (list(clustering.keys()),)
+    )
+    logger.info("clustering[c5] should be {'j'}!! and is %s" % (clustering[cids[5]],))
+    logger.info(
+        "clustering[c7] should be {'h', 'i', 'k'} and is %s" % (clustering[cids[7]],)
+    )
+    logger.info("n2c['h'] should be c7 and is %s" % (n2c['h'],))
+    logger.info("n2c['j'] should be c5 and is %s" % (n2c['j'],))
 
 
 def test_form_connected_cluster_pairs():
-    print('=================================')
-    print('test form_connected_cluster_pairs')
+    logger.info('=================================')
+    logger.info('test form_connected_cluster_pairs')
     G = ex_graph_fig1()
     cids = list(ct.cids_from_range(5))
     n2c = {
@@ -392,28 +417,37 @@ def test_form_connected_cluster_pairs():
     clustering = ct.build_clustering(n2c)
 
     cid_pairs = ct.form_connected_cluster_pairs(G, clustering, n2c)
-    print('form_connected_cluster_pairs(G, clustering, n2c)')
-    print('result: ', cid_pairs)
-    print(
-        'expecting: ',
-        [
-            (cids[0], cids[1]),
-            (cids[0], cids[2]),
-            (cids[0], cids[3]),
-            (cids[1], cids[3]),
-            (cids[2], cids[3]),
-            (cids[2], cids[4]),
-            (cids[3], cids[4]),
-        ],
+    logger.info('form_connected_cluster_pairs(G, clustering, n2c)')
+    logger.info('result:  %s' % (cid_pairs,))
+    logger.info(
+        'expecting: %s'
+        % (
+            [
+                (cids[0], cids[1]),
+                (cids[0], cids[2]),
+                (cids[0], cids[3]),
+                (cids[1], cids[3]),
+                (cids[2], cids[3]),
+                (cids[2], cids[4]),
+                (cids[3], cids[4]),
+            ],
+        )
     )
 
     new_cids = [cids[1], cids[4]]
     cid_pairs = ct.form_connected_cluster_pairs(G, clustering, n2c, new_cids)
-    print('form_connected_cluster_pairs(G, clustering, n2c, new_cids)')
-    print('result: ', cid_pairs)
-    print(
-        'expecting: ',
-        [(cids[0], cids[1]), (cids[1], cids[3]), (cids[2], cids[4]), (cids[3], cids[4])],
+    logger.info('form_connected_cluster_pairs(G, clustering, n2c, new_cids)')
+    logger.info('result:  %s' % (cid_pairs,))
+    logger.info(
+        'expecting: %s'
+        % (
+            [
+                (cids[0], cids[1]),
+                (cids[1], cids[3]),
+                (cids[2], cids[4]),
+                (cids[3], cids[4]),
+            ],
+        )
     )
 
 
@@ -442,19 +476,19 @@ def test_same_clustering():
         cids[25]: {'b', 'a'},
     }
 
-    print('====================')
-    print('test_same_clustering')
-    print('first test should generate no output and then return True')
-    print(ct.same_clustering(clustering0, clustering1, True))
-    print('second test should generate no output and then return False')
-    print(ct.same_clustering(clustering0, clustering2, False))
-    print('third test should generate mismatch output and then return False')
-    print('Expected:')
-    print("['c'] not in 2nd")
-    print("['d', 'e'] not in 2nd")
-    print("['c', 'd', 'e'] not in 1st")
+    logger.info('====================')
+    logger.info('test_same_clustering')
+    logger.info('first test should generate no output and then return True')
+    logger.info(ct.same_clustering(clustering0, clustering1, True))
+    logger.info('second test should generate no output and then return False')
+    logger.info(ct.same_clustering(clustering0, clustering2, False))
+    logger.info('third test should generate mismatch output and then return False')
+    logger.info('Expected:')
+    logger.info("['c'] not in 2nd")
+    logger.info("['d', 'e'] not in 2nd")
+    logger.info("['c', 'd', 'e'] not in 1st")
     result = ct.same_clustering(clustering0, clustering2, True)
-    print('It returned', result)
+    logger.info('It returned %s' % (result,))
 
 
 def test_comparisons():
@@ -488,13 +522,13 @@ def test_comparisons():
     }
     est_n2c = ct.build_node_to_cluster_mapping(est)
 
-    print('================')
-    print('test_comparisons')
-    print('ct.compare_by_lengths')
+    logger.info('================')
+    logger.info('test_comparisons')
+    logger.info('ct.compare_by_lengths')
 
     ct.compare_by_lengths(est, est_n2c, gt)
 
-    print(
+    logger.info(
         'Output for this example should be:\n'
         '1, 2, 1, 0.50, 0.667\n'
         '2, 3, 2, 0.67, 0.833\n'
@@ -502,17 +536,17 @@ def test_comparisons():
         '5, 1, 0, 0.00, 0.800'
     )
 
-    print('------')
-    print('ct.pairwise_eval')
+    logger.info('------')
+    logger.info('ct.pairwise_eval')
     # result = ct.compare_to_ground_truth(est, est_n2c, gt, gt_n2c)
     result = ct.percent_and_PR(est, est_n2c, gt, gt_n2c)
-    print('Result is [%1.3f, %1.3f, %1.3f]' % tuple(result))
+    logger.info('Result is [%1.3f, %1.3f, %1.3f]' % tuple(result))
     num_clusters = len(est)
     num_correct = 5
     tp, fp, fn = 18, 6, 7
     precision = tp / (tp + fp)
     recall = tp / (tp + fn)
-    print(
+    logger.info(
         'Should be [%1.3f, %1.3f, %1.3f]'
         % (num_correct / num_clusters, precision, recall)
     )
@@ -549,7 +583,7 @@ def test_count_equal():
 
     est_n2c = ct.build_node_to_cluster_mapping(est)
     n = ct.count_equal_clustering(gt, est, est_n2c)
-    print('test_count_equal: should be 5 and is', n)
+    logger.info('test_count_equal: should be 5 and is %s' % (n,))
 
 
 if __name__ == '__main__':

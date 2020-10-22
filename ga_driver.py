@@ -13,6 +13,10 @@ from wbia_lca import exp_scores as es
 from wbia_lca import graph_algorithm as ga
 from wbia_lca import weighter
 
+
+logger = logging.getLogger('wbia_lca')
+
+
 """
 
 This file contains functionality needed to prepare and run one or more
@@ -186,7 +190,7 @@ def generate_weighters(ga_params, verifier_gt):
     return wgtrs
 
 
-class ga_driver(object):
+class ga_driver(object):  # NOQA
     def __init__(
         self,
         verifier_results,
@@ -250,6 +254,7 @@ class ga_driver(object):
         return cid
 
     def add_cid_pair(self, cid0, cid1):
+        logger.info(cid0, cid1)
         if cid0 < cid1:
             self.cid_pairs.add((cid0, cid1))
         else:
@@ -301,9 +306,9 @@ class ga_driver(object):
                     clustering[cid] = nodes_in_c
                     nodes |= nodes_in_c
             edges = self.db.edges_between_nodes(nodes)
-            # print('final set of nodes:', nodes)
-            # print('resulting edges', edges)
-            # print('clustering', clustering)
+            # logger.info('final set of nodes: %s' % (nodes, ))
+            # logger.info('resulting edges %s' % (edges, ))
+            # logger.info('clustering %s' % (clustering, ))
             ccPIC = (edges, clustering)
             self.ccPICs.append(ccPIC)
 
@@ -380,7 +385,7 @@ class ga_driver(object):
         return self.changes_to_review
 
 
-if __name__ == '__main__':
+def test_ga_driver():
     ga_params = {
         'aug_names': ['vamp', 'human'],
         'prob_human_correct': 0.97,
@@ -391,7 +396,7 @@ if __name__ == '__main__':
     try:
         os.remove(log_file)
     except Exception:
-        print('FAILED')
+        logger.info('FAILED')
     log_format = '%(levelname)-6s [%(filename)18s:%(lineno)3d] %(message)s'
     logging.basicConfig(
         filename=log_file, level=ga_params['log_level'], format=log_format
@@ -464,7 +469,7 @@ if __name__ == '__main__':
     }
 
     weighters = generate_weighters(ga_params, gt_probs)
-    print(weighters)
+    logger.info(weighters)
     edge_gen = edge_generator.edge_generator(db, weighters[0])
 
     gad = ga_driver(
@@ -504,30 +509,34 @@ if __name__ == '__main__':
 
     corr_ccPIC = [ccp0, ccp1, ccp2]
     if len(corr_ccPIC) == len(gad.ccPICs):
-        print('Correct number of ccPICs found:', len(corr_ccPIC))
+        logger.info('Correct number of ccPICs found: %s' % (len(corr_ccPIC),))
     else:
-        print(
+        logger.info(
             'Incorrect length of ccPICs: found %d, expected %d'
             % (len(gad.ccPICs), len(corr_ccPIC))
         )
 
     i = 0
     for est, exp in zip(corr_ccPIC, gad.ccPICs):
-        print('----------------')
-        print('Testing ccPIC', i)
+        logger.info('----------------')
+        logger.info('Testing ccPIC %s' % (i,))
         if est[0] == exp[0]:
-            print('Edge list is correct:')
-            print(exp[0])
+            logger.info('Edge list is correct:')
+            logger.info(exp[0])
         else:
-            print('Error in edge list:')
-            print('Estimated', est[0])
-            print('Expected', exp[0])
+            logger.info('Error in edge list:')
+            logger.info('Estimated %s' % (est[0],))
+            logger.info('Expected %s' % (exp[0],))
 
         if est[1] == exp[1]:
-            print('Cluster dictionary is correct:')
-            print(exp[1])
+            logger.info('Cluster dictionary is correct:')
+            logger.info(exp[1])
         else:
-            print('Error in cluster dictionary:')
-            print('Estimated', est[1])
-            print('Expected', exp[1])
+            logger.info('Error in cluster dictionary:')
+            logger.info('Estimated %s' % (est[1],))
+            logger.info('Expected %s' % (exp[1],))
         i += 1
+
+
+if __name__ == '__main__':
+    test_ga_driver()

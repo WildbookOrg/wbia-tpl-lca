@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 import logging  # NOQA
 
+logger = logging.getLogger('wbia_lca')
+logger.setLevel(logging.INFO)
+
 try:
     from wbia_lca._version import __version__
 except ImportError:

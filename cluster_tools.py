@@ -4,7 +4,7 @@ import logging
 import math
 
 
-logger = logging.getLogger()
+logger = logging.getLogger('wbia_lca')
 
 
 def cids_from_range(n, prefix='c'):
@@ -234,22 +234,24 @@ def print_structures(G, clustering, node2cid, score):
     """
     Output the graph, the clusters, and the node-to-cluster mapping.
     """
-    print('Graph:')
+    logger.info('Graph:')
     for n in sorted(G.nodes()):
-        print('    %a: ' % n, end='')
+        logger.info('    %a: ' % n, end='')
         for m in sorted(G[n]):
-            print(' %a/%a' % (m, G[n][m]['weight']), end='')
-        print()
-    print('Clusters:')
+            logger.info(' %a/%a' % (m, G[n][m]['weight']), end='')
+        logger.info()
+    logger.info('Clusters:')
     for c in sorted(clustering):
-        print('    %d:' % c, end='')
+        logger.info('    %d:' % c, end='')
         for n in sorted(clustering[c]):
-            print(' %a' % n, end='')
-        print()
-    print('Node to cluster:')
+            logger.info(' %a' % n, end='')
+        logger.info()
+    logger.info('Node to cluster:')
     for n in sorted(G.nodes()):
-        print('    %a: %d ' % (n, node2cid[n]))
-    print('input score %a, actual score %a' % (score, clustering_score(G, node2cid)))
+        logger.info('    %a: %d ' % (n, node2cid[n]))
+    logger.info(
+        'input score %a, actual score %a' % (score, clustering_score(G, node2cid))
+    )
 
 
 def same_clustering(clustering0, clustering1, output_differences=False):
@@ -262,7 +264,7 @@ def same_clustering(clustering0, clustering1, output_differences=False):
     if len(clustering0) != len(clustering1):
         same = False
         if output_differences:
-            print(
+            logger.info(
                 'clustering lengths are different %d vs. %d'
                 % (len(clustering0), len(clustering1))
             )
@@ -271,13 +273,13 @@ def same_clustering(clustering0, clustering1, output_differences=False):
         if c not in clustering1.values():
             same = False
             if output_differences:
-                print('cluster', sorted(c), 'not in 2nd clustering')
+                logger.info('cluster %s not in 2nd clustering' % (sorted(c),))
 
     for c in clustering1.values():
         if c not in clustering0.values():
             same = False
             if output_differences:
-                print('cluster', sorted(c), 'not in 1st clustering')
+                logger.info('cluster %s not in 1st clustering' % (sorted(c),))
 
     return same
 

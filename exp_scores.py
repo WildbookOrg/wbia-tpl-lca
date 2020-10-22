@@ -4,7 +4,10 @@ import math as m
 import random
 
 
-class exp_scores(object):
+logger = logging.getLogger('wbia_lca')
+
+
+class exp_scores(object):  # NOQA
     """Model the verification scores as exponential distribution
     representations of two histograms, truncated to the domain [0,1].
     For any given score, two histogram values are produced, one for the
@@ -70,8 +73,10 @@ class exp_scores(object):
         return cls(np_ratio, pos_lambda, neg_lambda)
 
     def get_pos_neg(self, score):
-        """Get the positive and negative histogram values for a
-        score."""
+        """
+        Get the positive and negative histogram values for a
+        score.
+        """
         hp = self.trunc_exp_pos.pdf(1 - score)
         hn = self.np_ratio * self.trunc_exp_neg.pdf(score)
         return hp, hn
@@ -97,7 +102,7 @@ class exp_scores(object):
         return s
 
 
-class truncated_exponential(object):
+class truncated_exponential(object):  # NOQA
     def __init__(self, lmbda):
         self.lmbda = lmbda
         self.normalize = 1 - m.exp(-self.lmbda)
@@ -205,13 +210,13 @@ def test_truncated_exponential():
         x = i / n
         p = te.pdf(x)
         c = te.cdf(x)
-        print('%4.2f: %5.3f %5.3f' % (x, p, c))
+        logger.info('%4.2f: %5.3f %5.3f' % (x, p, c))
 
     n = 10000
     s = 0
     for i in range(n):
         s += te.sample()
-    print('Average from sample %.4f' % (s / n))
+    logger.info('Average from sample %.4f' % (s / n))
 
     # Numerically integrate:
     integral = 0
@@ -221,7 +226,7 @@ def test_truncated_exponential():
         x = (i + 0.5) / n
         integral += te.pdf(x)
     integral *= delta
-    print('PDF integrates to %1.4f' % integral)
+    logger.info('PDF integrates to %1.4f' % integral)
 
 
 def test_find_lambda():
@@ -231,26 +236,40 @@ def test_find_lambda():
         Find the positive lambda based on the error rate by simply
         using.
         """
-        print('----------')
-        print('test find_lambda_cdf ')
-        print('r =', r, 'err =', err)
+        logger.info('----------')
+        logger.info('test find_lambda_cdf ')
+        logger.info(
+            'r = %s err = %s'
+            % (
+                r,
+                err,
+            )
+        )
         lmbda_pos = find_lambda_cdf(1, err)  # find the positive match lambda
         lmbda_neg = find_lambda_cdf(r, err)  # find the negative match lambda
-        print('lmbda_pos =', lmbda_pos)
+        logger.info('lmbda_pos = %s' % (lmbda_pos,))
         te_pos = truncated_exponential(lmbda_pos)
         te_neg = truncated_exponential(lmbda_neg)
-        print('goal: positive frac below 0.5 prob =', err)
-        print('estimated: negative frac above 0.5 =', r * (1 - te_neg.cdf(0.5)))
+        logger.info('goal: positive frac below 0.5 prob = %s' % (err,))
+        logger.info(
+            'estimated: negative frac above 0.5 = %s' % (r * (1 - te_neg.cdf(0.5)),)
+        )
 
-        print('----------')
+        logger.info('----------')
         lmbda_neg = find_lambda_pdf(r, lmbda_pos)
-        print('test find_lambda_pdf ')
-        print('r =', r, 'lmbda_pos =', lmbda_pos)
-        print('lmbda_neg =', lmbda_neg)
+        logger.info('test find_lambda_pdf ')
+        logger.info(
+            'r = %s lmbda_pos = %s'
+            % (
+                r,
+                lmbda_pos,
+            )
+        )
+        logger.info('lmbda_neg = %s' % (lmbda_neg,))
         te_neg = truncated_exponential(lmbda_neg)
-        print('goal: pdf of positive at 0.5 = %.4f' % te_pos.pdf(0.5))
-        print('est: scaled pdf of negative at 0.5 = %.4f' % (r * te_neg.pdf(0.5)))
-        print()
+        logger.info('goal: pdf of positive at 0.5 = %.4f' % te_pos.pdf(0.5))
+        logger.info('est: scaled pdf of negative at 0.5 = %.4f' % (r * te_neg.pdf(0.5),))
+        logger.info('')
 
 
 def test_find_lambda_from_samples():
@@ -258,14 +277,14 @@ def test_find_lambda_from_samples():
     lmbda = 1 / beta
     te = truncated_exponential(lmbda)
 
-    print('-----------\n' 'test_find_lambda_from_samples')
+    logger.info('-----------\ntest_find_lambda_from_samples')
     n = 100000
     samples = [te.sample() for i in range(n)]
     s_mean = sum(samples) / len(samples)
-    print('from %d samples mean is %1.5f' % (n, s_mean))
-    print('population mean is %1.5f' % (te.mean()))
+    logger.info('from %d samples mean is %1.5f' % (n, s_mean))
+    logger.info('population mean is %1.5f' % (te.mean()))
     est_lmbda = find_lambda_from_samples(samples, is_positive=False)
-    print('target lmbda %.4f, estimated %.4f' % (lmbda, est_lmbda))
+    logger.info('target lmbda %.4f, estimated %.4f' % (lmbda, est_lmbda))
 
 
 def test_create_from_error_frac():
@@ -273,19 +292,21 @@ def test_create_from_error_frac():
     error_frac = 0.3
     corr_lambda_pos = 1.6946
     corr_lambda_neg = 8.1818
-    print('------------\n' 'test_create_from_error_frac\n')
+    logger.info('------------\ntest_create_from_error_frac\n')
     score_obj = exp_scores.create_from_error_frac(
         error_frac, np_ratio, create_from_pdf=True
     )
-    print(
+    logger.info(
         "corr_lambda_pos %.4f, object's lambda %.4f"
         % (corr_lambda_pos, score_obj.trunc_exp_pos.lmbda)
     )
-    print(
+    logger.info(
         "corr_lambda_neg %.4f, object's lambda %.4f"
         % (corr_lambda_neg, score_obj.trunc_exp_neg.lmbda)
     )
-    print("corr np_ratio %.2f, object's np_ratio %.2f" % (np_ratio, score_obj.np_ratio))
+    logger.info(
+        "corr np_ratio %.2f, object's np_ratio %.2f" % (np_ratio, score_obj.np_ratio)
+    )
 
     """  See if we can recreate the error fraction on positives from sampling
     """
@@ -303,23 +324,23 @@ def test_create_from_error_frac():
             num_neg_err += 1
 
     exp_match_frac = 1 / (np_ratio + 1)
-    print('expected match frac %.4f, actual %.4f' % (exp_match_frac, num_match / n))
+    logger.info('expected match frac %.4f, actual %.4f' % (exp_match_frac, num_match / n))
     exp_pos_error = round(n * exp_match_frac * error_frac)
-    print('expected num positive (and negative) errors:', exp_pos_error)
-    print('actual num positive errors:', num_pos_err)
-    print('actual num negative errors:', num_neg_err)
-    print('pos pdf at 0.5: %.4f' % (score_obj.trunc_exp_pos.pdf(0.5)))
-    print(
+    logger.info('expected num positive (and negative) errors: %s' % (exp_pos_error,))
+    logger.info('actual num positive errors: %s' % (num_pos_err,))
+    logger.info('actual num negative errors: %s' % (num_neg_err,))
+    logger.info('pos pdf at 0.5: %.4f' % (score_obj.trunc_exp_pos.pdf(0.5)))
+    logger.info(
         'np_ratio * neg pdf at 0.5: %.4f' % (np_ratio * score_obj.trunc_exp_neg.pdf(0.5))
     )
     cdf_at_half = score_obj.trunc_exp_neg.cdf(0.5)
     exp_neg_mistakes_from_cdf = round((1 - exp_match_frac) * n * (1 - cdf_at_half))
-    print('cdf_at_half (negative) = %.4f' % cdf_at_half)
-    print('exp_neg_mistakes_from_cid =', exp_neg_mistakes_from_cdf)
+    logger.info('cdf_at_half (negative) = %.4f' % cdf_at_half)
+    logger.info('exp_neg_mistakes_from_cid = %s' % (exp_neg_mistakes_from_cdf,))
 
 
 def test_create_from_samples():
-    print('------------\n' 'test_create_from_error_from_samples\n')
+    logger.info('------------\ntest_create_from_error_from_samples\n')
     np_ratio = 5.0
     n_pos = 100000
     n_neg = int(n_pos * np_ratio)
@@ -335,15 +356,15 @@ def test_create_from_samples():
     neg_samples = [te_neg.sample() for _ in range(n_neg)]
 
     score_obj = exp_scores.create_from_samples(pos_samples, neg_samples)
-    print(
+    logger.info(
         "pos_lambda %.4f, object's pos_lambda %.4f"
         % (pos_lambda, score_obj.trunc_exp_pos.lmbda)
     )
-    print(
+    logger.info(
         "neg_lambda %.4f, object's neg_lambda %.4f"
         % (neg_lambda, score_obj.trunc_exp_neg.lmbda)
     )
-    print("np_ratio %.2f, object's np_ratio %.2f" % (np_ratio, score_obj.np_ratio))
+    logger.info("np_ratio %.2f, object's np_ratio %.2f" % (np_ratio, score_obj.np_ratio))
 
 
 if __name__ == '__main__':

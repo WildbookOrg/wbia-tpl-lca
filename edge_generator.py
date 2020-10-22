@@ -2,9 +2,13 @@
 
 # import exp_scores as es
 # import weighter
+import logging
 
 
-class edge_generator(object):
+logger = logging.getLogger('wbia_lca')
+
+
+class edge_generator(object):  # NOQA
     def __init__(self, db, wgtr):
         self.db = db
         self.wgtr = wgtr

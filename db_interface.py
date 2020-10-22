@@ -21,9 +21,13 @@ I suspect we can implement this as a class hierarchy where examples and
 simulation are handled through one subclass and the true database
 interface is handled through another.
 """
+import logging
 
 
-class db_interface(object):
+logger = logging.getLogger('wbia_lca')
+
+
+class db_interface(object):  # NOQA
     def __init__(self):
         pass
 

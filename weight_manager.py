@@ -29,7 +29,8 @@ import collections
 import logging
 import os
 
-logger = logging.getLogger()
+
+logger = logging.getLogger('wbia_lca')
 
 
 def empty_gen(n):
@@ -40,7 +41,7 @@ def empty_gen(n):
     return gen
 
 
-class weight_manager(object):
+class weight_manager(object):  # NOQA
     def __init__(self, aug_names, tries_before_edge_done, request_cb, result_cb):
         """
         Initialize with a single request callback, a single result
@@ -67,7 +68,7 @@ class weight_manager(object):
         try:
             return self.aug_names.index(name)
         except ValueError:
-            print('Error:  Augmentation function name', name, 'is unknown')
+            logger.info('Error:  Augmentation function name %s is unknown' % (name,))
             assert False
 
     def get_initial_edges(self, labeled_edges):
@@ -180,7 +181,7 @@ class weight_manager(object):
 ########################################################
 
 
-class test_callbacks(object):
+class test_callbacks(object):  # NOQA
     def __init__(self, edges_to_add, num_to_return, unexpected_edges):
         self.edges_to_return = edges_to_add
         self.edges_requested = []
@@ -210,7 +211,7 @@ class test_callbacks(object):
         return ret_edges
 
 
-if __name__ == '__main__':
+def test_weight_manager():
     log_fname = './test.log'
     try:
         os.remove(log_fname)
@@ -256,95 +257,110 @@ if __name__ == '__main__':
 
     tries_before_edge_done = 4
     wm = weight_manager(aug_names, tries_before_edge_done, tc.request_cb, tc.result_cb)
-    print('Output should be (0, 1, 1.7), (0, 2, -0.8), (1, 2, -2.2)')
+    logger.info('Output should be (0, 1, 1.7), (0, 2, -0.8), (1, 2, -2.2)')
     for e in wm.get_initial_edges(init_edges):
-        print(e)
-    print('Aug count', wm.augment_count)
-    print(
-        'After get_initial_edges:\n' '  len(wm.augment_count) should be 3 and is',
-        len(wm.augment_count),
+        logger.info(e)
+    logger.info('Aug count %s' % (wm.augment_count,))
+    logger.info(
+        'After get_initial_edges:\n  len(wm.augment_count) should be 3 and is %s'
+        % (len(wm.augment_count),)
     )
-    print(
-        '  wm.augment_count((0, 1)) should be [1, 1, 2] and is', wm.augment_count[(0, 1)]
+    logger.info(
+        '  wm.augment_count((0, 1)) should be [1, 1, 2] and is %s'
+        % (wm.augment_count[(0, 1)],)
     )
-    print(
-        '  wm.augment_count((0, 2)) should be [0, 1, 0] and is', wm.augment_count[(0, 2)]
+    logger.info(
+        '  wm.augment_count((0, 2)) should be [0, 1, 0] and is %s'
+        % (wm.augment_count[(0, 2)],)
     )
-    print(
-        '  wm.augment_count((1, 2)) should be [1, 1, 1] and is', wm.augment_count[(1, 2)]
+    logger.info(
+        '  wm.augment_count((1, 2)) should be [1, 1, 1] and is %s'
+        % (wm.augment_count[(1, 2)],)
     )
 
     pairs = [(0, 1), (1, 3), (1, 3)]
     wm.request_new_weights(pairs)
 
-    print('==========')
-    print('First set of changes:')
-    print('Should get (0, 1, 0.9) plus unrequested' '(0, 4, 0.5) and (6, 7, -0.1)')
+    logger.info('==========')
+    logger.info('First set of changes:')
+    logger.info('Should get (0, 1, 0.9) plus unrequested (0, 4, 0.5) and (6, 7, -0.1)')
     for res in wm.get_weight_changes():
-        print(res)
-    print(
-        'After first set of changes:\n' '  len(wm.augment_count) should be 6 and is',
-        len(wm.augment_count),
+        logger.info(res)
+    logger.info(
+        'After first set of changes:\n  len(wm.augment_count) should be 6 and is %s'
+        % (len(wm.augment_count),)
     )
-    print(
-        '  wm.augment_count((0, 1)) should be [1, 1, 3] and is', wm.augment_count[(0, 1)]
+    logger.info(
+        '  wm.augment_count((0, 1)) should be [1, 1, 3] and is %s'
+        % (wm.augment_count[(0, 1)],)
     )
-    print(
-        '  wm.augment_count((1, 3)) should be [0, 0, 0] and is', wm.augment_count[(1, 3)]
+    logger.info(
+        '  wm.augment_count((1, 3)) should be [0, 0, 0] and is %s'
+        % (wm.augment_count[(1, 3)],)
     )
-    print(
-        '  wm.augment_count((6, 7)) should be [1, 0, 0] and is', wm.augment_count[(6, 7)]
+    logger.info(
+        '  wm.augment_count((6, 7)) should be [1, 0, 0] and is %s'
+        % (wm.augment_count[(6, 7)],)
     )
 
-    print('==========')
-    print('Second set of changes, with new edge (1,3).')
-    print('Should get (1, 3) only once, with weight 1.2, despite two requests.')
+    logger.info('==========')
+    logger.info('Second set of changes, with new edge (1,3).')
+    logger.info('Should get (1, 3) only once, with weight 1.2, despite two requests.')
     for res in wm.get_weight_changes():
-        print(res)
+        logger.info(res)
 
     pairs = [(1, 3)]  # obtain the result from siamese
     wm.request_new_weights(pairs)
     pairs = [(0, 2), (0, 1)]  # obtain the result from vamp and then human
     wm.request_new_weights(pairs)
-    print('==========')
-    print('Third set of changes. Should be (1, 3, 0.1) and (0, 2, 0.5).')
+    logger.info('==========')
+    logger.info('Third set of changes. Should be (1, 3, 0.1) and (0, 2, 0.5).')
     for e in wm.get_weight_changes():
-        print(e)
+        logger.info(e)
 
-    print('==========')
-    print('Fourth set of changes.')
-    print('Before: futile_tester(0, 1) should be False. It is', wm.futile_tester(0, 1))
-    print('Should be (0, 1, 0.7) - the fourth human result for (0,1)')
+    logger.info('==========')
+    logger.info('Fourth set of changes.')
+    logger.info(
+        'Before: futile_tester(0, 1) should be False. It is %s'
+        % (wm.futile_tester(0, 1),)
+    )
+    logger.info('Should be (0, 1, 0.7) - the fourth human result for (0,1)')
     for e in wm.get_weight_changes():
-        print(e)
-    print('After: futile_tester(0, 1) should be True. It is', wm.futile_tester(0, 1))
+        logger.info(e)
+    logger.info(
+        'After: futile_tester(0, 1) should be True. It is %s' % (wm.futile_tester(0, 1),)
+    )
 
     pairs = [(1, 3), (0, 2)]
     wm.request_new_weights(pairs)
-    print('==========')
-    print('Fifth set of changes.')
-    print('Should be (1, 3, 1.3)')
+    logger.info('==========')
+    logger.info('Fifth set of changes.')
+    logger.info('Should be (1, 3, 1.3)')
     for e in wm.get_weight_changes():
-        print(e)
+        logger.info(e)
 
-    print('==========')
-    print('Sixth set of changes.')
-    print('Should be (0, 2, 0.4)')
+    logger.info('==========')
+    logger.info('Sixth set of changes.')
+    logger.info('Should be (0, 2, 0.4)')
     for e in wm.get_weight_changes():
-        print(e)
+        logger.info(e)
 
     pairs = [(1, 2), (1, 2)]  # both human, but only one returned.
     wm.request_new_weights(pairs)
-    print('==========')
-    print('Duplicate human reviews.')
-    print('Should only get (1, 2, 1.4)')
+    logger.info('==========')
+    logger.info('Duplicate human reviews.')
+    logger.info('Should only get (1, 2, 1.4)')
     for e in wm.get_weight_changes():
-        print(e)
+        logger.info(e)
 
     pairs = [(6, 7)]
     wm.request_new_weights(pairs)
-    print('==========')
-    print('Finally, testing that we can work with the unrequested edges')
-    print('Should (6, 7, 1.0)')
+    logger.info('==========')
+    logger.info('Finally, testing that we can work with the unrequested edges')
+    logger.info('Should (6, 7, 1.0)')
     for e in wm.get_weight_changes():
-        print(e)
+        logger.info(e)
+
+
+if __name__ == '__main__':
+    test_weight_manager()

@@ -16,7 +16,7 @@ repos:
       - id: brunette
         name: brunette
         description: Run Brunette on Python code (fork of Black).
-        entry: brunette --config=setup.cfg
+        entry: brunette --config=../setup.cfg
         language: system
         types: [python]
   - repo: https://gitlab.com/pycqa/flake8

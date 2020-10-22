@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 import collections
+import logging
+
+
+logger = logging.getLogger('wbia_lca')
 
 
 class CID2LCA(object):
@@ -63,7 +67,7 @@ class CID2LCA(object):
                     for cp in a.from_cids():
                         if cp != c:
                             self.cid2lcas[cp].remove(a)
-                # print("cid2lca::remove_with_cids: deleted cid", c)
+                # logger.info("cid2lca::remove_with_cids: deleted cid", c)
         return all_lcas
 
     def is_consistent(self):
@@ -77,35 +81,37 @@ class CID2LCA(object):
         for c in self.cid2lcas:
             for a in self.cid2lcas[c]:
                 if c not in a.from_cids():
-                    print('CID2LCA.is_consistent, error found')
-                    print('LCA in set for cluster', c, 'but does not contain it')
+                    logger.info('CID2LCA.is_consistent, error found')
+                    logger.info(
+                        'LCA in set for cluster %s but does not contain it' % (c,)
+                    )
                     all_ok = False
 
                 for cp in a.from_cids():
                     if cp != c and a not in self.cid2lcas[cp]:
-                        print('CID2LCA.is_consistent, error found')
-                        print(
-                            'LCA with from_cids',
-                            a.from_cids,
-                            'is in set for cid',
-                            c,
-                            'but not for cid',
-                            cp,
+                        logger.info('CID2LCA.is_consistent, error found')
+                        logger.info(
+                            'LCA with from_cids %s is in set for cid %s but not for cid %s'
+                            % (
+                                a.from_cids,
+                                c,
+                                cp,
+                            )
                         )
                         all_ok = False
         return all_ok
 
     def print_structure(self):
         for c in sorted(self.cid2lcas.keys()):
-            print('cid', c, 'has the following LCAs:')
+            logger.info('cid %s has the following LCAs:' % (c,))
             for a in self.cid2lcas[c]:
-                print('    ', str(a))
+                logger.info('\t%s' % (a,))
 
 
 ################################  Testing code  ################################  # NOQA
 
 
-class lca_lite(object):
+class lca_lite(object):  # NOQA
     def __init__(self, hv, cids):
         self.__hash_value = hv
         self.m_cids = cids
@@ -123,7 +129,7 @@ class lca_lite(object):
         return 'hash = %d, cids = %a' % (self.__hash_value, self.m_cids)
 
 
-def test_all():
+def test_cid_to_lca():
     lcas = [
         lca_lite(747, [0, 1]),
         lca_lite(692, [1, 2]),
@@ -139,58 +145,60 @@ def test_all():
     for a in lcas:
         c2a.add(a)
 
-    print('len (should be )', len(c2a.cid2lcas))
-    print('keys (should be [0, 1, 2, 4, 5, 7, 8, 9])', sorted(c2a.cid2lcas.keys()))
-
-    lca_set = c2a.containing_all_cids([1, 2])
-    print('containg_all_cids [1,2] (should be just 692):')
-    for a in lca_set:
-        print('    ', str(a))
-
-    lca_set = c2a.containing_all_cids([2])
-    print('containg_all_cids [2] (should be 692, 710, 826):')
-    for a in lca_set:
-        print('    ', str(a))
-
-    lca_set = c2a.containing_all_cids([1, 5])
-    print('containg_all_cids [1, 5] (should be len(0)):', len(lca_set))
-
-    lca_set = c2a.containing_all_cids([1, 99])
-    print('containg_all_cids [1, 99] (should be len(0)):', len(lca_set))
-
-    print('========\nDictionary structure')
-    if c2a.is_consistent():
-        print('All consistent.')
-    c2a.print_structure()
-    lca_set = c2a.remove_with_cids([2, 5])
-    print('after removing [2, 5] returned LCAs should be 124, 692, 710, 826')
-    for a in lca_set:
-        print('    ', str(a))
-
-    print('========\nDictionary structure')
-    if c2a.is_consistent():
-        print('All consistent.')
-    c2a.print_structure()
-    lca_set = c2a.remove_with_cids([1])
-    print('after removing [1] returned LCAs should be 381, 747')
-    for a in lca_set:
-        print('    ', str(a))
-
-    print('========\nDictionary structure')
-    if c2a.is_consistent():
-        print('All consistent.')
-    c2a.print_structure()
-    lca_set = c2a.remove_with_cids([4])
-    print(
-        'after removing [4]; should have returned the empty set, did it? ',
-        len(lca_set) == 0,
+    logger.info('len (should be ) %s' % (len(c2a.cid2lcas),))
+    logger.info(
+        'keys (should be [0, 1, 2, 4, 5, 7, 8, 9]) %s' % (sorted(c2a.cid2lcas.keys()),)
     )
 
-    print('========\nDictionary structure (final)')
+    lca_set = c2a.containing_all_cids([1, 2])
+    logger.info('containg_all_cids [1,2] (should be just 692):')
+    for a in lca_set:
+        logger.info('\t%s' % (a,))
+
+    lca_set = c2a.containing_all_cids([2])
+    logger.info('containg_all_cids [2] (should be 692, 710, 826):')
+    for a in lca_set:
+        logger.info('\t%s' % (a,))
+
+    lca_set = c2a.containing_all_cids([1, 5])
+    logger.info('containg_all_cids [1, 5] (should be len(0)): %s' % (len(lca_set),))
+
+    lca_set = c2a.containing_all_cids([1, 99])
+    logger.info('containg_all_cids [1, 99] (should be len(0)): %s' % (len(lca_set),))
+
+    logger.info('========\nDictionary structure')
     if c2a.is_consistent():
-        print('All consistent.')
+        logger.info('All consistent.')
+    c2a.print_structure()
+    lca_set = c2a.remove_with_cids([2, 5])
+    logger.info('after removing [2, 5] returned LCAs should be 124, 692, 710, 826')
+    for a in lca_set:
+        logger.info('\t%s' % (a,))
+
+    logger.info('========\nDictionary structure')
+    if c2a.is_consistent():
+        logger.info('All consistent.')
+    c2a.print_structure()
+    lca_set = c2a.remove_with_cids([1])
+    logger.info('after removing [1] returned LCAs should be 381, 747')
+    for a in lca_set:
+        logger.info('\t%s' % (a,))
+
+    logger.info('========\nDictionary structure')
+    if c2a.is_consistent():
+        logger.info('All consistent.')
+    c2a.print_structure()
+    lca_set = c2a.remove_with_cids([4])
+    logger.info(
+        'after removing [4]; should have returned the empty set, did it? %s'
+        % (len(lca_set) == 0,)
+    )
+
+    logger.info('========\nDictionary structure (final)')
+    if c2a.is_consistent():
+        logger.info('All consistent.')
     c2a.print_structure()
 
 
 if __name__ == '__main__':
-    test_all()
+    test_cid_to_lca()

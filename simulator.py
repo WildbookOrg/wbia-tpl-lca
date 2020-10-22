@@ -12,10 +12,11 @@ from wbia_lca import cluster_tools as ct
 from wbia_lca import exp_scores as es
 from wbia_lca import weighter as wgtr
 
-logger = logging.getLogger()
+
+logger = logging.getLogger('wbia_lca')
 
 
-class simulator(object):
+class simulator(object):  # NOQA
     """
     Important note (2019-08-01): when human-weighted edges are added, only the
     latest edge is currently "remembered" in this graph.  This could
@@ -246,7 +247,7 @@ class simulator(object):
         if self.verify_steps_until_return < 0:
             self.verify_steps_until_return = random.randint(0, self.max_delay_steps)
             """
-            print(
+            logger.info(
                 'sim::verify_request: first delay will be %d steps'
                 % self.verify_steps_until_return
             )
@@ -437,7 +438,14 @@ def find_np_ratio(gamma_shape, gamma_scale, ranker_per_node, prob_match):
     mode = 1 + (gamma_shape - 1) * gamma_scale
     std_dev = m.sqrt(gamma_shape) * gamma_scale
 
-    logger.info('mean', mean, ' mode', mode, ' std_dev %.2f' % std_dev)
+    logger.info(
+        'mean %s mode %s std_dev %.2f'
+        % (
+            mean,
+            mode,
+            std_dev,
+        )
+    )
 
     limit = int(mean + 10 * std_dev)
 
@@ -478,7 +486,7 @@ def find_np_ratio(num_clusters, nodes_per_cluster, ranker_per_node,
     correct match is formed between a pair of nodes that should match,
     find the expected ratio of negative edges to positive edges.
     '''
-    print('nodes_per_cluster', nodes_per_cluster)
+    logger.info('nodes_per_cluster %s' % (nodes_per_cluster, ))
     lmbd = 1 / (nodes_per_cluster - 1)
     limit = 1 + round(15 / lmbd)
 
@@ -489,10 +497,10 @@ def find_np_ratio(num_clusters, nodes_per_cluster, ranker_per_node,
         prs = min(prs, i*ranker_per_node)
         pos = p * prs
         pos_per_cluster += pos
-        print(i, prs, pos, pos_per_cluster)
+        logger.info(i, prs, pos, pos_per_cluster)
 
     neg_per_cluster = nodes_per_cluster * ranker_per_node - pos_per_cluster
-    print("pos_per_cluster:", pos_per_cluster, ", neg_per_cluster:", neg_per_cluster)
+    logger.info("pos_per_cluster:", pos_per_cluster, ", neg_per_cluster:", neg_per_cluster)
     ratio = neg_per_cluster / pos_per_cluster
     return ratio
 """
@@ -504,23 +512,23 @@ def test_find_np_ratio():
     ranker_per_node = 10
     prob_match = 0.85
     ratio = find_np_ratio(gamma_shape, gamma_scale, ranker_per_node, prob_match)
-    print('Final np ratio is %1.4f' % ratio)
+    logger.info('Final np ratio is %1.4f' % ratio)
 
     gamma_shape = 1
     gamma_scale = 3
     ranker_per_node = 15
     prob_match = 0.85
     ratio = find_np_ratio(gamma_shape, gamma_scale, ranker_per_node, prob_match)
-    print('Final np ratio is %1.4f' % ratio)
+    logger.info('Final np ratio is %1.4f' % ratio)
 
 
-def test_after_gen(sim):
-    print(
+def ensure_after_gen(sim, params):
+    logger.info(
         '\n================================\n'
         'Testing the generated simulator:\n'
         '================================'
     )
-    print(
+    logger.info(
         'Number of clusters:  should be %d is %d'
         % (sim.params['num_clusters'], len(sim.gt_clustering))
     )
@@ -529,25 +537,25 @@ def test_after_gen(sim):
     num_nodes_in_node2cid = len(sim.gt_node2cid)
     num_nodes_in_clusters = sum([len(c) for c in sim.gt_clustering.values()])
 
-    print(
+    logger.info(
         'All three numbers of nodes should be equal:\n '
-        '    %d in graph\n' % num_nodes_in_graph,
-        '    %d in node2cid\n' % num_nodes_in_node2cid,
-        '    %d in cluster' % num_nodes_in_clusters,
+        + '    %d in graph\n' % (num_nodes_in_graph,)
+        + '    %d in node2cid\n' % (num_nodes_in_node2cid,)
+        + '    %d in cluster' % (num_nodes_in_clusters,)
     )
 
     """
     All node_matches sets are the same length, and that length is the params values.
     """
     num_from_ranker = params['num_from_ranker']
-    print('Each node should have %d matches from the ranker' % num_from_ranker)
+    logger.info('Each node should have %d matches from the ranker' % num_from_ranker)
     all_same = True
     for node, matches in sim.ranker_matches.items():
         if len(matches) != num_from_ranker:
             all_same = False
-            print('Error: node %s has %d matches' % (node, len(matches)))
+            logger.info('Error: node %s has %d matches' % (node, len(matches)))
     if all_same:
-        print('Yes. All have the correct number of ranker matches')
+        logger.info('Yes. All have the correct number of ranker matches')
 
     """
     Examine the distribution of true and false edges
@@ -574,18 +582,18 @@ def test_after_gen(sim):
                     else:
                         zero_neg += 1
 
-    print(
+    logger.info(
         'tp %d    fp %d\nfn %d    tn %d\nzero_pos %d  zero_neg %d'
         % (tp, fp, fn, tn, zero_pos, zero_neg)
     )
-    print('actual ratio = %1.2f' % ((fp + tn + zero_neg) / (tp + fn + zero_pos)))
-    print('actual number of xx positive pairs', (tp + fn + zero_pos))
-    print('actual number of xx negative pairs', (tn + fp + zero_neg))
+    logger.info('actual ratio = %1.2f' % ((fp + tn + zero_neg) / (tp + fn + zero_pos)))
+    logger.info('actual number of xx positive pairs %s' % (tp + fn + zero_pos,))
+    logger.info('actual number of xx negative pairs %s' % (tn + fp + zero_neg,))
     """
     exp_neg, exp_pos = sim.wgtr.eval_overlap()
-    print("Correct match fraction with positive weight = %5.3f, expected = %5.3f"
+    logger.info("Correct match fraction with positive weight = %5.3f, expected = %5.3f"
           % ((tp / (tp+fn)), exp_pos))
-    print("Incorrect match fraction with negative weight = %5.3f, expected = %5.3f"
+    logger.info("Incorrect match fraction with negative weight = %5.3f, expected = %5.3f"
           % ((tn / (tn+fp)), exp_neg))
     """
 
@@ -597,15 +605,15 @@ def test_after_gen(sim):
     for c in sim.gt_clustering.values():
         nc = len(c)
         num_possible += nc * (nc - 1) // 2
-    print(
+    logger.info(
         'Fraction of true edges generated = %1.3f, expected = %1.3f'
         % (num_correct_edges / num_possible, sim.params['p_ranker_correct'])
     )
 
     avg_per_cluster = len(sim.G.nodes()) / len(sim.gt_clustering)
     exp_per_cluster = 1 + sim.params['gamma_shape'] * sim.params['gamma_scale']
-    print('Average cluster size is %1.2f' % avg_per_cluster)
-    print('Expected cluster size is %1.2f' % exp_per_cluster)
+    logger.info('Average cluster size is %1.2f' % avg_per_cluster)
+    logger.info('Expected cluster size is %1.2f' % exp_per_cluster)
 
 
 def get_positive_missing(sim, num_requested):
@@ -642,7 +650,7 @@ def get_negative_missing(sim, num_requested):
     return neg_missing
 
 
-def test_verify(sim):
+def ensure_verify(sim, params):
     """
     1. Test abilty to ignore edges already in the graph.
     """
@@ -658,10 +666,10 @@ def test_verify(sim):
         pairs.append(pr)
     sim.verify_request(pairs)
     edges = sim.verify_result()
-    print('test_verify:')
-    print(
-        'After adding edges already in the graph, num returned should be 0. ' 'It is',
-        len(edges),
+    logger.info('test_verify:')
+    logger.info(
+        'After adding edges already in the graph, num returned should be 0. It is %s'
+        % (len(edges),)
     )
 
     """
@@ -672,15 +680,17 @@ def test_verify(sim):
         pos_missing = get_positive_missing(sim, tries + 1)
         neg_missing = get_negative_missing(sim, tries + 2)
         missing = pos_missing + neg_missing
-        print('Verify request / results try', tries)
-        print('Num pos_missing (should be 3) is', len(pos_missing))
-        print('Num neg_missing (should be 2) is', len(neg_missing))
+        logger.info('Verify request / results try %s' % (tries,))
+        logger.info('Num pos_missing (should be 3) is %s' % (len(pos_missing),))
+        logger.info('Num neg_missing (should be 2) is %s' % (len(neg_missing),))
 
         #  Make the request for weights for these edges. This does not get them
         #  yet.  Make sure though that it has set the delay.
         sim.verify_request(missing)
         steps_until = sim.verify_steps_until_return
-        print('Delay steps until return should be non-negative and is', steps_until)
+        logger.info(
+            'Delay steps until return should be non-negative and is %s' % (steps_until,)
+        )
 
         # For the given number of steps, the result should be empty
         has_error = False
@@ -689,27 +699,36 @@ def test_verify(sim):
             edges = sim.verify_result()
             if len(edges) > 0:
                 has_error = True
-                print(
-                    'Error: with ',
-                    steps_until,
-                    'iterations remaining',
-                    'returned',
-                    len(edges),
-                    'edges.',
+                logger.info(
+                    'Error: with %s iterations remaining returned %s edges.'
+                    % (
+                        steps_until,
+                        len(edges),
+                    )
                 )
 
         if not has_error:
-            print('Successfully iterated through the delay without returning edges.')
+            logger.info(
+                'Successfully iterated through the delay without returning edges.'
+            )
 
         #  This time it should return edges.
         edges = sim.verify_result()
-        print('Requested missing edges: positive', pos_missing, ' negative:', neg_missing)
-        print('returned are', edges)
+        logger.info(
+            'Requested missing edges: positive %s negative: %s'
+            % (
+                pos_missing,
+                neg_missing,
+            )
+        )
+        logger.info('returned are %s' % (edges,))
         if len(missing) != len(edges):
-            print('Error: incorrect number returned')
+            logger.info('Error: incorrect number returned')
         else:
-            print('Correct number returned')
-        print('sim.verify_edges should be len 0, and it is', len(sim.verify_edges))
+            logger.info('Correct number returned')
+        logger.info(
+            'sim.verify_edges should be len 0, and it is %s' % (len(sim.verify_edges),)
+        )
 
 
 def get_positive_for_human(sim, num_pos):
@@ -749,25 +768,28 @@ def get_negative_for_human(sim, num_neg):
     return neg
 
 
-def test_human(sim):
-    print('Test simulation of human')
+def ensure_human(sim, params):
+    logger.info('Test simulation of human')
     for tries in range(2):
-        print('try', tries)
-        print('Test human request / result try', tries)
+        logger.info('try %s' % (tries,))
+        logger.info('Test human request / result try %s' % (tries,))
         pos_for_human = get_positive_for_human(sim, tries + 2)
         neg_for_human = get_negative_for_human(sim, tries + 1)
         for_human = pos_for_human + neg_for_human
-        print(for_human)
+        logger.info(for_human)
         sim.human_request(for_human)
 
-        print(
-            'Requested edges from human: positive',
-            pos_for_human,
-            ' negative:',
-            neg_for_human,
+        logger.info(
+            'Requested edges from human: positive %s negative: %s'
+            % (
+                pos_for_human,
+                neg_for_human,
+            )
         )
         steps_until = sim.human_steps_until_return
-        print('Delay steps until return should be non-negative and is', steps_until)
+        logger.info(
+            'Delay steps until return should be non-negative and is %s' % (steps_until,)
+        )
 
         # For the given number of steps, the result should be empty
         has_error = False
@@ -776,32 +798,39 @@ def test_human(sim):
             edges = sim.human_result()
             if len(edges) > 0:
                 has_error = True
-                print(
-                    'Error: with ',
-                    steps_until,
-                    'iterations remaining',
-                    'returned',
-                    len(edges),
-                    'edges.',
+                logger.info(
+                    'Error: with %s iterations remaining returned %s edges.'
+                    % (
+                        steps_until,
+                        len(edges),
+                    )
                 )
 
         if not has_error:
-            print('Successfully iterated through the delay without returning edges.')
+            logger.info(
+                'Successfully iterated through the delay without returning edges.'
+            )
 
         #  This time it should return edges.
         edges = sim.human_result()
-        print(
-            'Requested human edges: positive', pos_for_human, ' negative:', neg_for_human
+        logger.info(
+            'Requested human edges: positive %s negative: %s'
+            % (
+                pos_for_human,
+                neg_for_human,
+            )
         )
-        print('returned are', edges)
+        logger.info('returned are %s' % (edges,))
         if len(for_human) != len(edges):
-            print('Error: incorrect number returned')
+            logger.info('Error: incorrect number returned')
         else:
-            print('Correct number returned')
-        print('sim.human_edges should be len 0, and it is', len(sim.human_edges))
+            logger.info('Correct number returned')
+        logger.info(
+            'sim.human_edges should be len 0, and it is %s' % (len(sim.human_edges),)
+        )
 
 
-if __name__ == '__main__':
+def test_simulator():
     test_find_np_ratio()
 
     params = dict()
@@ -822,7 +851,8 @@ if __name__ == '__main__':
     #
     params['gamma_shape'] = 1.5
     params['gamma_scale'] = 3
-    num_per_cluster = params['gamma_scale'] * params['gamma_shape'] + 1
+    # num_per_cluster = params['gamma_scale'] * params['gamma_shape'] + 1
+
     params['p_ranker_correct'] = 0.9
     params['p_human_correct'] = 0.98
     params['num_from_ranker'] = 10
@@ -833,41 +863,51 @@ if __name__ == '__main__':
         params['num_from_ranker'],
         params['p_ranker_correct'],
     )
-    print('np_ratio = %1.3f' % np_ratio)
+    logger.info('np_ratio = %1.3f' % np_ratio)
 
     scorer = es.exp_scores.create_from_error_frac(params['pos_error_frac'], np_ratio)
-    wgtr = wgtr.weighter(scorer, human_prob=params['p_human_correct'])
+    wgtr_ = wgtr.weighter(scorer, human_prob=params['p_human_correct'])
 
-    sim = simulator(params, wgtr)
+    sim = simulator(params, wgtr_)
     sim.generate()
 
     r_leng = len(sim.r_clustering)
     gt_leng = len(sim.gt_clustering)
-    print('gt length', gt_leng, 'reachable length', r_leng)
+    logger.info(
+        'gt length %s reachable length %s'
+        % (
+            gt_leng,
+            r_leng,
+        )
+    )
 
     """
-    print("\nClusters")
+    logger.info("\nClusters")
     for cid in sim.gt_clustering:
-        print("%3d: %a" % (cid, sim.gt_clusters[cid]))
+        logger.info("%3d: %a" % (cid, sim.gt_clusters[cid]))
 
-    print("Length gt_node2cid %d, should be equal to graph nodes %d" \
+    logger.info("Length gt_node2cid %d, should be equal to graph nodes %d" \
           % (len(sim.gt_node2cid), len(sim.G.nodes())))
 
-    print("\nRanker matches\n")
+    logger.info("\nRanker matches\n")
     for nid in sim.ranker_matches:
-        print("Node %s has matches:" %nid, end=' ')
+        logger.info("Node %s has matches:" % (nid, ), end=' ')
         for m in sim.ranker_matches[nid]:
-            print(m, end=' ')
-        print()
+            logger.info(m, end=' ')
+        logger.info()
 
-    print("\nEdges for each node (ranker matches in each direction!)")
+    logger.info("\nEdges for each node (ranker matches in each direction!)")
     for nid in sorted(sim.G.nodes()):
-        print("Node ", nid)
+        logger.info("Node ", nid)
         for m in sim.G[nid]:
             n0, n1 = min(nid, m), max(nid, m)
-            print("(%a, %a, %1.4f)" % (n0, n1, sim.G[nid][m]['weight']))
+            logger.info("(%a, %a, %1.4f)" % (n0, n1, sim.G[nid][m]['weight']))
     """
 
-    test_after_gen(sim)
-    test_verify(sim)
-    test_human(sim)
+    ensure_after_gen(sim, params)
+    ensure_verify(sim, params)
+    ensure_human(sim, params)
+
+
+if __name__ == '__main__':
+    test_simulator()

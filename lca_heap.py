@@ -9,9 +9,13 @@ This is implemented using an auxiliary dictionary that associates a heap index
 with each LCA. These indices are updated as the LCA is moved through the heap
 during percolate up and percolate down.
 """
+import logging
 
 
-class lca_heap(object):
+logger = logging.getLogger('wbia_lca')
+
+
+class lca_heap(object):  # NOQA
     def __init__(self):
         self.heap = []
         self.lca2index = dict()
@@ -50,8 +54,8 @@ class lca_heap(object):
         """
         """
         a.pprint()
-        print("len of index", len(self.lca2index))
-        print("len of heap", len(self.heap))
+        logger.info("len of index", len(self.lca2index))
+        logger.info("len of heap", len(self.heap))
         """
         assert a in self.lca2index
 
@@ -151,12 +155,12 @@ class lca_heap(object):
         """
         Print the LCA heap vector and dictionary.
         """
-        print('Here is the heap vector')
+        logger.info('Here is the heap vector')
         for i, lca in enumerate(self.heap):
-            print('    %d: %s' % (i, str(lca)))
-        print('Here is the dictionary')
+            logger.info('    %d: %s' % (i, str(lca)))
+        logger.info('Here is the dictionary')
         for k, v in self.lca2index.items():
-            print('    %s: %d' % (str(k), v))
+            logger.info('    %s: %d' % (str(k), v))
 
     def is_consistent(self):
         """
@@ -165,7 +169,7 @@ class lca_heap(object):
         is_ok = True
         if len(self.heap) != len(self.lca2index):
             is_ok = False
-            print(
+            logger.info(
                 'is_consistent: heap is len',
                 len(self.heap),
                 ' while lca2index is len',
@@ -175,7 +179,7 @@ class lca_heap(object):
         # Make sure each index is in the heap
         for i, lca in enumerate(self.heap):
             if lca not in self.lca2index:
-                print(
+                logger.info(
                     'lca at location %d with heap value %d not in lca2index'
                     % (i, lca.__heap)
                 )
@@ -183,12 +187,12 @@ class lca_heap(object):
 
         # Make sure each lca2index entry is unique
         if len(self.lca2index.values()) != len(set(self.lca2index.values())):
-            print('Duplicated indices in lca2index values')
+            logger.info('Duplicated indices in lca2index values')
             is_ok = False
 
         # Make sure all indices are in range
         if not all([0 <= i < len(self.heap) for i in self.lca2index.values()]):
-            print('At least one index out of range in self.lca2index.values')
+            logger.info('At least one index out of range in self.lca2index.values')
             is_ok = False
 
         # Finally test to see if the ordering property is maintained
@@ -197,7 +201,7 @@ class lca_heap(object):
             lchild = 2 * i + 1
             rchild = lchild + 1
             if self.heap[i].delta_score() < self.heap[lchild].delta_score():
-                print(
+                logger.info(
                     'Heap index %d has score %1.1f less than left child %d with score %1.1f'
                     % (
                         i,
@@ -212,7 +216,7 @@ class lca_heap(object):
                 rchild < len(self.heap)
                 and self.heap[i].delta_score() < self.heap[lchild].delta_score()
             ):
-                print(
+                logger.info(
                     'Heap index %d has score %1.1f, less than right child %d with score %1.1f'
                     % (
                         i,
@@ -224,13 +228,13 @@ class lca_heap(object):
                 is_ok = False
 
         if not is_ok:
-            print('Output of inconsistent data structure')
+            logger.info('Output of inconsistent data structure')
             self.print_structure()
 
         return is_ok
 
 
-class lca_lite(object):
+class lca_lite(object):  # NOQA
     """
     A version of the LCA object used for testing. It only has a hash value and a
     delta score.
@@ -250,10 +254,10 @@ class lca_lite(object):
         return 'hash = %d, delta_score = %1.1f' % (self.__hash, self.m_delta_score)
 
     def pprint(self):
-        print(str(self))
+        logger.info(str(self))
 
 
-def test_all():
+def test_lca_heap():
     h = lca_heap()
 
     v = [
@@ -273,47 +277,49 @@ def test_all():
         h.insert(a)
         if not h.is_consistent():
             found_error = True
-            print('Breaking on inconsistency')
+            logger.info('Breaking on inconsistency')
             break
 
     if not found_error:
-        print('After %d successful inserts the heap looks like' % len(h))
+        logger.info('After %d successful inserts the heap looks like' % len(h))
         h.print_structure()
 
-    print('Top of queue should be (459, 9.4) and is %s' % str(h.top_Q()))
+    logger.info('Top of queue should be (459, 9.4) and is %s' % str(h.top_Q()))
     remove1 = lca_lite(585, 8.5)
     h.insert(remove1)
 
     h.pop_Q()
-    print('After pop_Q')
+    logger.info('After pop_Q')
     if not h.is_consistent():
-        print('Inconsistent')
+        logger.info('Inconsistent')
     else:
-        print('Consistent. Here is queue.')
+        logger.info('Consistent. Here is queue.')
         h.print_structure()
-        print('top value should have delta_score 8.9.  It has %s' % str(h.get_all()[0]))
+        logger.info(
+            'top value should have delta_score 8.9.  It has %s' % str(h.get_all()[0])
+        )
 
     h.insert(lca_lite(183, 8.3))
-    print(
+    logger.info(
         'Trying two remove operations; one should trigger percolate up and the other percolate down'
     )
     h.remove(remove0)
     h.remove(remove1)
     if not h.is_consistent():
-        print('Inconsistent')
+        logger.info('Inconsistent')
     else:
-        print('Consistent. Here is queue.')
+        logger.info('Consistent. Here is queue.')
         h.print_structure()
 
     while not len(h) == 0:
         h.pop_Q()
         if not h.is_consistent():
-            print('Inconsistent')
+            logger.info('Inconsistent')
             break
 
-    print('Emptied the queue')
+    logger.info('Emptied the queue')
 
-    print('Running special inserts to trigger more percolate up calls in remove.')
+    logger.info('Running special inserts to trigger more percolate up calls in remove.')
     v = [
         lca_lite(123, 19),
         lca_lite(459, 16),
@@ -330,17 +336,17 @@ def test_all():
     for a in v:
         h.insert(a)
         if not h.is_consistent():
-            print('Inconsistent during insert')
+            logger.info('Inconsistent during insert')
             break
     h.remove(remove0)
     h.remove(remove1)
     if not h.is_consistent():
-        print('Inconsistent during remove')
+        logger.info('Inconsistent during remove')
     else:
-        print('All consistent during the remove examples')
+        logger.info('All consistent during the remove examples')
 
     h.clear()
-    print('Running a bunch more inserts and removes.')
+    logger.info('Running a bunch more inserts and removes.')
     v = [
         lca_lite(123, 1.0),
         lca_lite(459, 9.4),
@@ -360,22 +366,22 @@ def test_all():
     for a in v:
         h.insert(a)
         if not h.is_consistent():
-            print('Inconsistent during insert')
+            logger.info('Inconsistent during insert')
             error_found = True
             break
     if not error_found:
-        print('No errors')
+        logger.info('No errors')
 
     error_found = False
     for a in v:
         h.remove(a)
         if not h.is_consistent():
-            print('Inconsistent during remove')
+            logger.info('Inconsistent during remove')
             error_found = True
             break
     if not error_found:
-        print('All consistent.  No errors')
+        logger.info('All consistent.  No errors')
 
 
 if __name__ == '__main__':
-    test_all()
+    test_lca_heap()

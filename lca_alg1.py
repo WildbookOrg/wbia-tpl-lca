@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 import networkx as nx
+import logging
 
 from wbia_lca import cluster_tools as ct
 from wbia_lca import test_cluster_tools as tct
+
+
+logger = logging.getLogger('wbia_lca')
 
 
 def best_shift(n0, n1, G, clustering, node2cid, trace_on=False):
@@ -15,8 +19,8 @@ def best_shift(n0, n1, G, clustering, node2cid, trace_on=False):
     frontier = set()
 
     if trace_on:
-        print('===========================')
-        print('Running best_shift:  n0 = %s, n1 = %s' % (n0, n1))
+        logger.info('===========================')
+        logger.info('Running best_shift:  n0 = %s, n1 = %s' % (n0, n1))
 
     for m in H[n0]:
         w = H[n0][m]['weight']
@@ -28,13 +32,13 @@ def best_shift(n0, n1, G, clustering, node2cid, trace_on=False):
     shift_set = {n0}
 
     if trace_on:
-        print('Initial values:')
+        logger.info('Initial values:')
 
     while len(frontier) > 0 and len(shift_set) < len(c0) - 1:
         if trace_on:
-            print('delta_s:', delta_s)
-            print('shift_set:', shift_set)
-            print('frontier:', frontier)
+            logger.info('delta_s: %s' % (delta_s,))
+            logger.info('shift_set: %s' % (shift_set,))
+            logger.info('frontier: %s' % (frontier,))
         best_delta = delta_s
         best_node = None
         for m in frontier:
@@ -45,16 +49,16 @@ def best_shift(n0, n1, G, clustering, node2cid, trace_on=False):
                 else:
                     new_delta -= 2 * H[m][m1]['weight']  # 2* since pos -> neg
             if trace_on:
-                print('m %s, new_delta %a' % (m, new_delta))
+                logger.info('m %s, new_delta %a' % (m, new_delta))
             if new_delta > best_delta:
                 best_delta = new_delta
                 best_node = m
 
         if trace_on:
-            print('.......')
+            logger.info('.......')
         if best_node is None:
             if trace_on:
-                print('best_node is None')
+                logger.info('best_node is None')
             break
 
         frontier.remove(best_node)
@@ -65,7 +69,7 @@ def best_shift(n0, n1, G, clustering, node2cid, trace_on=False):
                 frontier.add(m)
 
     if trace_on:
-        print('============')
+        logger.info('============')
     return delta_s, shift_set
 
 
@@ -86,16 +90,16 @@ def lca_alg1(curr_G, stop_at_two=False, trace_on=False):
     score = ct.clustering_score(G_prime, node2cid)
 
     if trace_on:
-        print('====================')
-        print('====  lca_alg1  ====')
-        print('====================')
+        logger.info('====================')
+        logger.info('====  lca_alg1  ====')
+        logger.info('====================')
         ct.print_structures(G_prime, clustering, node2cid, score)
 
     for e in pos_edges:
         if trace_on:
-            print('=======================')
-            print('Start of next iteration')
-            print('=======================')
+            logger.info('=======================')
+            logger.info('Start of next iteration')
+            logger.info('=======================')
         if e[0] < e[1]:
             n0, n1 = e[0], e[1]
         else:
@@ -103,24 +107,24 @@ def lca_alg1(curr_G, stop_at_two=False, trace_on=False):
         wgt = e[2]
         n0_cid, n1_cid = node2cid[n0], node2cid[n1]
         if trace_on:
-            print(
+            logger.info(
                 'n0=%s, n1=%s, wgt=%a, n0_cid=%a, n1_cid=%a'
                 % (n0, n1, wgt, n0_cid, n1_cid)
             )
 
         is_merge_allowed = not stop_at_two or len(clustering) > 2
         if trace_on:
-            print('is_merge_allowed', is_merge_allowed)
+            logger.info('is_merge_allowed %s' % (is_merge_allowed,))
 
         if n0_cid == n1_cid:
             if trace_on:
-                print('In the same cluster')
+                logger.info('In the same cluster')
             score += wgt
         elif is_merge_allowed and not ct.has_edges_between_them(
             G_prime, clustering[n0_cid], clustering[n1_cid]
         ):
             if trace_on:
-                print('Merging disjoint clusters')
+                logger.info('Merging disjoint clusters')
             sc_delta = ct.merge_clusters(n0_cid, n1_cid, G_prime, clustering, node2cid)
             assert sc_delta == 0
             score += sc_delta + wgt  # why might sc_delta be non-zero here???
@@ -129,15 +133,15 @@ def lca_alg1(curr_G, stop_at_two=False, trace_on=False):
                 ct.score_delta_after_merge(n0_cid, n1_cid, G_prime, clustering) + wgt
             )
             if trace_on:
-                print('sc_merged=%a' % sc_merged)
+                logger.info('sc_merged=%a' % sc_merged)
             sc_unmerged = -wgt
             if trace_on:
-                print('sc_unmerged=%a' % sc_unmerged)
+                logger.info('sc_unmerged=%a' % sc_unmerged)
             if len(clustering[n0_cid]) == 1 or len(clustering[n1_cid]) == 1:
                 sc_n0_to_n1 = sc_n1_to_n0 = min(sc_merged, sc_unmerged) - 9999
                 n0_to_move = n1_to_move = []
                 if trace_on:
-                    print(
+                    logger.info(
                         'not checking moving nodes because '
                         'at least one cluster is length 1'
                     )
@@ -147,13 +151,17 @@ def lca_alg1(curr_G, stop_at_two=False, trace_on=False):
                 )
                 sc_n0_to_n1 += wgt
                 if trace_on:
-                    print('sc_n0_to_n1=%a, n0_to_move=%a' % (sc_n0_to_n1, n0_to_move))
+                    logger.info(
+                        'sc_n0_to_n1=%a, n0_to_move=%a' % (sc_n0_to_n1, n0_to_move)
+                    )
                 sc_n1_to_n0, n1_to_move = best_shift(
                     n1, n0, G_prime, clustering, node2cid, trace_on=trace_on
                 )
                 sc_n1_to_n0 += wgt
                 if trace_on:
-                    print('sc_n1_to_n0=%a, n1_to_move=%a' % (sc_n1_to_n0, n1_to_move))
+                    logger.info(
+                        'sc_n1_to_n0=%a, n1_to_move=%a' % (sc_n1_to_n0, n1_to_move)
+                    )
 
             if is_merge_allowed and sc_merged >= max(
                 sc_unmerged, sc_n0_to_n1, sc_n1_to_n0
@@ -161,25 +169,29 @@ def lca_alg1(curr_G, stop_at_two=False, trace_on=False):
                 ct.merge_clusters(n0_cid, n1_cid, G_prime, clustering, node2cid)
                 score += sc_merged
                 if trace_on:
-                    print('Choose merge')
+                    logger.info('Choose merge')
             elif sc_unmerged >= max(sc_n0_to_n1, sc_n1_to_n0):
                 score += sc_unmerged
                 if trace_on:
-                    print('Choose unmerged - unchanged')
+                    logger.info('Choose unmerged - unchanged')
             elif sc_n0_to_n1 >= sc_n1_to_n0:
                 ct.shift_between_clusters(
                     n0_cid, n0_to_move, n1_cid, clustering, node2cid
                 )
                 score += sc_n0_to_n1
                 if trace_on:
-                    print('Choose to shift from cluster %a to %a' % (n0_cid, n1_cid))
+                    logger.info(
+                        'Choose to shift from cluster %a to %a' % (n0_cid, n1_cid)
+                    )
             else:
                 ct.shift_between_clusters(
                     n1_cid, n1_to_move, n0_cid, clustering, node2cid
                 )
                 score += sc_n1_to_n0
                 if trace_on:
-                    print('Choose to shift from cluster %a to %a' % (n1_cid, n0_cid))
+                    logger.info(
+                        'Choose to shift from cluster %a to %a' % (n1_cid, n0_cid)
+                    )
         G_prime.add_weighted_edges_from([e])
         if trace_on:
             ct.print_structures(G_prime, clustering, node2cid, score)
@@ -190,9 +202,9 @@ def lca_alg1(curr_G, stop_at_two=False, trace_on=False):
 def test_best_shift(trace_on=False):
     G = nx.Graph()
 
-    print('==================')
-    print('Testing best_shift')
-    print('==================')
+    logger.info('==================')
+    logger.info('Testing best_shift')
+    logger.info('==================')
 
     """
     For this test, leaving out ('c', 'e', 4), the edge to be added
@@ -221,77 +233,77 @@ def test_best_shift(trace_on=False):
     exp_delta = -12
     exp_move = ['e', 'f', 'g']
     if exp_delta != delta or set(exp_move) != set(to_move):
-        print('Test 1 (larger to smaller): FAIL')
-        print('    delta %a, to_move %a' % (delta, sorted(to_move)))
-        print("    should be -12 and ['e', 'f', 'g']")
+        logger.info('Test 1 (larger to smaller): FAIL')
+        logger.info('    delta %a, to_move %a' % (delta, sorted(to_move)))
+        logger.info("    should be -12 and ['e', 'f', 'g']")
     else:
-        print('Test 1 (larger to smaller): success')
+        logger.info('Test 1 (larger to smaller): success')
 
     n0, n1 = 'c', 'e'  # from biggest set to smaller
     delta, to_move = best_shift(n0, n1, G, clustering, node2cid)
     exp_delta = -26
     exp_move = ['c']
     if exp_delta != delta or set(exp_move) != set(to_move):
-        print('Test 2 (smaller to larger): FAIL')
-        print('delta %a, to_move %a' % (delta, sorted(to_move)))
-        print("should be -26 and ['c']")
+        logger.info('Test 2 (smaller to larger): FAIL')
+        logger.info('delta %a, to_move %a' % (delta, sorted(to_move)))
+        logger.info("should be -26 and ['c']")
     else:
-        print('Test 2 (smaller to larger): success')
+        logger.info('Test 2 (smaller to larger): success')
 
 
-def test_run_lca_alg1(G, expected_clustering, msg, stop_at_two=False, trace_on=False):
+def run_lca_alg1(G, expected_clustering, msg, stop_at_two=False, trace_on=False):
     node2cid = ct.build_node_to_cluster_mapping(expected_clustering)
     expected_score = ct.clustering_score(G, node2cid)
     clustering, score = lca_alg1(G, stop_at_two=stop_at_two, trace_on=trace_on)
     failed = False
     if not ct.same_clustering(clustering, expected_clustering):
         failed = True
-        print(msg, 'FAILED')
+        logger.info('%s FAILED' % (msg,))
     else:
-        print(msg, 'success')
+        logger.info('%s success' % (msg,))
 
     if score != expected_score:
         failed = True
-        print('score %d, expected_score %d. FAILED' % (score, expected_score))
+        logger.info('score %d, expected_score %d. FAILED' % (score, expected_score))
 
     if failed:
-        print('current structures with failure:')
+        logger.info('current structures with failure:')
         node2cid = ct.build_node_to_cluster_mapping(clustering)
         ct.print_structures(G, clustering, node2cid, score)
 
 
 def test_overall(trace_on=False):
-    print('\n================\n' 'Testing lca_alg1' '\n================')
+    logger.info('\n================\nTesting lca_alg1\n================')
 
     G = nx.Graph()
     expected_clustering = dict()
-    test_run_lca_alg1(
+    run_lca_alg1(
         G, expected_clustering, 'lca_alg1 (1) on empty graph:', trace_on=trace_on
     )
 
     G.add_nodes_from(['a'])
     expected_clustering = {0: {'a'}}
-    test_run_lca_alg1(
+    run_lca_alg1(
         G, expected_clustering, 'lca_alg1 (2) on single node graph:', trace_on=trace_on
     )
 
     G.add_nodes_from(['b'])
     expected_clustering = {0: {'a'}, 1: {'b'}}
-    test_run_lca_alg1(
+    run_lca_alg1(
         G, expected_clustering, 'lca_alg1 (3) on disjoint pair graph:', trace_on=trace_on
     )
 
     G = nx.Graph()
     G.add_weighted_edges_from([('a', 'b', 4)])
     expected_clustering = {0: {'a', 'b'}}
-    test_run_lca_alg1(
+    run_lca_alg1(
         G, expected_clustering, 'lca_alg1 (4) on one edge graph:', trace_on=trace_on
     )
 
     G = nx.Graph()
     G.add_weighted_edges_from([('a', 'b', -6)])
     expected_clustering = {0: {'a'}, 1: {'b'}}
-    test_run_lca_alg1(
+    run_lca_alg1(
         G,
         expected_clustering,
         'lca_alg1 (5) on one (negative) edge graph:',
@@ -314,7 +326,7 @@ def test_overall(trace_on=False):
         ]
     )
     expected_clustering = {0: {'a', 'b'}, 1: {'c', 'd', 'e', 'f'}}
-    test_run_lca_alg1(
+    run_lca_alg1(
         G, expected_clustering, 'lca_alg1 (6) on Figure 2 graph:', trace_on=trace_on
     )
 
@@ -337,7 +349,7 @@ def test_overall(trace_on=False):
         ]
     )
     expected_clustering = {0: {'a', 'd'}, 1: {'b', 'e'}, 2: {'c', 'f'}}
-    test_run_lca_alg1(
+    run_lca_alg1(
         G,
         expected_clustering,
         'lca_alg1 (7) on three-component graph:',
@@ -351,14 +363,14 @@ def test_overall(trace_on=False):
         2: {'f', 'g', 'j', 'k'},
         3: {'h', 'i'},
     }
-    test_run_lca_alg1(
+    run_lca_alg1(
         G, expected_clustering, 'lca_alg1 (8) on Figure 1 graph:', trace_on=trace_on
     )
 
 
 def test_no_final_merge(trace_on=False):
-    print()
-    print(
+    logger.info('')
+    logger.info(
         '=========================================\n'
         'Testing lca_alg1 with/without final merge\n'
         '========================================='
@@ -378,7 +390,7 @@ def test_no_final_merge(trace_on=False):
         ]
     )
     expected_clustering = {0: {'a', 'b', 'c'}, 1: {'d', 'e', 'f'}}
-    test_run_lca_alg1(
+    run_lca_alg1(
         G,
         expected_clustering,
         '(1) No final merge allowed:',
@@ -387,7 +399,7 @@ def test_no_final_merge(trace_on=False):
     )
 
     expected_clustering = {0: {'a', 'b', 'c', 'd', 'e', 'f'}}
-    test_run_lca_alg1(
+    run_lca_alg1(
         G,
         expected_clustering,
         '(2) Final merge allowed:',

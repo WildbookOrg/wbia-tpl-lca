@@ -14,12 +14,14 @@ Negative weight edges between clusters are shown in dotted red.
 Weights are drawn on an edges.
 """
 
-
 import logging
 import math as m
 import matplotlib.pyplot as plt
 import networkx as nx
 import random
+
+
+logger = logging.getLogger('wbia_lca')
 
 
 def random_hex_rgb():
@@ -45,7 +47,7 @@ def add_random_offset(pos, delta):
         pos[e][1] += dy
 
 
-class draw_lca(object):
+class draw_lca(object):  # NOQA
     def __init__(self, prefix, ext='.png', max_iterations=1000):
         self.prefix = prefix
         n = m.ceil(m.log10(max_iterations))
@@ -118,4 +120,4 @@ class draw_lca(object):
 
         logger = logging.getLogger()
         logger.debug('Wrote iteration graph ' + out_name)
-        print(out_name)
+        logger.info(out_name)

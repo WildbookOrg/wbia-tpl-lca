@@ -1,7 +1,12 @@
 # -*- coding: utf-8 -*-
 import networkx as nx
+import logging
 
 from wbia_lca import cluster_tools as ct
+
+
+logger = logging.getLogger('wbia_lca')
+
 
 """
 
@@ -21,19 +26,19 @@ structure.  Add to the accumulated results.
 """
 
 
-class baseline(object):
+class baseline(object):  # NOQA
     def __init__(self, sim):
         self.sim = sim
         self.nodes = sim.G_orig.nodes
-        # print("\n========")
-        # print("In baseline.__init__:")
+        # logger.info("\n========")
+        # logger.info("In baseline.__init__:")
         edges = [e for e in sim.G_orig.edges.data('weight')]
         edges = [(min(e[0], e[1]), max(e[0], e[1]), e[2]) for e in edges]
         self.edges_by_abs_wgt = sorted(edges, key=lambda e: abs(e[2]))
-        # print("edges_by_abs_wgt:", self.edges_by_abs_wgt)
+        # logger.info("edges_by_abs_wgt:", self.edges_by_abs_wgt)
         prs = [(min(e[0], e[1]), max(e[0], e[1])) for e in edges]
         self.dict_human = {pr: sim.gen_human_wgt(pr) for pr in prs}
-        # print("dict_human:", self.dict_human)
+        # logger.info("dict_human:", self.dict_human)
         self.gt_results = []
         self.r_results = []
 
@@ -42,9 +47,9 @@ class baseline(object):
         human_prs = [(e[0], e[1]) for e in self.edges_by_abs_wgt[:num_human]]
         human_edges = [(pr[0], pr[1], self.dict_human[pr]) for pr in human_prs]
         human_edges = [e for e in human_edges if e[2] > 0]
-        # print("\n--------")
-        # print("orig_edges:", orig_edges)
-        # print("human_edges:", human_edges)
+        # logger.info("\n--------")
+        # logger.info("orig_edges:", orig_edges)
+        # logger.info("human_edges:", human_edges)
         edges = orig_edges + human_edges
         new_G = nx.Graph()
         new_G.add_nodes_from(self.nodes)
@@ -53,7 +58,7 @@ class baseline(object):
         idx = 0
         clustering = dict()
         for cc in nx.connected_components(new_G):
-            # print("idx =", idx, "cc =", list(cc))
+            # logger.info("idx =", idx, "cc =", list(cc))
             clustering[idx] = set(cc)
             idx += 1
 

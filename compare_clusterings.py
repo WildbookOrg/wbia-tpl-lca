@@ -4,6 +4,10 @@ import logging
 
 from wbia_lca import cluster_tools as ct
 
+
+logger = logging.getLogger('wbia_lca')
+
+
 """
 Generates the comparison of the clusterings before and after the run of
 the graph algorithm, producing the main interpretation of the graph
@@ -66,7 +70,7 @@ subset of nodes from a previous cluster. New nodes may be added.
 """
 
 
-class clustering_change(object):
+class clustering_change(object):  # NOQA
     def __init__(self, old_clustering, new_clustering):
         self.old_clustering = old_clustering
         self.new_clustering = new_clustering
@@ -114,11 +118,11 @@ class clustering_change(object):
         logging.info('Change type %a' % self.change_type)
 
     def print_it(self):
-        print('old_clustering', self.old_clustering)
-        print('new_clustering', self.new_clustering)
-        print('query nodes', self.query_nodes)
-        print('removed_nodes', self.removed_nodes)
-        print('change_type', self.change_type)
+        logger.info('old_clustering %s' % (self.old_clustering,))
+        logger.info('new_clustering %s' % (self.new_clustering,))
+        logger.info('query nodes %s' % (self.query_nodes,))
+        logger.info('removed_nodes %s' % (self.removed_nodes,))
+        logger.info('change_type %s' % (self.change_type,))
 
 
 def bipartite_cc(from_visited, from_nbrs, to_visited, to_nbrs, from_nodes):
@@ -145,22 +149,20 @@ def find_changes(old_clustering, old_n2c, new_clustering, new_n2c):
     """
     Main function to find changes between an old and new clustering as
     described above.
-    """
 
-    """
     1. Form a bipartite graph between the ids in the old clustering and
     the ids in the new clustering. Edges are generated between old
     and new clusters that intersect.
     """
     old_nbrs = dict()
     for oc, nodes in old_clustering.items():
-        # print(oc, nodes)
+        # logger.info(oc, nodes)
         old_nbrs[oc] = {new_n2c[n] for n in nodes if n in new_n2c}
-    # print(old_nbrs)
+    # logger.info(old_nbrs)
     new_nbrs = dict()
     for nc, nodes in new_clustering.items():
         new_nbrs[nc] = {old_n2c[n] for n in nodes if n in old_n2c}
-    # print(new_nbrs)
+    # logger.info(new_nbrs)
 
     """
     2. Perform bipartite connected components labeling, preserving old
@@ -241,7 +243,7 @@ def test_bipartite_cc():
     old_sets = []
     new_sets = []
 
-    print('\ntest_bipartite_cc:')
+    logger.info('\ntest_bipartite_cc:')
     for o, v in old_visited.items():
         if not v:
             old_set, new_set = bipartite_cc(
@@ -254,20 +256,20 @@ def test_bipartite_cc():
     exp_new_sets = [set([0]), set([2, 3, 4]), set([5]), set([])]
 
     for i in range(len(old_sets)):
-        print('.........')
-        print('Component', i)
-        print(
+        logger.info('.........')
+        logger.info('Component: %s' % (i,))
+        logger.info(
             '%d:old %a, expected old %a, correct %a'
             % (i, old_sets[i], exp_old_sets[i], old_sets[i] == exp_old_sets[i])
         )
-        print(
+        logger.info(
             '%d:new %a, expected new %a, correct %a'
             % (i, new_sets[i], exp_new_sets[i], new_sets[i] == exp_new_sets[i])
         )
 
 
 def test_find_changes():
-    print('\ntest_find_changes:')
+    logger.info('\ntest_find_changes:')
     old_clustering = {
         0: set(['e']),
         1: set(['f', 'g']),
@@ -304,9 +306,9 @@ def test_find_changes():
     ]
     changes = find_changes(old_clustering, old_n2c, new_clustering, new_n2c)
     for c, t in zip(changes, correct_types):
-        print('..........')
+        logger.info('..........')
         c.print_it()
-        print('Correct change type?', (t == c.change_type))
+        logger.info('Correct change type? %s' % (t == c.change_type,))
 
 
 if __name__ == '__main__':

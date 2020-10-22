@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
 import argparse
 import configparser
+import logging
 import json
 import sys
 
 from wbia_lca import ga_driver
 from wbia_lca import db_interface_sim
 from wbia_lca import edge_generator_sim
+
+
+logger = logging.getLogger('wbia_lca')
 
 
 """
@@ -68,7 +72,7 @@ def form_edge_generator(request, db, wgtr):
     try:
         gen_dict = request['generator']
     except KeyError:
-        print('Information about the edge generator must be in the request.')
+        logger.info('Information about the edge generator must be in the request.')
         sys.exit(1)
 
     # Get hand-specified results from the verifier that aren't in the
@@ -113,7 +117,7 @@ def extract_requests(request, db):
     try:
         req_dict = request['query']
     except KeyError:
-        print('Information about the GA query itself must be in the request JSON.')
+        logger.info('Information about the GA query itself must be in the request JSON.')
         sys.exit(1)
 
     # 1. Get the verifier result quads (n0, n1, prob, aug_name).
@@ -133,10 +137,10 @@ def extract_requests(request, db):
         cluster_ids_to_check = req_dict['cluster_ids']
 
     for cid in cluster_ids_to_check:
-        print(cid)
-        print(cluster_ids_to_check)
+        logger.info(cid)
+        logger.info(cluster_ids_to_check)
         if not db.cluster_exists(cid):
-            print('GA request cluster id %s does not exist' % cid)
+            logger.info('GA request cluster id %s does not exist' % cid)
             raise ValueError('Cluster id does not exist')
 
     return verifier_results, human_decisions, cluster_ids_to_check
@@ -178,7 +182,7 @@ if __name__ == '__main__':
     # verification algorithm).
     ga_params, wgtrs = ga_driver.params_and_weighters(config_ini, verifier_gt)
     if len(wgtrs) > 1:
-        print('Not currently handling more than one weighter!!')
+        logger.info('Not currently handling more than one weighter!!')
         sys.exit(1)
     wgtr = wgtrs[0]
 
@@ -199,6 +203,7 @@ if __name__ == '__main__':
 
     # 6. Run it. Changes are logged.
     changes_to_review = driver.run_all_ccPICs()
+    logger.info(changes_to_review)
 
     # 7. Commit changes. Record them in the database and the log
     # file.

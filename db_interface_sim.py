@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
 import networkx as nx
+import logging
 
 from wbia_lca import cluster_tools as ct
 from wbia_lca import compare_clusterings
 from wbia_lca import db_interface
+
+
+logger = logging.getLogger('wbia_lca')
+
 
 """
 Init edges
@@ -13,7 +18,7 @@ Query edges
 """
 
 
-class db_interface_sim(db_interface.db_interface):
+class db_interface_sim(db_interface.db_interface):  # NOQA
     def __init__(self, edges, clustering):
         super().__init__()
         self.edge_graph = nx.Graph()
@@ -211,24 +216,30 @@ def test_example():
 
 
 def print_edge(g, n0, n1):
-    print('(%s, %s):' % (n0, n1))
+    logger.info('(%s, %s):' % (n0, n1))
     for k, v in g[n0][n1].items():
-        print(k, v)
+        logger.info(
+            '%s %s'
+            % (
+                k,
+                v,
+            )
+        )
 
 
-if __name__ == '__main__':
+def test_db_interface_sim():
     quads, clustering = test_example()
 
     db = db_interface_sim(quads, clustering)
-    print(db.clustering)
+    logger.info(db.clustering)
 
     for n0 in db.edge_graph:
         for n1 in db.edge_graph[n0]:
             if n0 < n1:
-                print()
+                logger.info('')
                 print_edge(db.edge_graph, n0, n1)
 
-    print('\nTest get weight')
+    logger.info('\nTest get weight')
     triples = [
         ('a', 'b', 'human'),  # 22
         ('d', 'e', 'vamp'),  # -5
@@ -242,60 +253,78 @@ if __name__ == '__main__':
     num_err = 0
     for t, a in zip(triples, answers):
         res = db.get_weight(t)
-        print('Expected', a, 'and got', res)
+        logger.info(
+            'Expected %s and got %s'
+            % (
+                a,
+                res,
+            )
+        )
         if res != a:
-            print('Error')
+            logger.info('Error')
             num_err += 1
     if num_err == 0:
-        print('no errors')
+        logger.info('no errors')
 
-    print('\nTest get_cid')
+    logger.info('\nTest get_cid')
     nodes = ['a', 'e', 'z']
     answers = [1000, 1002, None]
     num_err = 0
     for n, a in zip(nodes, answers):
         res = db.get_cid(n)
-        print('Expected', a, 'and got', res)
+        logger.info(
+            'Expected %s and got %s'
+            % (
+                a,
+                res,
+            )
+        )
         if res != a:
-            print('Error')
+            logger.info('Error')
             num_err += 1
     if num_err == 0:
-        print('no errors')
+        logger.info('no errors')
 
-    print('\nTest get_nodes_in_cluster')
+    logger.info('\nTest get_nodes_in_cluster')
     cids = [1000, 1003]
     answers = [['a', 'b', 'd'], None]
     num_err = 0
     for cid, a in zip(cids, answers):
         res = db.get_nodes_in_cluster(cid)
-        print('Expected', a, 'and got', res)
+        logger.info(
+            'Expected %s and got %s'
+            % (
+                a,
+                res,
+            )
+        )
         if res != a:
-            print('Error')
+            logger.info('Error')
             num_err += 1
     if num_err == 0:
-        print('no errors')
+        logger.info('no errors')
 
-    print('\nTest edges_within_cluster')
-    print(db.edges_within_cluster(1000))
+    logger.info('\nTest edges_within_cluster')
+    logger.info(db.edges_within_cluster(1000))
 
-    print('\nTest edges_leaving_cluster')
-    print(db.edges_leaving_cluster(1002))
+    logger.info('\nTest edges_leaving_cluster')
+    logger.info(db.edges_leaving_cluster(1002))
 
-    print('\nTest edges_between_clusters')
-    print(db.edges_between_clusters(1002, 1000))
+    logger.info('\nTest edges_between_clusters')
+    logger.info(db.edges_between_clusters(1002, 1000))
 
-    print('\nTest edges_between_nodes')
-    print(db.edges_between_nodes(set(['a', 'b', 'e', 'g'])))
+    logger.info('\nTest edges_between_nodes')
+    logger.info(db.edges_between_nodes(set(['a', 'b', 'e', 'g'])))
 
-    print('\nTest edges_from_node a (should have edges to b, d, e')
-    print(db.edges_from_node('a'))
-    print('\nTest edges_from_node e (should have edges to a, c, d, g, h)')
-    print(db.edges_from_node('e'))
+    logger.info('\nTest edges_from_node a (should have edges to b, d, e')
+    logger.info(db.edges_from_node('a'))
+    logger.info('\nTest edges_from_node e (should have edges to a, c, d, g, h)')
+    logger.info(db.edges_from_node('e'))
 
-    print('\nTesting remove_nodes and commit_cluster_change')
-    print('Output the current state:')
-    print(db.clustering)
-    print(db.node_to_cid)
+    logger.info('\nTesting remove_nodes and commit_cluster_change')
+    logger.info('Output the current state:')
+    logger.info(db.clustering)
+    logger.info(db.node_to_cid)
 
     old_clustering = {1001: set(['c', 'f']), 1002: set(['e', 'g', 'h'])}
     new_clustering = {
@@ -309,17 +338,21 @@ if __name__ == '__main__':
         ),
     }
     cc = compare_clusterings.clustering_change(old_clustering, new_clustering)
-    print('Here is the cluster change object')
+    logger.info('Here is the cluster change object')
     cc.print_it()
 
-    print('Removing the node(s)')
+    logger.info('Removing the node(s)')
     db.remove_nodes(cc.removed_nodes)
 
-    print('Here is the new state')
-    print(db.clustering)
-    print(db.node_to_cid)
+    logger.info('Here is the new state')
+    logger.info(db.clustering)
+    logger.info(db.node_to_cid)
 
     db.commit_cluster_change(cc)
-    print('After committing the change, here is the final state')
-    print(db.clustering)
-    print(db.node_to_cid)
+    logger.info('After committing the change, here is the final state')
+    logger.info(db.clustering)
+    logger.info(db.node_to_cid)
+
+
+if __name__ == '__main__':
+    test_db_interface_sim()

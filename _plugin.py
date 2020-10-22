@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function
 from wbia.control import controller_inject
 from wbia.constants import CONTAINERIZED, PRODUCTION  # NOQA
 import utool as ut
+import logging
 
 import argparse
 import configparser
@@ -12,7 +12,8 @@ import sys
 from wbia_lca import ga_driver
 from wbia_lca.overall_driver import form_database, form_edge_generator, extract_requests
 
-(print, rrr, profile) = ut.inject2(__name__)
+
+logger = logging.getLogger('wbia_lca')
 
 
 _, register_ibs_method = controller_inject.make_ibs_register_decorator(__name__)
@@ -109,7 +110,7 @@ def wbia_plugin_lca_init(ibs):
     # verification algorithm).
     ga_params, wgtrs = ga_driver.params_and_weighters(config_ini, verifier_gt)
     if len(wgtrs) > 1:
-        print('Not currently handling more than one weighter!!')
+        logger.info('Not currently handling more than one weighter!!')
         sys.exit(1)
     wgtr = wgtrs[0]
 
@@ -130,7 +131,7 @@ def wbia_plugin_lca_init(ibs):
 
     # 6. Run it. Changes are logged.
     changes_to_review = driver.run_all_ccPICs()
-    print(changes_to_review)
+    logger.info(changes_to_review)
 
     # 7. Commit changes. Record them in the database and the log
     # file.
@@ -146,11 +147,8 @@ def wbia_plugin_lca_init(ibs):
 if __name__ == '__main__':
     r"""
     CommandLine:
-        python -m wbia_lca._plugin --allexamples
+        python -m wbia_lca._plugin
     """
-    import multiprocessing
+    import xdoctest
 
-    multiprocessing.freeze_support()  # for win32
-    import utool as ut  # NOQA
-
-    ut.doctest_funcs()
+    xdoctest.doctest_module(__file__)

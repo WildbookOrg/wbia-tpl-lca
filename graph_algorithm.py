@@ -12,6 +12,10 @@ from wbia_lca import lca_queues
 from wbia_lca import logging
 from wbia_lca import weight_manager as wm
 
+
+logger = logging.getLogger('wbia_lca')
+
+
 """
 Construction:
 
@@ -178,7 +182,7 @@ Invariants:
 logger = logging.getLogger()
 
 
-class graph_algorithm(object):
+class graph_algorithm(object):  # NOQA
     def __init__(self, edges, clusters, aug_names, params, aug_request_cb, aug_result_cb):
         self.params = params
         logger.info('======================================')

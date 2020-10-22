@@ -7,8 +7,10 @@ from wbia_lca import exp_scores as es
 
 #  Need to add weight according to verifier names!!!
 
+logger = logging.getLogger('wbia_lca')
 
-class weighter(object):
+
+class weighter(object):  # NOQA
     """Object whose primary function is to generate a signed edge
     weight from a verification score. This verification score is
     converted to a value from histograms of positive and negative
@@ -75,13 +77,14 @@ class weighter(object):
 
     def scale_and_trunc_(self, w0):
         """Map the weight into an integer in the range -max_weight,
-        ... max_weight."""
+        ... max_weight.
+        """
         w0 = max(-self.max_raw_weight, min(self.max_raw_weight, w0))
         w = round(w0 / self.max_raw_weight * self.max_weight)
         return w
 
 
-if __name__ == '__main__':
+def test_weighter():
     error_frac = 0.15
     neg_pos_ratio = 5.0
     scorer = es.exp_scores.create_from_error_frac(error_frac, neg_pos_ratio)
@@ -89,31 +92,31 @@ if __name__ == '__main__':
     human_prob = 0.98
     s2w = weighter(scorer, human_prob)
 
-    print('\nSampling of weights:')
+    logger.info('\nSampling of weights:')
     n = 100
     for i in range(n + 1):
         s = i / n
-        print('score: %4.2f, wgt %d' % (s, s2w.wgt(s)))
+        logger.info('score: %4.2f, wgt %d' % (s, s2w.wgt(s)))
 
     """
     n = 25
-    print("\nGenerating", n, "positives")
+    logger.info("\nGenerating", n, "positives")
     wgts = sorted([ew.random_wgt(is_match_correct=True) for i in range(n)])
     for w in wgts:
-        print(w, end=' ')
-    print()
+        logger.info(w, end=' ')
+    logger.info()
 
-    print("\nGenerating", n, "negatives")
+    logger.info("\nGenerating", n, "negatives")
     wgts = sorted([ew.random_wgt(is_match_correct=False) for i in range(n)])
     for w in wgts:
-        print(w, end=' ')
-    print()
+        logger.info(w, end=' ')
+    logger.info()
 
     marked_correct = True
-    print("\nPositive weight from human = %d" % ew.human_wgt(marked_correct))
+    logger.info("\nPositive weight from human = %d" % ew.human_wgt(marked_correct))
 
     marked_correct = False
-    print("Negative weight from human = %d" % ew.human_wgt(marked_correct))
+    logger.info("Negative weight from human = %d" % ew.human_wgt(marked_correct))
 
     is_match_correct = True
     num_samples = 1000
@@ -122,7 +125,11 @@ if __name__ == '__main__':
         wgt = ew.human_random_wgt(is_match_correct)
         if wgt != ew.max_weight:
             num_errors += 1
-    print("Positive human_random_wgt: num errors %d, num samples %d, pct errors %1.2f"
+    logger.info("Positive human_random_wgt: num errors %d, num samples %d, pct errors %1.2f"
           % (num_errors, num_samples, 100*num_errors/num_samples))
 
     """
+
+
+if __name__ == '__main__':
+    test_weighter()

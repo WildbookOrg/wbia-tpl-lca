@@ -6,8 +6,11 @@ import os
 from wbia_lca import graph_algorithm as ga
 
 
+logger = logging.getLogger('wbia_lca')
+
+
 def check_line(name, corr, actual):
-    print(
+    logger.info(
         '%s: expected %a, actual %a, correct? %a' % (name, corr, actual, corr == actual)
     )
 
@@ -53,7 +56,7 @@ def check_against_expected(d, gai):
     if 'phase' in d:
         check_line('phase', d['phase'], gai.phase)
     if 'topQ' in d and len(gai.queues.Q) == 0:
-        print('Error: expected non-empty Q:', d['topQ'])
+        logger.info('Error: expected non-empty Q: %s' % (d['topQ'],))
     elif 'topQ' in d:
         (nodes, from_score, to_score, delta) = d['topQ']
         a = gai.queues.top_Q()
@@ -67,8 +70,8 @@ def check_against_expected(d, gai):
 def test_lca_in_graph_algorithm():
     params = default_params()
     aug_names = ['vamp', 'human']
-    print('==============================')
-    print('Testing for graph construction and then LCA operations')
+    logger.info('==============================')
+    logger.info('Testing for graph construction and then LCA operations')
     initial_edges = [
         ('a', 'b', 3, 'vamp'),
         ('a', 'c', 2, 'vamp'),
@@ -87,7 +90,7 @@ def test_lca_in_graph_algorithm():
         aug_request_cb,
         aug_result_cb,
     )
-    print('Checking initial construction')
+    logger.info('Checking initial construction')
     d = {
         'lcas': 4,
         'clusters': 5,
@@ -101,12 +104,14 @@ def test_lca_in_graph_algorithm():
     check_against_expected(d, gai)
 
     gai.compute_lca_scores()
-    print('...................................\n' 'Checking after computing LCA scores')
+    logger.info(
+        '...................................\nChecking after computing LCA scores'
+    )
     del_D = {'Q': 4, 'S': 0, 'W': 0, 'topQ': (('a', 'b', 'd'), 0.0, 6.0, 6.0)}
     d.update(del_D)
     check_against_expected(d, gai)
 
-    print('...............................\n' 'Checking after applying top LCA')
+    logger.info('...............................\nChecking after applying top LCA')
     a = gai.queues.top_Q()
     gai.score += a.delta_score()
     gai.apply_lca(a)
@@ -116,7 +121,7 @@ def test_lca_in_graph_algorithm():
     check_against_expected(d, gai)
 
 
-class test_generator(object):
+class test_generator(object):  # NOQA
     def __init__(self, which_graph=0):
         self.no_calls_yet = True
         self.first_edges_to_add = None
@@ -724,9 +729,9 @@ def test_add_and_remove():
 
     for wg in graph_tests:
         tg = test_generator(wg)
-        print('===========================')
-        print('Testing graph', wg)
-        print(tg.msg)
+        logger.info('===========================')
+        logger.info('Testing graph %s' % (wg,))
+        logger.info(tg.msg)
         gai = ga.graph_algorithm(
             tg.initial_edges,
             tg.initial_clustering,
@@ -754,13 +759,13 @@ def test_add_and_remove():
         check_against_expected(tg.corr_dict, gai)
 
 
-def test_iterations_and_phase_changes(which_graph):
+def ensure_iterations_and_phase_changes(which_graph):
     params = default_params()
 
-    print('===========================================')
+    logger.info('===========================================')
     tg = test_generator(which_graph=which_graph)
-    print(tg.msg)
-    print('Test graph: ', which_graph)
+    logger.info(tg.msg)
+    logger.info('Test graph: %s' % (which_graph,))
     gai = ga.graph_algorithm(
         tg.initial_edges,
         tg.initial_clustering,
@@ -771,28 +776,28 @@ def test_iterations_and_phase_changes(which_graph):
     )
     gai.set_remove_nodes_cb(tg.remove_nodes_cb)
 
-    print('......')
-    print('After initialization')
+    logger.info('......')
+    logger.info('After initialization')
     d = tg.corr_dict.pop(0)
     check_against_expected(d, gai)
 
     iter_num = 0
     converged = False
     while len(tg.corr_dict) > 0 and not converged:
-        print('Iteration:', iter_num + 1)
+        logger.info('Iteration: %s' % (iter_num + 1,))
         d = tg.corr_dict.pop(0)
         (should_pause, iter_num, converged) = gai.run_main_loop(
             iter_num=iter_num, max_iterations=iter_num + 1
         )
         check_against_expected(d, gai)
 
-    print(nx.get_edge_attributes(gai.G, 'weight'))
+    logger.info(nx.get_edge_attributes(gai.G, 'weight'))
     if converged:
-        print('Converged')
+        logger.info('Converged')
     elif should_pause:
-        print('Error: unexpected pause.')
+        logger.info('Error: unexpected pause.')
     else:
-        print('Done with step-by-step iterations')
+        logger.info('Done with step-by-step iterations')
 
 
 def run_until_convergence(which_graph, print_graph=False):
@@ -801,10 +806,10 @@ def run_until_convergence(which_graph, print_graph=False):
         params['draw_iterations'] = True
         params['drawing_prefix'] = 'test_graph_%d' % which_graph
 
-    print('===========================================')
-    print('Test graph: ', which_graph)
+    logger.info('===========================================')
+    logger.info('Test graph: %s' % (which_graph,))
     tg = test_generator(which_graph=which_graph)
-    print(tg.msg)
+    logger.info(tg.msg)
     gai = ga.graph_algorithm(
         tg.initial_edges,
         tg.initial_clustering,
@@ -826,12 +831,12 @@ def run_until_convergence(which_graph, print_graph=False):
         check_against_expected(d, gai)
 
     if converged:
-        print('Converged')
+        logger.info('Converged')
     else:
-        print('Ended or paused without convergence!')
+        logger.info('Ended or paused without convergence!')
 
 
-if __name__ == '__main__':
+def test_graph_algorithm():
     log_fname = './test_graph_algorithm.log'
     try:
         os.remove(log_fname)
@@ -846,9 +851,13 @@ if __name__ == '__main__':
 
     test_lca_in_graph_algorithm()
     test_add_and_remove()  # which_grap in range 0..10
-    test_iterations_and_phase_changes(which_graph=10)
-    test_iterations_and_phase_changes(which_graph=11)
+    ensure_iterations_and_phase_changes(which_graph=10)
+    ensure_iterations_and_phase_changes(which_graph=11)
     run_until_convergence(which_graph=12)
     run_until_convergence(which_graph=13)
     run_until_convergence(which_graph=14, print_graph=True)
     run_until_convergence(which_graph=15)
+
+
+if __name__ == '__main__':
+    test_graph_algorithm()

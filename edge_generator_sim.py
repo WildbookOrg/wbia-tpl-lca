@@ -4,10 +4,11 @@ import logging
 from wbia_lca import cluster_tools as ct
 from wbia_lca import edge_generator
 
-logger = logging.getLogger()
+
+logger = logging.getLogger('wbia_lca')
 
 
-class edge_generator_sim(edge_generator.edge_generator):
+class edge_generator_sim(edge_generator.edge_generator):  # NOQA
     def __init__(
         self,
         db,

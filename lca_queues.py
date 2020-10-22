@@ -23,7 +23,10 @@ import logging
 from wbia_lca import lca_heap as lh
 
 
-class lca_queues(object):
+logger = logging.getLogger('wbia_lca')
+
+
+class lca_queues(object):  # NOQA
     def __init__(self, lcas=None):
         """
         The initializer, putting all LCAs on the scoring queue and
@@ -186,32 +189,32 @@ class lca_queues(object):
 
         qs = q_set & self.S
         if len(qs) > 0:
-            print('LCA queues, Q and S intersect')
+            logger.info('LCA queues, Q and S intersect')
             all_ok = False
 
         qw = q_set & self.W
         if len(qw) > 0:
-            print('LCA queues, Q and W intersect')
+            logger.info('LCA queues, Q and W intersect')
             all_ok = False
 
         qd = q_set & self.done
         if len(qd) > 0:
-            print('LCA queues, Q and done queue intersect')
+            logger.info('LCA queues, Q and done queue intersect')
             all_ok = False
 
         sw = self.S & self.W
         if len(sw) > 0:
-            print('LCA queues, S and W intersect')
+            logger.info('LCA queues, S and W intersect')
             all_ok = False
 
         sd = self.S & self.done
         if len(sd) > 0:
-            print('LCA queues, S and done queue intersect')
+            logger.info('LCA queues, S and done queue intersect')
             all_ok = False
 
         wd = self.W & self.done
         if len(wd) > 0:
-            print('LCA queues, W and done queue intersect')
+            logger.info('LCA queues, W and done queue intersect')
             all_ok = False
 
         return all_ok
@@ -257,7 +260,7 @@ class lca_queues(object):
                 lca.pprint_short(initial_str=spaces, stop_after_from=True)
 
 
-def test_all():
+def test_lca_queues():
     v = [
         lh.lca_lite(123, 1.0),
         lh.lca_lite(456, 5.3),
@@ -270,8 +273,8 @@ def test_all():
     ]
     queues = lca_queues(v)
 
-    print()
-    print(
+    logger.info('')
+    logger.info(
         'After initialization: lengths should be (0, %d, 0, 0)'
         ' and are (%d, %d, %d, %d)'
         % (len(v), len(queues.Q), len(queues.S), len(queues.W), len(queues.done))
@@ -286,55 +289,63 @@ def test_all():
     lcas_on_S = v[:2]
     lcas_on_Q = v[2:-2]
     lcas_on_W = v[-2:]
-    print(
+    logger.info(
         'After moving around: lengths should be (%d, 2, 2)'
         ' and are (%d, %d, %d)'
         % (len(v) - 4, len(queues.Q), len(queues.S), len(queues.W))
     )
-    print('num_on_W should be %d, and is %d' % (len(queues.W), queues.num_on_W()))
-    print('Which queue: should be S and is', queues.which_queue(lcas_on_S[0]))
-    print('Which queue: should be Q and is', queues.which_queue(lcas_on_Q[0]))
-    print('Which queue: should be W and is', queues.which_queue(lcas_on_W[0]))
+    logger.info('num_on_W should be %d, and is %d' % (len(queues.W), queues.num_on_W()))
+    logger.info(
+        'Which queue: should be S and is %s' % (queues.which_queue(lcas_on_S[0]),)
+    )
+    logger.info(
+        'Which queue: should be Q and is %s' % (queues.which_queue(lcas_on_Q[0]),)
+    )
+    logger.info(
+        'Which queue: should be W and is %s' % (queues.which_queue(lcas_on_W[0]),)
+    )
 
-    print('Here is Q:')
+    logger.info('Here is Q:')
     queues.Q.print_structure()
     a = queues.top_Q()
-    print('top of queue should have values (459, 9.4) and has', str(a))
+    logger.info('top of queue should have values (459, 9.4) and has %s' % (str(a),))
     queues.pop_Q()
     a1 = queues.top_Q()
-    print('popped off queue; new top should have values (389, 8.9) and has', str(a1))
+    logger.info(
+        'popped off queue; new top should have values (389, 8.9) and has %s' % (str(a1),)
+    )
     queues.add_to_Q(a)  # put it back on....
-    print('put top back on')
+    logger.info('put top back on')
 
-    print('---------------')
-    print('Testing score_change method:')
+    logger.info('---------------')
+    logger.info('Testing score_change method:')
     queues.score_change(lcas_on_S[0], 4, -3)
-    print('Changed on S should stay on S:', queues.which_queue(lcas_on_S[0]))
+    logger.info('Changed on S should stay on S: %s' % (queues.which_queue(lcas_on_S[0]),))
     queues.score_change(lcas_on_Q[0], 4, -3)
-    print(
-        "Negative 'to' score change from Q should be on S:",
-        queues.which_queue(lcas_on_Q[0]),
+    logger.info(
+        "Negative 'to' score change from Q should be on S: %s"
+        % (queues.which_queue(lcas_on_Q[0]),)
     )
     queues.score_change(lcas_on_Q[1], -4, 3)
-    print(
-        "Negative 'from' score change (positive to) from Q should be on Q:",
-        queues.which_queue(lcas_on_Q[1]),
+    logger.info(
+        "Negative 'from' score change (positive to) from Q should be on Q: %s"
+        % (queues.which_queue(lcas_on_Q[1]),)
     )
     queues.score_change(lcas_on_W[0], 4, -3)
-    print(
-        "Negative 'to' score change from W should be on S:",
-        queues.which_queue(lcas_on_W[0]),
+    logger.info(
+        "Negative 'to' score change from W should be on S: %s"
+        % (queues.which_queue(lcas_on_W[0]),)
     )
     queues.score_change(lcas_on_W[1], -4, 3)
-    print(
-        "Negative 'from' score change (positive to) from W should be on Q:",
-        queues.which_queue(lcas_on_W[1]),
+    logger.info(
+        "Negative 'from' score change (positive to) from W should be on Q: %s"
+        % (queues.which_queue(lcas_on_W[1]),)
     )
 
     v = []
     queues = lca_queues(v)
     a = queues.top_Q()
-    print('Empty main queue should have a top of None:', a)
+    logger.info('Empty main queue should have a top of None: %s' % (a,))
 
     v = [
         lh.lca_lite(123, 1.0),
@@ -344,8 +355,8 @@ def test_all():
     ]
     queues = lca_queues(v)
 
-    print()
-    print(
+    logger.info('')
+    logger.info(
         'After initialization (again): lengths should be (0, %d, 0, 0)'
         ' and are (%d, %d, %d, %d)'
         % (len(v), len(queues.Q), len(queues.S), len(queues.W), len(queues.done))
@@ -355,17 +366,17 @@ def test_all():
     queues.add_to_done(v[1])
     queues.add_to_done(v[2])
     queues.add_to_done(v[3])
-    print(
+    logger.info(
         'After moving around: lengths should be (1, 0, 0, 3)'
         ' and are (%d, %d, %d, %d)'
         % (len(queues.Q), len(queues.S), len(queues.W), len(queues.done))
     )
     queues.remove(v[3])
     queues.score_change(v[2], from_delta=0, to_delta=-4)
-    print('Which queue: should be Q and is', queues.which_queue(v[0]))
-    print('Which queue: should be D and is', queues.which_queue(v[1]))
-    print('Which queue: should be S and is', queues.which_queue(v[2]))
-    print(
+    logger.info('Which queue: should be Q and is %s' % (queues.which_queue(v[0]),))
+    logger.info('Which queue: should be D and is %s' % (queues.which_queue(v[1]),))
+    logger.info('Which queue: should be S and is %s' % (queues.which_queue(v[2]),))
+    logger.info(
         'At end: lengths should be (1, 1, 0, 1)'
         ' and are (%d, %d, %d, %d)'
         % (len(queues.Q), len(queues.S), len(queues.W), len(queues.done))
@@ -373,4 +384,4 @@ def test_all():
 
 
 if __name__ == '__main__':
-    test_all()
+    test_lca_queues()
