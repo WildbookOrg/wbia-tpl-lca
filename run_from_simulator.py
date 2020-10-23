@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import logging
-import os
 import sys
 
 from wbia_lca import baseline
@@ -79,25 +78,21 @@ if __name__ == '__main__':
         file_prefix = gen_prefix + ('_%02d' % i)
         log_file = file_prefix + '.log'
 
-        # Delete log file if it exists
-        try:
-            os.remove(log_file)
-        except Exception:
-            pass
-
         """Configure the log file. This is repeated in the __init__ function
         for the graph_algorithm class, something that is only done here
         simulation information into the log file. It should not be done
         when running with "live" data.
         """
-        log_format = '%(levelname)-6s [%(filename)18s:%(lineno)3d] %(message)s'
-        logging.basicConfig(
-            filename=log_file, level=ga_params['log_level'], format=log_format
-        )
+        from wbia_lca import formatter
+
+        handler = logging.FileHandler(log_file, mode='w')
+        handler.setLevel(ga_params['log_level'])
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
 
         # To do: output information to log file about simulation.
-        logging.info('Negative / positive prob ratio %1.3f' % np_ratio)
-        logging.info('Simulation parameters %a', sim_params)
+        logger.info('Negative / positive prob ratio %1.3f' % np_ratio)
+        logger.info('Simulation parameters %a', sim_params)
 
         scorer = es.exp_scores.create_from_error_frac(
             sim_params['pos_error_frac'], np_ratio

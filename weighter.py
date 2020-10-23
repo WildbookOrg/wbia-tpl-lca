@@ -25,7 +25,7 @@ class weighter(object):  # NOQA
         self.human_prob = human_prob
         self.max_weight = 100  # should not change
         self.max_raw_weight = self.raw_wgt_(human_prob)
-        logging.info(
+        logger.info(
             'Built weighter with human_prob %1.2f and max_weight %d'
             % (self.human_prob, self.max_weight)
         )

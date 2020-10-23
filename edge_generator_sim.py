@@ -50,7 +50,7 @@ class edge_generator_sim(edge_generator.edge_generator):  # NOQA
         for tr in self.edge_requests:
             n0, n1, aug = tr
             if node_set is not None and (n0 not in node_set or n1 not in node_set):
-                logging.warning(
+                logger.warning(
                     'At least of node pair (%a,%a) is not in node set' % (n0, n1)
                 )
                 continue

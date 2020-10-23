@@ -43,11 +43,11 @@ class exp_scores(object):  # NOQA
 
         # Debugging output
         trunc_exp_pos = truncated_exponential(pos_lambda)
-        logging.info('creating exp_scores from error fractions')
-        logging.info('error fraction %1.3f' % error_frac)
-        logging.info('positive error rate %1.3f' % (1 - trunc_exp_pos.cdf(0.5)))
+        logger.info('creating exp_scores from error fractions')
+        logger.info('error fraction %1.3f' % error_frac)
+        logger.info('positive error rate %1.3f' % (1 - trunc_exp_pos.cdf(0.5)))
         trunc_exp_neg = truncated_exponential(neg_lambda)
-        logging.info(
+        logger.info(
             'negative error rate %1.3f' % (np_ratio * (1 - trunc_exp_neg.cdf(0.5)))
         )
 
@@ -62,13 +62,13 @@ class exp_scores(object):  # NOQA
         the distribution of samples fed into the verification
         algorithm.
         """
-        logging.info('creating exp_scores from ground truth sample distributions')
+        logger.info('creating exp_scores from ground truth sample distributions')
         np_ratio = len(neg_samples) / len(pos_samples)
         pos_lambda = find_lambda_from_samples(pos_samples, is_positive=True)
         neg_lambda = find_lambda_from_samples(neg_samples, is_positive=False)
-        logging.info('negative positive ratio: %.3f' % np_ratio)
-        logging.info('positive lambda for expoential: %.3f' % pos_lambda)
-        logging.info('negative lambda for expoential: %.3f' % neg_lambda)
+        logger.info('negative positive ratio: %.3f' % np_ratio)
+        logger.info('positive lambda for expoential: %.3f' % pos_lambda)
+        logger.info('negative lambda for expoential: %.3f' % neg_lambda)
 
         return cls(np_ratio, pos_lambda, neg_lambda)
 

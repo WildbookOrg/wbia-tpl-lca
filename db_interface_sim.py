@@ -20,7 +20,7 @@ Query edges
 
 class db_interface_sim(db_interface.db_interface):  # NOQA
     def __init__(self, edges, clustering):
-        super().__init__()
+        super(db_interface_sim, self).__init__(edges, clustering)
         self.edge_graph = nx.Graph()
         self.add_edges(edges)
         self.clustering = clustering

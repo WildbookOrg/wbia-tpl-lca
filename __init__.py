@@ -1,8 +1,22 @@
 # -*- coding: utf-8 -*-
 import logging  # NOQA
+import logging.config
+
+LOGGING_FORMAT = '%(levelname)-6s %(asctime)s [%(filename)18s:%(lineno)3d] %(message)s'
+LOGGING_LEVEL = logging.INFO
+
+root_logger = logging.getLogger()
+root_logger.setLevel(logging.WARNING)
+
+formatter = logging.Formatter(LOGGING_FORMAT)
+handler = logging.StreamHandler()
+handler.setLevel(LOGGING_LEVEL)
+handler.setFormatter(formatter)
 
 logger = logging.getLogger('wbia_lca')
-logger.setLevel(logging.INFO)
+logger.setLevel(LOGGING_LEVEL)
+logger.propagate = 0
+logger.addHandler(handler)
 
 try:
     from wbia_lca._version import __version__

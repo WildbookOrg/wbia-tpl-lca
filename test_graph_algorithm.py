@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
 import networkx as nx
-import os
 
 from wbia_lca import graph_algorithm as ga
 
@@ -837,17 +836,18 @@ def run_until_convergence(which_graph, print_graph=False):
 
 
 def test_graph_algorithm():
-    log_fname = './test_graph_algorithm.log'
-    try:
-        os.remove(log_fname)
-    except Exception:
-        pass
-
+    log_file = './test_graph_algorithm.log'
     log_level = logging.INFO
-    log_format = '%(levelname)-6s [%(filename)18s:%(lineno)3d] %(message)s'
-    logging.basicConfig(filename=log_fname, level=log_level, format=log_format)
-    logging.info('=================================')
-    logging.info('Start of test_graph_algorithm')
+
+    from wbia_lca import formatter
+
+    handler = logging.FileHandler(log_file, mode='w')
+    handler.setLevel(log_level)
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
+    logger.info('=================================')
+    logger.info('Start of test_graph_algorithm')
 
     test_lca_in_graph_algorithm()
     test_add_and_remove()  # which_grap in range 0..10

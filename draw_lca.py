@@ -118,6 +118,5 @@ class draw_lca(object):  # NOQA
         plt.savefig(out_name)
         plt.clf()
 
-        logger = logging.getLogger()
         logger.debug('Wrote iteration graph ' + out_name)
         logger.info(out_name)

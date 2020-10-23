@@ -220,23 +220,22 @@ class lca_queues(object):  # NOQA
         return all_ok
 
     def log(self):
-        logger = logging.getLogger()
         logger.info(
             'Number of LCAs on Q %d, W %d, S %d, done %d'
             % (len(self.Q), len(self.W), len(self.S), len(self.done))
         )
 
     def info_long(self, max_entries=-1):
-        logging.info('LCA Queues:')
+        logger.info('LCA Queues:')
 
         # Log Q
         spaces = ' ' * 4
         if len(self.Q) == 0:
-            logging.info('Q: <empty>')
+            logger.info('Q: <empty>')
         else:
             if max_entries <= 0 or max_entries > len(self.Q):
                 max_entries = len(self.Q)
-            logging.info('Q: %d entries; printing %d' % (len(self.Q), max_entries))
+            logger.info('Q: %d entries; printing %d' % (len(self.Q), max_entries))
             for i in range(max_entries):
                 initial_str = '%4d: ' % i
                 self.Q.heap[i].pprint_short(
@@ -245,17 +244,17 @@ class lca_queues(object):  # NOQA
 
         # Log S
         if len(self.S) == 0:
-            logging.info('S: <empty>')
+            logger.info('S: <empty>')
         else:
-            logging.info('S: %d entries:' % len(self.S))
+            logger.info('S: %d entries:' % len(self.S))
             for lca in self.S:
                 lca.pprint_short(initial_str=spaces, stop_after_from=True)
 
         # Log W
         if len(self.W) == 0:
-            logging.info('W: <empty>')
+            logger.info('W: <empty>')
         else:
-            logging.info('W: %d entries:' % len(self.W))
+            logger.info('W: %d entries:' % len(self.W))
             for lca in self.W:
                 lca.pprint_short(initial_str=spaces, stop_after_from=True)
 

@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 from wbia.control import controller_inject
 from wbia.constants import CONTAINERIZED, PRODUCTION  # NOQA
-from wbia.web.graph_server import GRAPH_ACTOR_CLASS
+from wbia.web.graph_server import GraphActor
 import logging
 import utool as ut
-import time
 
 import configparser
 import json
@@ -351,7 +350,7 @@ def extract_requests(request, db):
     return verifier_results, human_decisions, cluster_ids_to_check
 
 
-class LCAActor(GRAPH_ACTOR_CLASS):
+class LCAActor(GraphActor):
     """
 
     CommandLine:
@@ -407,50 +406,9 @@ class LCAActor(GRAPH_ACTOR_CLASS):
         >>> actor.infr.status()
     """
 
-    def __init__(actor):
+    def __init__(actor, *args, **kwargs):
+        super(LCAActor, actor).__init__(*args, **kwargs)
         actor.db = None
-
-    def handle(actor, message):
-        if not isinstance(message, dict):
-            raise ValueError('Commands must be passed in a message dict')
-        message = message.copy()
-        action = message.pop('action', None)
-        if action is None:
-            raise ValueError('Payload must have an action item')
-        if action == 'wait':
-            num = message.get('num', 0)
-            time.sleep(num)
-            return message
-        elif action == 'debug':
-            return actor
-        elif action == 'error':
-            raise Exception('FOOBAR')
-        elif action == 'latest_logs':
-            return actor.infr.latest_logs(colored=True)
-        elif action == 'logs':
-            return actor.infr.logs
-        else:
-            func = getattr(actor, action, None)
-            if func is None:
-                raise ValueError('Unknown action=%r' % (action,))
-            else:
-                try:
-                    return func(**message)
-                except Exception as ex:
-                    import sys
-                    import traceback
-
-                    traceback.print_exc()
-                    trace = traceback.format_exc()
-
-                    if actor.infr is not None:
-                        actor.infr.print('Actor Server Error: {!r}'.format(ex))
-                        actor.infr.print('Actor Server Traceback: {!r}'.format(trace))
-                    else:
-                        logger.info(ex)
-                        logger.info(trace)
-
-                    raise sys.exc_info()[0](trace)
 
     def start(actor, dbdir, aids='all', config={}, **kwargs):
         import wbia
@@ -653,79 +611,31 @@ class LCAActor(GRAPH_ACTOR_CLASS):
 
         return 'initialized'
 
-    def continue_review(actor):
-        # This will signal on_request_review with the same data
-        user_request = actor.infr.continue_review()
-        return user_request
+    def resume(actor):
+        raise NotImplementedError()
 
     def add_feedback(actor, **feedback):
-        response = actor.infr.accept(feedback)
-        return response
-
-    def remove_annots(actor, aids, **kwargs):
-        logger.info('Removing aids=%r from AnnotInference' % (aids,))
-        response = actor.infr.remove_aids(aids)
-        logger.info('\t got response = %r' % (response,))
-        logger.info('Applying NonDynamic Update to AnnotInference')
-        actor.infr.apply_nondynamic_update()
-        logger.info('\t ...applied')
-        return 'removed'
-
-    def update_task_thresh(actor, task, decision, value, **kwargs):
-        logger.info(
-            'Updating actor.infr.task_thresh with %r %r %r' % (task, decision, value)
-        )
-        actor.infr.task_thresh[task][decision] = value
-        logger.info('Updated actor.infr.task_thresh = %r' % (actor.infr.task_thresh,))
-        return 'updated'
+        raise NotImplementedError()
 
     def add_annots(actor, aids, **kwargs):
-        actor.infr.add_annots(aids)
-        return 'added'
+        raise NotImplementedError()
 
-    def get_infr_status(actor):
-        infr_status = {}
-        try:
-            infr_status['phase'] = actor.infr.phase
-        except Exception:
-            pass
-        try:
-            infr_status['loop_phase'] = actor.infr.loop_phase
-        except Exception:
-            pass
-        try:
-            infr_status['is_inconsistent'] = len(actor.infr.nid_to_errors) > 0
-        except Exception:
-            pass
-        try:
-            infr_status['is_converged'] = actor.infr.phase == 4
-        except Exception:
-            pass
-        try:
-            infr_status['num_meaningful'] = actor.infr.refresh.num_meaningful
-        except Exception:
-            pass
-        try:
-            infr_status['num_pccs'] = len(actor.infr.queue)
-        except Exception:
-            pass
-        try:
-            infr_status['num_inconsistent_ccs'] = len(actor.infr.nid_to_errors)
-        except Exception:
-            pass
-        try:
-            infr_status['cc_status'] = actor.infr.connected_component_status()
-        except Exception:
-            pass
+    def remove_annots(actor, aids, **kwargs):
+        raise NotImplementedError()
 
-        return infr_status
+    def get_logs(actor):
+        raise NotImplementedError()
+
+    def get_logs_latest(actor):
+        raise NotImplementedError()
+
+    def get_status(actor):
+        raise NotImplementedError()
+
+    # ##### HotSpotter ######
 
     def get_feat_extractor(actor):
-        if actor.infr.verifiers is None:
-            actor.infr.verifiers = {}
-        match_state_verifier = actor.infr.verifiers.get('match_state', None)
-        if match_state_verifier is not None:
-            return match_state_verifier.extr
+        raise NotImplementedError()
 
 
 if __name__ == '__main__':

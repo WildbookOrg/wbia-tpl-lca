@@ -3,7 +3,6 @@ import collections
 import datetime as dt
 import logging
 import networkx as nx
-import os
 
 from wbia_lca import cluster_tools as ct
 from wbia_lca import compare_clusterings
@@ -96,9 +95,6 @@ additions to existing clusters or formation of new clusters do not.
 """
 
 
-logger = logging.getLogger()
-
-
 def params_and_weighters(config_ini, verifier_gt):
     ga_params = dict()
 
@@ -135,12 +131,18 @@ def params_and_weighters(config_ini, verifier_gt):
     ga_params['log_level'] = log_level
     log_file = config_ini['LOGGING']['log_file']
     ga_params['log_file'] = log_file
-    try:
-        os.remove(log_file)
-    except Exception:
-        pass
-    log_format = '%(levelname)-6s [%(filename)21s:%(lineno)3d] %(message)s'
-    logging.basicConfig(filename=log_file, level=log_level, format=log_format)
+
+    from wbia_lca import formatter
+
+    handler = logging.FileHandler(log_file, mode='w')
+    handler.setLevel(log_level)
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
+    print(log_file)
+    print(log_level)
+    print(formatter)
+    print(handler)
 
     ga_params['draw_iterations'] = config_ini['DRAWING'].getboolean('draw_iterations')
     ga_params['drawing_prefix'] = config_ini['DRAWING']['drawing_prefix']
@@ -391,17 +393,18 @@ def test_ga_driver():
         'log_level': logging.DEBUG,
     }
 
-    log_file = 'test_ga_driver.log'
-    try:
-        os.remove(log_file)
-    except Exception:
-        logger.info('FAILED')
-    log_format = '%(levelname)-6s [%(filename)18s:%(lineno)3d] %(message)s'
-    logging.basicConfig(
-        filename=log_file, level=ga_params['log_level'], format=log_format
-    )
-    logging.info('=================================')
-    logging.info('Start of example to test ga_driver')
+    log_file = './test_ga_driver.log'
+    log_level = ga_params['log_level']
+
+    from wbia_lca import formatter
+
+    handler = logging.FileHandler(log_file)
+    handler.setLevel(log_level)
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
+    logger.info('=================================')
+    logger.info('Start of example to test ga_driver')
 
     db_quads = [
         ('a', 'b', 45, 'vamp'),

@@ -27,7 +27,6 @@ node and augmentation method that has been called for.
 
 import collections
 import logging
-import os
 
 
 logger = logging.getLogger('wbia_lca')
@@ -212,16 +211,18 @@ class test_callbacks(object):  # NOQA
 
 
 def test_weight_manager():
-    log_fname = './test.log'
-    try:
-        os.remove(log_fname)
-    except Exception:
-        pass
+    log_file = './test.log'
+    log_level = logging.INFO
+
+    from wbia_lca import formatter
+
+    handler = logging.FileHandler(log_file, mode='w')
+    handler.setLevel(log_level)
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
     aug_names = ['vamp', 'siamese', 'human']
-    log_format = '%(levelname)-6s [%(filename)18s:%(lineno)d] %(message)s'
-    log_level = logging.INFO
-    logging.basicConfig(filename=log_fname, level=log_level, format=log_format)
+
     init_edges = [
         (0, 1, 0.5, 'vamp'),
         (0, 1, -0.3, 'siamese'),

@@ -159,15 +159,15 @@ class simulator(object):  # NOQA
                     edges.append(e)
 
         self.G.add_weighted_edges_from(edges)
-        logging.info('simulator::generate: adding %d edges' % len(edges))
-        logging.info('%d correct match edges have positive weight' % num_correct_positive)
-        logging.info('%d correct match edges have zero weight' % num_correct_zero)
-        logging.info('%d correct match edges have negative weight' % num_correct_negative)
-        logging.info(
+        logger.info('simulator::generate: adding %d edges' % len(edges))
+        logger.info('%d correct match edges have positive weight' % num_correct_positive)
+        logger.info('%d correct match edges have zero weight' % num_correct_zero)
+        logger.info('%d correct match edges have negative weight' % num_correct_negative)
+        logger.info(
             '%d incorrect match edges have positive weight' % num_incorrect_positive
         )
-        logging.info('%d incorrect match edges have zero weight' % num_incorrect_zero)
-        logging.info(
+        logger.info('%d incorrect match edges have zero weight' % num_incorrect_zero)
+        logger.info(
             '%d incorrect match edges have negative weight' % num_incorrect_negative
         )
 
@@ -272,7 +272,7 @@ class simulator(object):  # NOQA
             edges_returned = self.verify_edges.copy()
             self.verify_edges.clear()
             self.verify_steps_until_return = random.randint(0, self.max_delay_steps)
-            logging.info(
+            logger.info(
                 'sim::verify_request: next delay will be %d steps'
                 % self.verify_steps_until_return
             )
@@ -291,7 +291,7 @@ class simulator(object):  # NOQA
     def human_request(self, node_pairs):
         if self.human_steps_until_return < 0:
             self.human_steps_until_return = random.randint(0, self.max_delay_steps)
-            logging.info(
+            logger.info(
                 'sim::human_request: delay will be %d steps'
                 % self.human_steps_until_return
             )
@@ -311,7 +311,7 @@ class simulator(object):  # NOQA
             edges_returned = self.human_edges.copy()
             self.human_edges.clear()
             self.human_steps_until_return = random.randint(0, self.max_delay_steps)
-            logging.info(
+            logger.info(
                 'sim::human_result: next delay will be %d steps'
                 % self.human_steps_until_return
             )

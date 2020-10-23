@@ -28,7 +28,6 @@ clustering is a mapping from a cluster id to a set of node ids.
 """
 
 g_cluster_counter = 0
-logger = logging.getLogger()
 
 
 class LCA(object):

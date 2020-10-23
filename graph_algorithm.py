@@ -179,8 +179,6 @@ Invariants:
    considered "futile".
 """
 
-logger = logging.getLogger()
-
 
 class graph_algorithm(object):  # NOQA
     def __init__(self, edges, clusters, aug_names, params, aug_request_cb, aug_result_cb):

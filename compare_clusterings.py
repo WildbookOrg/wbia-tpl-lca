@@ -110,12 +110,12 @@ class clustering_change(object):  # NOQA
             self.change_type = 'Merge/Split'
 
     def log_change(self):
-        logging.info('Old clustering %a' % self.old_clustering)
-        logging.info('New clustering %a' % self.new_clustering)
-        logging.info('Query nodes %a' % self.query_nodes)
+        logger.info('Old clustering %a' % self.old_clustering)
+        logger.info('New clustering %a' % self.new_clustering)
+        logger.info('Query nodes %a' % self.query_nodes)
         if len(self.removed_nodes) > 0:
-            logging.info('Removed nodes %a' % self.query_nodes)
-        logging.info('Change type %a' % self.change_type)
+            logger.info('Removed nodes %a' % self.query_nodes)
+        logger.info('Change type %a' % self.change_type)
 
     def print_it(self):
         logger.info('old_clustering %s' % (self.old_clustering,))
